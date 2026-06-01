@@ -1,0 +1,65 @@
+<section class="demandes-page">
+  <header class="page-header">
+    <div>
+      <h1>Demandes de remboursement</h1>
+      <p>
+        {{ stats().total }} demandes · {{ stats().waiting }} en attente · {{ stats().month }} ce mois
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button mat-flat-button color="primary" type="button" (click)="openNouvelleDemandeDialog()">
+        <mat-icon aria-hidden="true">add</mat-icon>
+        Nouvelle demande
+      </button>
+      <button mat-stroked-button type="button" (click)="openImportCsvDialog()">
+        <mat-icon aria-hidden="true">upload_file</mat-icon>
+        Importer CSV
+      </button>
+    </div>
+  </header>
+
+  <app-demandes-filter-bar />
+
+  <section class="results-header" aria-label="Résultats">
+    <strong>{{ filtered().length }} résultats</strong>
+    <span>Tri : risque ↓, date ↑</span>
+  </section>
+
+  @if (filtered().length === 0) {
+    <section class="empty-state">
+      @if (activeFilterCount() > 0) {
+        <mat-icon aria-hidden="true">filter_list_off</mat-icon>
+        <h2>Aucun résultat pour ces filtres</h2>
+        <button mat-button color="primary" type="button" (click)="resetFilters()">
+          Réinitialiser les filtres
+        </button>
+      } @else {
+        <mat-icon aria-hidden="true">inbox</mat-icon>
+        <h2>Aucune demande pour le moment</h2>
+      }
+    </section>
+  } @else {
+    <section class="claims-list" aria-label="Liste des demandes">
+      @for (demande of filtered(); track demande.id) {
+        <app-claim-card
+          [id]="demande.id"
+          [patientName]="demande.patientName"
+          [planTierName]="demande.planTierName"
+          [membershipId]="demande.patientMemberId"
+          [employerName]="demande.employerName ?? ''"
+          [actDescription]="demande.actDescription"
+          [providerName]="demande.providerName"
+          [amount]="demande.totalAmount"
+          [source]="demande.source"
+          [riskScore]="demande.riskScore"
+          [status]="demande.status"
+          [submittedAt]="demande.submittedAt"
+          [flags]="demande.flags"
+          actionLabel="Ouvrir"
+          (opened)="onOpenDetail($event)"
+        />
+      }
+    </section>
+  }
+</section>

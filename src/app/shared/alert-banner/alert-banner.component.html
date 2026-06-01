@@ -1,0 +1,24 @@
+@if (!hidden()) {
+  <section
+    class="alert-banner"
+    [class.info]="tone() === 'info'"
+    [class.warning]="tone() === 'warning'"
+    [class.error]="tone() === 'error'"
+    [class.success]="tone() === 'success'"
+  >
+    <mat-icon aria-hidden="true">{{ displayIcon() }}</mat-icon>
+    <span>{{ message() }}</span>
+    <div class="alert-actions">
+      @if (actionLabel()) {
+        <button mat-button type="button" (click)="action.emit()">
+          {{ actionLabel() }}
+        </button>
+      }
+      @if (dismissible()) {
+        <button mat-icon-button type="button" aria-label="Fermer" (click)="dismiss()">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </button>
+      }
+    </div>
+  </section>
+}

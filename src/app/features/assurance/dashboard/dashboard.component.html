@@ -1,0 +1,127 @@
+@if (dashboardData(); as dashboard) {
+  <section class="dashboard-page">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ dashboard.companyName }}</p>
+        <h1>Tableau de bord</h1>
+        <p>{{ dashboard.subtitle }}</p>
+      </div>
+    </header>
+
+    @if (importantMessages().length > 0) {
+      <app-alert-banner
+        tone="warning"
+        icon="campaign"
+        [message]="'Communication FTUSA importante — ' + importantMessages()[0].subject"
+        actionLabel="Lire"
+        (action)="openMessage(importantMessages()[0])"
+      />
+    }
+
+    <section class="kpi-section" aria-label="Indicateurs principaux">
+      <div class="kpi-grid four-columns">
+        @for (kpi of dashboard.kpiRows[0]; track kpi.id) {
+          <mat-card
+            class="kpi-card"
+            appearance="outlined"
+            [class.tone-primary]="kpi.tone === 'primary'"
+            [class.tone-secondary]="kpi.tone === 'secondary'"
+            [class.tone-tertiary]="kpi.tone === 'tertiary'"
+          >
+            <mat-card-content>
+              <div class="kpi-icon">
+                <lucide-icon [img]="kpi.icon" [size]="22" [strokeWidth]="2.2" />
+              </div>
+              <strong
+                class="kpi-value"
+                [appCountUp]="kpi.value"
+                [format]="kpi.format"
+                [suffix]="kpi.suffix ?? ''"
+              ></strong>
+              <span class="kpi-label">{{ kpi.label }}</span>
+              @if (kpi.trend) {
+                <span class="kpi-trend">{{ kpi.trend }}</span>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+
+      <div class="kpi-grid three-columns">
+        @for (kpi of dashboard.kpiRows[1]; track kpi.id) {
+          <mat-card
+            class="kpi-card"
+            appearance="outlined"
+            [class.tone-primary]="kpi.tone === 'primary'"
+            [class.tone-secondary]="kpi.tone === 'secondary'"
+            [class.tone-tertiary]="kpi.tone === 'tertiary'"
+          >
+            <mat-card-content>
+              <div class="kpi-icon">
+                <lucide-icon [img]="kpi.icon" [size]="22" [strokeWidth]="2.2" />
+              </div>
+              <strong
+                class="kpi-value"
+                [appCountUp]="kpi.value"
+                [format]="kpi.format"
+                [suffix]="kpi.suffix ?? ''"
+              ></strong>
+              <span class="kpi-label">{{ kpi.label }}</span>
+              @if (kpi.trend) {
+                <span class="kpi-trend">{{ kpi.trend }}</span>
+              }
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </section>
+
+    <section class="content-section" aria-labelledby="insights-title">
+      <div class="section-heading">
+        <h2 id="insights-title">Aperçu intelligent</h2>
+      </div>
+
+      <div class="insight-grid">
+        @for (insight of dashboard.insights; track insight.id; let index = $index) {
+          <div class="insight-item" [style.animation-delay.ms]="index * 50">
+            <app-insight-card
+              [icon]="insight.icon"
+              [eyebrow]="insight.eyebrow"
+              [title]="insight.title"
+              [description]="insight.description"
+              [supportingData]="insight.supportingData"
+              [actionLabel]="insight.actionLabel"
+              [tone]="insight.tone"
+              (action)="openInsight(insight)"
+            />
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="content-section" aria-labelledby="quick-actions-title">
+      <mat-card class="quick-actions-card" appearance="outlined">
+        <mat-card-content>
+          <div class="section-heading">
+            <h2 id="quick-actions-title">Actions rapides</h2>
+          </div>
+
+          <div class="quick-actions">
+            @for (action of dashboard.quickActions; track action.id) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="action.disabled"
+                [matTooltip]="action.disabled ? 'Fonctionnalité prévue dans une prochaine étape' : ''"
+                (click)="runQuickAction(action)"
+              >
+                <lucide-icon [img]="action.icon" [size]="18" [strokeWidth]="2.2" />
+                {{ action.label }}
+              </button>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+  </section>
+}

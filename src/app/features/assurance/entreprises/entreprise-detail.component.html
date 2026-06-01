@@ -1,0 +1,157 @@
+<section class="entreprise-detail-page">
+  <button mat-button type="button" class="back-button" (click)="backToList()">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon>
+    Retour aux entreprises
+  </button>
+
+  @if (contract(); as contract) {
+    <header class="detail-header">
+      <div>
+        <h1>{{ contract.employerName }}</h1>
+        <mat-chip-set aria-label="Secteur">
+          <mat-chip>{{ contract.employerSector }}</mat-chip>
+        </mat-chip-set>
+      </div>
+      <app-status-chip [status]="contract.status" />
+    </header>
+
+    <mat-card class="section-card">
+      <h2>Contrat</h2>
+      <div class="contract-grid">
+        <div>
+          <span>Début</span>
+          <strong>{{ formatDate(contract.contractStartDate) }}</strong>
+        </div>
+        <div>
+          <span>Fin</span>
+          <strong>{{ formatDate(contract.contractEndDate) }}</strong>
+        </div>
+        <div>
+          <span>Préavis renouvellement</span>
+          <strong>{{ formatDate(contract.renewalNoticeDate) }}</strong>
+        </div>
+        <div>
+          <span>Compte à rebours</span>
+          <strong>J-{{ daysUntil(contract.renewalNoticeDate) }}</strong>
+        </div>
+        <div>
+          <span>Contact RH</span>
+          <strong>{{ contract.hrContactName }} · {{ contract.hrContactEmail }}</strong>
+        </div>
+        <div>
+          <span>Plans</span>
+          <strong>{{ planNames(contract) }}</strong>
+        </div>
+      </div>
+
+      <div class="enrollment-block">
+        <div>
+          <strong>{{ contract.enrolledEmployees }} / {{ contract.totalEmployees }} salariés inscrits</strong>
+          <span>{{ enrollmentPercent(contract) }} % du groupe couvert</span>
+        </div>
+        <mat-progress-bar mode="determinate" [value]="enrollmentPercent(contract)" />
+      </div>
+
+      <p class="premium">Prime annuelle: {{ formatCurrency(contract.annualPremium) }}</p>
+    </mat-card>
+
+    <mat-card class="section-card">
+      <h2>Activité année en cours</h2>
+      <div class="kpi-row">
+        <article>
+          <span>Total demandes</span>
+          <strong>{{ activity().total }}</strong>
+        </article>
+        <article>
+          <span>Approuvées</span>
+          <strong>{{ activity().approved }}</strong>
+        </article>
+        <article>
+          <span>Refusées</span>
+          <strong>{{ activity().rejected }}</strong>
+        </article>
+        <article>
+          <span>Remboursé</span>
+          <strong>{{ formatCurrency(activity().reimbursed) }}</strong>
+        </article>
+        <article>
+          <span>Ratio sinistres</span>
+          <strong class="ratio" [class.success]="ratioTone(contract.claimsRatio) === 'success'" [class.warning]="ratioTone(contract.claimsRatio) === 'warning'" [class.error]="ratioTone(contract.claimsRatio) === 'error'">
+            {{ formatPercent(contract.claimsRatio) }}
+          </strong>
+          <small>vs moyenne marché 35 %</small>
+        </article>
+      </div>
+    </mat-card>
+
+    <app-chart-card
+      title="Évolution mensuelle"
+      [options]="monthlyReimbursementsOptions()"
+      [height]="320"
+      (exportCsv)="exportMonthlyReimbursements()"
+    />
+
+    <mat-card class="section-card">
+      <h2>Top prestataires</h2>
+      @if (topProviders().length === 0) {
+        <p class="muted">Aucun prestataire sur ce contrat.</p>
+      } @else {
+        <div class="provider-list">
+          @for (provider of topProviders(); track provider.providerName) {
+            <article>
+              <strong>{{ provider.providerName }}</strong>
+              <span>{{ provider.count }} demande(s) · {{ formatCurrency(provider.total) }}</span>
+            </article>
+          }
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="section-card employees-card">
+      <div>
+        <h2>Salariés assurés</h2>
+        <p>Consulter la liste des adhérents rattachés à ce contrat groupe.</p>
+      </div>
+      <button mat-stroked-button color="primary" type="button" (click)="openAdherents()">
+        Ouvrir les salariés assurés
+      </button>
+    </mat-card>
+
+    @if (contract.status === 'EXPIRATION_PROCHE' || contract.status === 'ACTIF') {
+      <mat-card class="section-card renewal-card">
+        <header>
+          <div>
+            <h2>Renouvellement</h2>
+            <p>Préavis dans {{ daysUntil(contract.renewalNoticeDate) }} jours.</p>
+          </div>
+        </header>
+
+        <div class="recommendations">
+          @for (recommendation of recommendations(); track recommendation) {
+            <article>
+              <mat-icon aria-hidden="true">task_alt</mat-icon>
+              <span>{{ recommendation }}</span>
+            </article>
+          }
+        </div>
+
+        <div class="renewal-actions">
+          <button mat-flat-button color="primary" type="button" (click)="prepareRenewal()">
+            Préparer le dossier de renouvellement
+          </button>
+          <button mat-stroked-button type="button" (click)="exportReport()">
+            Exporter le rapport employeur
+          </button>
+        </div>
+      </mat-card>
+    }
+  } @else {
+    <mat-card class="empty-state">
+      <mat-icon aria-hidden="true">domain_disabled</mat-icon>
+      <h1>Contrat introuvable</h1>
+      <button mat-flat-button color="primary" type="button" (click)="backToList()">
+        Retour aux entreprises
+      </button>
+    </mat-card>
+  }
+</section>

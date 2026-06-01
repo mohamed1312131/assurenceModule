@@ -1,0 +1,146 @@
+<section class="settings-page">
+  <header class="page-header">
+    <div>
+      <h1>Paramètres plateforme</h1>
+      <p>Référentiels FTUSA, catégories système et paramètres globaux.</p>
+    </div>
+  </header>
+
+  <mat-accordion>
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Compagnies FTUSA</mat-panel-title>
+        <mat-panel-description>{{ companies().length }} membres</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="inline-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nom</mat-label>
+          <input matInput [value]="newCompanyName()" (input)="newCompanyName.set($any($event.target).value)" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Code</mat-label>
+          <input matInput [value]="newCompanyCode()" (input)="newCompanyCode.set($any($event.target).value.toUpperCase())" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="addCompany()">Ajouter</button>
+      </div>
+
+      <div class="list-grid">
+        @for (company of companies(); track company.id) {
+          <article>
+            <div>
+              <strong>{{ company.name }}</strong>
+              <span>{{ company.code }} · {{ company.status }}</span>
+            </div>
+            <button mat-button color="warn" type="button" (click)="toggleCompany(company)">
+              {{ company.status === 'SUSPENDUE' ? 'Réactiver' : 'Désactiver' }}
+            </button>
+          </article>
+        }
+      </div>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Catégories d'actes système</mat-panel-title>
+        <mat-panel-description>{{ categories().length }} catégories</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="panel-actions">
+        <button mat-flat-button color="primary" type="button" (click)="addCategory()">
+          Ajouter une catégorie
+        </button>
+      </div>
+
+      <div class="list-grid">
+        @for (category of categories(); track category.id + category.label) {
+          <article>
+            <div>
+              <strong>{{ category.label }}</strong>
+              <span>{{ category.id }} · {{ category.active ? 'Active' : 'Inactive' }}</span>
+            </div>
+            <div class="row-actions">
+              <button mat-button type="button" (click)="renameCategory(category)">Renommer</button>
+              <button mat-button color="warn" type="button" (click)="toggleCategory(category)">
+                {{ category.active ? 'Désactiver' : 'Réactiver' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Paramètres globaux</mat-panel-title>
+        <mat-panel-description>SLA, autorisations et délai légal</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>SLA marché minimum (jours)</mat-label>
+          <input
+            matInput
+            type="number"
+            [value]="settings().minimumMarketSlaDays"
+            (input)="patchSettings('minimumMarketSlaDays', +$any($event.target).value)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Délai légal d'auto-approbation</mat-label>
+          <input
+            matInput
+            type="number"
+            [value]="settings().legalAutoApprovalDays"
+            (input)="patchSettings('legalAutoApprovalDays', +$any($event.target).value)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Catégories obligatoirement soumises à autorisation préalable</mat-label>
+          <mat-select
+            multiple
+            [value]="settings().mandatoryPriorAuthCategories"
+            (selectionChange)="patchSettings('mandatoryPriorAuthCategories', $event.value)"
+          >
+            @for (category of categories(); track category.id) {
+              <mat-option [value]="category.id" [disabled]="isRequired(category.id)">
+                {{ category.label }}{{ isRequired(category.id) ? ' · obligatoire' : '' }}
+              </mat-option>
+            }
+          </mat-select>
+          <mat-hint>Plancher imposé: Chirurgie + Hospitalisation toujours requises</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="panel-actions">
+        <button mat-flat-button color="primary" type="button" (click)="saveSettings()">
+          Enregistrer
+        </button>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <mat-card class="roadmap-card">
+    <h2>Roadmap</h2>
+    <div class="roadmap-table">
+      <article>
+        <strong>Phase 1</strong>
+        <span>Actuelle</span>
+      </article>
+      <article>
+        <strong>Phase 2</strong>
+        <span>Q3 2026</span>
+      </article>
+      <article>
+        <strong>Phase 3</strong>
+        <span>Q1 2027</span>
+      </article>
+      <article>
+        <strong>Phase 4</strong>
+        <span>2027</span>
+      </article>
+    </div>
+  </mat-card>
+</section>

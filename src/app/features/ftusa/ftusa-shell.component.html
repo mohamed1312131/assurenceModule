@@ -1,0 +1,54 @@
+<mat-sidenav-container class="shell-container">
+  <mat-sidenav class="shell-sidenav" mode="side" opened>
+    <div class="shell-logo">
+      <span>FTUSA</span>
+      <small>Plateforme Assurance</small>
+    </div>
+
+    <mat-nav-list>
+      @for (item of navItems; track item.path) {
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <mat-icon matListItemIcon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+
+    <div class="shell-spacer"></div>
+    <mat-divider />
+
+    <div class="shell-user">
+      @if (user(); as currentUser) {
+        <strong>{{ currentUser.name }}</strong>
+        <span>{{ currentUser.email }}</span>
+      }
+      <button mat-button type="button" (click)="logout()">
+        <mat-icon aria-hidden="true">logout</mat-icon>
+        Déconnexion
+      </button>
+      <button mat-button type="button" class="reset-demo" (click)="resetDemo()">
+        <mat-icon aria-hidden="true">restart_alt</mat-icon>
+        Réinitialiser la démo
+      </button>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="shell-toolbar">
+      <span>OmniCare — Tableau de Bord Assurance FTUSA</span>
+      <span class="toolbar-spacer"></span>
+      @if (user(); as currentUser) {
+        <span class="toolbar-user">{{ currentUser.name }}</span>
+      }
+    </mat-toolbar>
+
+    <main class="shell-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

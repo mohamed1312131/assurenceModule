@@ -1,0 +1,11 @@
+<mat-chip-set aria-label="Statut">
+  <mat-chip
+    class="status-chip"
+    [class.success]="displayTone() === 'success'"
+    [class.warning]="displayTone() === 'warning'"
+    [class.error]="displayTone() === 'error'"
+    [class.info]="displayTone() === 'info'"
+  >
+    {{ displayLabel() }}
+  </mat-chip>
+</mat-chip-set>

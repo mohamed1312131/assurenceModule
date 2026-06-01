@@ -1,0 +1,44 @@
+.source-badge {
+  --mdc-chip-elevated-container-color: #eef2f4;
+  --mdc-chip-label-text-color: var(--omnicare-text);
+
+  border-radius: 999px;
+  min-height: 30px;
+}
+
+:host {
+  display: inline-flex;
+}
+
+.source-badge.compact {
+  min-width: 34px;
+}
+
+.source-badge mat-icon {
+  color: currentColor;
+}
+
+.omnicare {
+  --mdc-chip-elevated-container-color: rgba(31, 191, 154, 0.16);
+  --mdc-chip-label-text-color: #047857;
+}
+
+.manuel {
+  --mdc-chip-elevated-container-color: rgba(59, 130, 246, 0.14);
+  --mdc-chip-label-text-color: #1d4ed8;
+}
+
+.import-csv {
+  --mdc-chip-elevated-container-color: rgba(245, 158, 11, 0.16);
+  --mdc-chip-label-text-color: #92400e;
+}
+
+.website {
+  --mdc-chip-elevated-container-color: rgba(124, 58, 237, 0.14);
+  --mdc-chip-label-text-color: #6d28d9;
+}
+
+.email {
+  --mdc-chip-elevated-container-color: rgba(100, 116, 139, 0.14);
+  --mdc-chip-label-text-color: #475569;
+}

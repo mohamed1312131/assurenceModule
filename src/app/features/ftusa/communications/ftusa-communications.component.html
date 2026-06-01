@@ -1,0 +1,47 @@
+<section class="communications-page">
+  <header class="page-header">
+    <div>
+      <h1>Communications</h1>
+      <p>Messages envoyés aux compagnies membres.</p>
+    </div>
+    <button mat-flat-button color="primary" type="button" (click)="openComposer()">
+      <mat-icon aria-hidden="true">add</mat-icon>
+      Nouveau message
+    </button>
+  </header>
+
+  <section class="message-list">
+    @for (message of comms.sortedCommunications(); track message.id) {
+      <mat-card class="message-row" [class.urgent]="message.priority === 'URGENT'" [class.important]="message.priority === 'IMPORTANT'">
+        <div class="priority">
+          @switch (message.priority) {
+            @case ('URGENT') {
+              <span>URGENT</span>
+            }
+            @case ('IMPORTANT') {
+              <span>IMPORTANT</span>
+            }
+            @default {
+              <span>INFO</span>
+            }
+          }
+        </div>
+        <div class="message-main">
+          <strong>{{ message.subject }}</strong>
+          <span>{{ categoryLabel(message.category) }} · {{ relativeDate(message.sentAt) }}</span>
+        </div>
+        <div class="receipt">
+          Lu par {{ readCount(message) }} / {{ recipientCount(message) }} compagnies
+        </div>
+        <div class="actions">
+          <button mat-button color="primary" type="button" (click)="openReceipts(message)">
+            Voir destinataires
+          </button>
+          <button mat-button type="button" (click)="openDetail(message)">
+            Voir détail
+          </button>
+        </div>
+      </mat-card>
+    }
+  </section>
+</section>

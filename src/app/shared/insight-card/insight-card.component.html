@@ -1,0 +1,43 @@
+<mat-card
+  class="insight-card"
+  appearance="outlined"
+  [class.success]="tone() === 'success'"
+  [class.warning]="tone() === 'warning'"
+  [class.error]="tone() === 'error'"
+  [class.neutral]="tone() === 'neutral'"
+>
+  <mat-card-content>
+    <div class="icon-frame">
+      <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+    </div>
+
+    <div class="insight-body">
+      @if (eyebrow()) {
+        <span class="eyebrow">{{ eyebrow() }}</span>
+      }
+
+      <h3>{{ title() }}</h3>
+
+      @if (description()) {
+        <p>{{ description() }}</p>
+      }
+
+      @if (supportingData().length) {
+        <ul>
+          @for (item of supportingData(); track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      }
+    </div>
+  </mat-card-content>
+
+  @if (actionLabel()) {
+    <mat-card-actions align="end">
+      <button mat-button type="button" (click)="onAction()">
+        {{ actionLabel() }}
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </mat-card-actions>
+  }
+</mat-card>

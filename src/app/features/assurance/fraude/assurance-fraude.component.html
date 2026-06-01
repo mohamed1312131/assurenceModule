@@ -1,0 +1,143 @@
+<section class="fraude-page">
+  <header class="page-header">
+    <div>
+      <h1>Fraude & risque</h1>
+      <p>Détection interne, investigation prestataire et partage inter-compagnies.</p>
+    </div>
+  </header>
+
+  <section class="hero-grid">
+    <mat-card class="hero-card">
+      <h2>Détection interne</h2>
+      <p>
+        Les drapeaux sont calculés à partir des règles de montant, délais, doublons et réseau agréé.
+        Les actions ci-dessous restent internes à votre compagnie.
+      </p>
+    </mat-card>
+
+    <mat-card class="hero-card optin-card">
+      <div class="optin-header">
+        <div>
+          <h2>Partage inter-compagnies</h2>
+          <p>État actuel: {{ optedIn() ? 'activé' : 'non activé' }}</p>
+        </div>
+        <mat-slide-toggle [checked]="optedIn()" disabled>Partage</mat-slide-toggle>
+      </div>
+
+      @if (!optedIn()) {
+        <div class="optin-explanation">
+          <mat-icon aria-hidden="true">lock</mat-icon>
+          <div>
+            <strong>Activation sous contrat FTUSA</strong>
+            <p>
+              Le partage anonyme nécessite une validation contractuelle et la configuration des
+              garanties INPDP avant transmission vers ALFA.
+            </p>
+            <button mat-stroked-button color="primary" type="button" (click)="requestActivation()">
+              Demander l’activation
+            </button>
+          </div>
+        </div>
+      }
+    </mat-card>
+  </section>
+
+  <section class="kpi-row" aria-label="Indicateurs fraude">
+    <mat-card>
+      <span>Signalés ce mois</span>
+      <strong>{{ kpis().flaggedThisMonth }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Fraudes confirmées</span>
+      <strong>{{ kpis().confirmed }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Faux positifs</span>
+      <strong>{{ kpis().falsePositives }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Économies estimées</span>
+      <strong>{{ formatCurrency(kpis().estimatedSavings) }}</strong>
+    </mat-card>
+  </section>
+
+  <mat-card class="table-card">
+    <header>
+      <div>
+        <h2>Dossiers flagués</h2>
+        <p>{{ flaggedDemandes().length }} dossier(s) avec drapeaux actifs.</p>
+      </div>
+    </header>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Montant</th>
+            <th>Drapeaux</th>
+            <th>Risque</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (demande of flaggedDemandes(); track demande.id) {
+            <tr>
+              <td>
+                <strong>{{ anonymizedPatient(demande) }}</strong>
+                <span>{{ demande.id }}</span>
+              </td>
+              <td>{{ formatCurrency(demande.totalAmount) }}</td>
+              <td>
+                <mat-chip-set aria-label="Drapeaux">
+                  @for (flag of demande.flags; track flag) {
+                    <mat-chip>{{ flagLabel(flag) }}</mat-chip>
+                  }
+                </mat-chip-set>
+              </td>
+              <td><app-status-chip [status]="demande.riskScore" /></td>
+              <td><app-status-chip [status]="demande.status" /></td>
+              <td>
+                <button mat-icon-button type="button" [matMenuTriggerFor]="menu" aria-label="Actions fraude">
+                  <mat-icon aria-hidden="true">more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item type="button" (click)="markFalsePositive(demande)">
+                    <mat-icon aria-hidden="true">check_circle</mat-icon>
+                    <span>Faux positif</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="confirmFraud(demande)">
+                    <mat-icon aria-hidden="true">gpp_bad</mat-icon>
+                    <span>Confirmer fraude</span>
+                  </button>
+                  <button mat-menu-item type="button" (click)="investigateProvider(demande)">
+                    <mat-icon aria-hidden="true">local_hospital</mat-icon>
+                    <span>Investiguer prestataire</span>
+                  </button>
+                  <button
+                    mat-menu-item
+                    type="button"
+                    [disabled]="!optedIn()"
+                    matTooltip="Disponible après activation du partage"
+                    (click)="transmitToAlfa(demande)"
+                  >
+                    <mat-icon aria-hidden="true">send</mat-icon>
+                    <span>Transmettre à ALFA</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (flaggedDemandes().length === 0) {
+      <section class="empty-state">
+        <mat-icon aria-hidden="true">verified_user</mat-icon>
+        <h2>Aucun dossier flagué</h2>
+      </section>
+    }
+  </mat-card>
+</section>

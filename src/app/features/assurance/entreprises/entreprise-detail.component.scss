@@ -1,0 +1,209 @@
+.entreprise-detail-page {
+  display: grid;
+  gap: 18px;
+}
+
+.back-button {
+  justify-self: start;
+}
+
+.detail-header {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
+}
+
+h1 {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 10px;
+}
+
+h2 {
+  color: var(--omnicare-text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.section-card,
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 20px;
+}
+
+.contract-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.contract-grid div,
+.enrollment-block div,
+.provider-list article,
+.kpi-row article {
+  display: grid;
+  gap: 5px;
+}
+
+.contract-grid span,
+.enrollment-block span,
+.provider-list span,
+.kpi-row span,
+.kpi-row small,
+.employees-card p,
+.renewal-card p,
+.muted {
+  color: var(--omnicare-muted);
+}
+
+.contract-grid strong,
+.enrollment-block strong,
+.provider-list strong,
+.kpi-row strong {
+  color: var(--omnicare-text);
+  font-weight: 800;
+}
+
+.enrollment-block {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.premium {
+  color: var(--omnicare-secondary);
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 18px 0 0;
+}
+
+.kpi-row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.kpi-row article {
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.kpi-row strong {
+  font-size: 1.35rem;
+}
+
+.ratio {
+  border-radius: 999px;
+  justify-self: start;
+  padding: 4px 9px;
+}
+
+.ratio.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ratio.warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.ratio.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.provider-list {
+  display: grid;
+  gap: 10px;
+}
+
+.provider-list article {
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.employees-card {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.employees-card p,
+.renewal-card p {
+  margin: 0;
+}
+
+.recommendations {
+  display: grid;
+  gap: 10px;
+}
+
+.recommendations article {
+  align-items: center;
+  background: rgba(31, 191, 154, 0.08);
+  border: 1px solid rgba(107, 227, 178, 0.7);
+  border-radius: 14px;
+  color: var(--omnicare-secondary);
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+
+.renewal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--omnicare-muted);
+  display: grid;
+  justify-items: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  color: #94a3b8;
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+}
+
+@media (max-width: 1060px) {
+  .contract-grid,
+  .kpi-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .detail-header,
+  .employees-card {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .contract-grid,
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,207 @@
+.ftusa-dashboard-page {
+  display: grid;
+  gap: 22px;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
+}
+
+h1 {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+
+.page-header p,
+.activity-card p,
+.kpi-card small,
+.timeline span,
+.empty-state {
+  color: var(--omnicare-muted);
+}
+
+.page-header p,
+.activity-card p {
+  margin: 0;
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.kpi-period-caption {
+  color: var(--omnicare-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: -10px 0 0;
+  text-transform: capitalize;
+}
+
+.kpi-card,
+.activity-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 18px;
+}
+
+.kpi-card {
+  display: grid;
+  gap: 8px;
+  min-height: 142px;
+}
+
+.kpi-card span {
+  color: var(--omnicare-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.kpi-card strong {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.kpi-card.warning span {
+  color: #b45309;
+}
+
+.hero-chart-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.content-grid {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.insights-section {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.activity-card {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 18px;
+}
+
+.activity-card h2 {
+  color: var(--omnicare-text);
+  font-size: 1.15rem;
+  margin: 0 0 6px;
+}
+
+.timeline {
+  display: grid;
+}
+
+.timeline article {
+  border-left: 2px solid #e5e7eb;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr;
+  padding: 0 0 18px 14px;
+  position: relative;
+}
+
+.timeline article:last-child {
+  padding-bottom: 0;
+}
+
+.icon-frame {
+  align-items: center;
+  background: #eff6ff;
+  border-radius: 999px;
+  color: #1d4ed8;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.timeline article.success .icon-frame {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.timeline article.warning .icon-frame {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.timeline article.error .icon-frame {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.timeline div {
+  display: grid;
+  gap: 4px;
+}
+
+.timeline strong {
+  color: var(--omnicare-text);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.empty-state {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-height: 160px;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  color: #94a3b8;
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+}
+
+@media (max-width: 1180px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-card {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .kpi-grid,
+  .hero-chart-grid,
+  .insights-section {
+    grid-template-columns: 1fr;
+  }
+}

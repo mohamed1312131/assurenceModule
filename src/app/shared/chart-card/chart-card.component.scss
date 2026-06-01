@@ -1,0 +1,79 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+:host(.wide) {
+  grid-column: 1 / -1;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: none;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.chart-note {
+  align-items: start;
+  background: #effbf7;
+  border: 1px solid #b8eee0;
+  border-radius: 10px;
+  color: var(--omnicare-secondary);
+  display: grid;
+  font-size: 0.9rem;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+  line-height: 1.45;
+  padding: 12px;
+}
+
+.chart-note mat-icon {
+  color: var(--omnicare-primary);
+}
+
+header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+h2 {
+  color: var(--omnicare-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 0;
+}
+
+button mat-icon {
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.chart-frame {
+  min-width: 0;
+}
+
+:host ::ng-deep .apexcharts-canvas,
+:host ::ng-deep .apexcharts-svg {
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif !important;
+}
+
+@media (max-width: 760px) {
+  header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button {
+    justify-content: center;
+  }
+}

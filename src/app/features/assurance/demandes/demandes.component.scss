@@ -1,0 +1,96 @@
+.demandes-page {
+  display: grid;
+  gap: 22px;
+}
+
+.page-header {
+  align-items: end;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
+}
+
+h1 {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 8px;
+}
+
+.page-header p {
+  color: var(--omnicare-muted);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.header-actions button {
+  min-height: 42px;
+}
+
+.results-header {
+  align-items: center;
+  color: var(--omnicare-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.results-header strong {
+  color: var(--omnicare-text);
+  font-size: 1rem;
+}
+
+.claims-list {
+  display: grid;
+  gap: 14px;
+}
+
+.empty-state {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid rgba(15, 111, 115, 0.12);
+  border-radius: 16px;
+  color: var(--omnicare-muted);
+  display: grid;
+  justify-items: center;
+  min-height: 300px;
+  padding: 36px;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  color: #94a3b8;
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+}
+
+.empty-state h2 {
+  color: var(--omnicare-text);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}

@@ -1,0 +1,73 @@
+<section class="export-page">
+  <header class="page-header">
+    <div>
+      <h1>Export d'activité</h1>
+      <p>Extraction neutre des données d’activité OmniCare.</p>
+    </div>
+  </header>
+
+  <app-alert-banner
+    tone="warning"
+    icon="info"
+    message="Données d'activité OmniCare uniquement. Ne constitue pas un rapport réglementaire. Les compagnies doivent compléter avec leurs données internes avant tout dépôt CGA."
+  />
+
+  <mat-card class="controls-card">
+    <mat-form-field appearance="outline">
+      <mat-label>Du</mat-label>
+      <input matInput type="date" [value]="dateFrom() ?? ''" (input)="setDateFrom($any($event.target).value)" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Au</mat-label>
+      <input matInput type="date" [value]="dateTo() ?? ''" (input)="setDateTo($any($event.target).value)" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Compagnies</mat-label>
+      <mat-select [value]="companyId()" (selectionChange)="companyId.set($event.value)">
+        <mat-option value="ALL">Toutes</mat-option>
+        @for (company of companies(); track company.id) {
+          <mat-option [value]="company.id">{{ company.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Format</mat-label>
+      <mat-select [value]="format()" (selectionChange)="format.set($event.value)">
+        <mat-option value="CSV">CSV</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </mat-card>
+
+  <section class="preview-grid" aria-label="Aperçu agrégé">
+    <mat-card>
+      <span>Demandes traitées</span>
+      <strong>{{ preview().treated }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Montants approuvés</span>
+      <strong>{{ formatCurrency(preview().approvedAmount) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Montants refusés</span>
+      <strong>{{ formatCurrency(preview().refusedAmount) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Taux d'approbation</span>
+      <strong>{{ formatPercent(preview().approvalRate) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Délai moyen</span>
+      <strong>{{ preview().averageDelay.toFixed(1) }} j</strong>
+    </mat-card>
+  </section>
+
+  <div class="download-row">
+    <button mat-flat-button color="primary" type="button" (click)="downloadCsv()">
+      <mat-icon aria-hidden="true">download</mat-icon>
+      Télécharger le fichier
+    </button>
+  </div>
+</section>

@@ -1,0 +1,120 @@
+<section class="entreprises-page">
+  <header class="page-header">
+    <div>
+      <h1>Entreprises</h1>
+      <p>
+        {{ facade.allContracts().length }} contrats · {{ formatCurrency(totalPremium()) }} de primes annuelles
+      </p>
+    </div>
+
+    <button mat-flat-button color="primary" type="button" (click)="openNewContractDialog()">
+      <mat-icon aria-hidden="true">add_business</mat-icon>
+      Nouveau contrat groupe
+    </button>
+  </header>
+
+  @if (expiringSoon().length > 0) {
+    <app-alert-banner
+      tone="warning"
+      icon="event_busy"
+      [message]="expiringSoon().length + ' contrat(s) arrivent à échéance dans 90 jours.'"
+    />
+  }
+
+  <mat-card class="filter-card">
+    <div class="filter-row">
+      <span class="filter-label">Statut</span>
+      <mat-chip-listbox multiple aria-label="Filtrer par statut">
+        @for (status of statuses; track status) {
+          <mat-chip-option
+            [selected]="facade.filters().statuses.includes(status)"
+            (click)="toggleStatus(status)"
+          >
+            {{ statusLabel(status) }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+
+    <div class="filter-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Secteur</mat-label>
+        <input
+          matInput
+          type="search"
+          [value]="facade.filters().sector ?? ''"
+          (input)="setSector($any($event.target).value)"
+          placeholder="Banque, énergie..."
+        />
+      </mat-form-field>
+
+      <mat-checkbox
+        [checked]="facade.filters().renewalWithin90Days"
+        (change)="setRenewalWithin90Days($event.checked)"
+      >
+        Renouvellement sous 90 jours
+      </mat-checkbox>
+    </div>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <div class="results-header">
+      <strong>{{ filtered().length }} contrats</strong>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employeur</th>
+            <th>Secteur</th>
+            <th>Salariés</th>
+            <th>Inscrits</th>
+            <th>Plans</th>
+            <th>Primes annuelles</th>
+            <th>Remboursé YTD</th>
+            <th>Ratio sinistres</th>
+            <th>Statut</th>
+            <th>Gérer</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (contract of filtered(); track contract.id) {
+            <tr>
+              <td><strong>{{ contract.employerName }}</strong></td>
+              <td>{{ contract.employerSector }}</td>
+              <td>{{ contract.totalEmployees }}</td>
+              <td>{{ contract.enrolledEmployees }}</td>
+              <td>{{ contract.availablePlanTiers.length }}</td>
+              <td>{{ formatCurrency(contract.annualPremium) }}</td>
+              <td>{{ formatCurrency(contract.reimbursedThisYear) }}</td>
+              <td>
+                <span
+                  class="ratio"
+                  [class.success]="ratioTone(contract) === 'success'"
+                  [class.warning]="ratioTone(contract) === 'warning'"
+                  [class.error]="ratioTone(contract) === 'error'"
+                >
+                  {{ formatPercent(contract.claimsRatio) }}
+                </span>
+              </td>
+              <td><app-status-chip [status]="contract.status" /></td>
+              <td>
+                <button mat-button color="primary" type="button" (click)="manage(contract)">
+                  Gérer
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (filtered().length === 0) {
+      <section class="empty-state">
+        <mat-icon aria-hidden="true">domain_disabled</mat-icon>
+        <h2>Aucun contrat trouvé</h2>
+      </section>
+    }
+  </mat-card>
+</section>

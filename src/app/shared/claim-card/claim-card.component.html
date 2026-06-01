@@ -1,0 +1,61 @@
+<mat-card
+  class="claim-card"
+  appearance="outlined"
+  [class.risk-medium]="riskScore() === 'MOYEN'"
+  [class.risk-high]="riskScore() === 'ELEVE'"
+>
+  <mat-card-content>
+    <div class="claim-header">
+      <div class="chip-row">
+        <app-status-chip [status]="riskScore()" />
+        <app-source-badge [source]="source()" />
+        @if (status(); as claimStatus) {
+          <app-status-chip [status]="claimStatus" />
+        }
+      </div>
+
+      <button mat-button type="button" (click)="onOpen()">
+        {{ actionLabel() }}
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <div class="claim-main">
+      <div class="claim-copy">
+        <h3>{{ patientName() }}</h3>
+
+        @if (patientMeta()) {
+          <p>{{ patientMeta() }}</p>
+        }
+
+        @if (careLine()) {
+          <p>{{ careLine() }}</p>
+        }
+      </div>
+
+      @if (amountLabel()) {
+        <strong>{{ amountLabel() }}</strong>
+      }
+    </div>
+
+    @if (submittedLabel() || slaLabel()) {
+      <div class="claim-timing">
+        <mat-icon aria-hidden="true">schedule</mat-icon>
+        @if (submittedLabel()) {
+          <span>{{ submittedLabel() }}</span>
+        }
+        @if (slaLabel()) {
+          <span>{{ slaLabel() }}</span>
+        }
+      </div>
+    }
+
+    @if (flagLabels().length) {
+      <mat-chip-set class="flag-row" aria-label="Signaux dossier">
+        @for (item of flagLabels(); track item.flag) {
+          <mat-chip>{{ item.label }}</mat-chip>
+        }
+      </mat-chip-set>
+    }
+  </mat-card-content>
+</mat-card>

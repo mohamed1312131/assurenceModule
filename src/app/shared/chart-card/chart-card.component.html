@@ -1,0 +1,39 @@
+<mat-card class="chart-card" [class.wide]="wide()">
+  @if (note()) {
+    <div class="chart-note">
+      <mat-icon aria-hidden="true">privacy_tip</mat-icon>
+      <span>{{ note() }}</span>
+    </div>
+  }
+
+  <header>
+    <h2>{{ title() }}</h2>
+    <button mat-button color="primary" type="button" (click)="onExport()">
+      <mat-icon aria-hidden="true">download</mat-icon>
+      Exporter CSV
+    </button>
+  </header>
+
+  <div class="chart-frame" [style.min-height.px]="height()">
+    <apx-chart
+      [annotations]="$any(options().annotations)"
+      [chart]="$any(options().chart)"
+      [colors]="$any(options().colors)"
+      [dataLabels]="$any(options().dataLabels)"
+      [fill]="$any(options().fill)"
+      [grid]="$any(options().grid)"
+      [labels]="$any(options().labels)"
+      [legend]="$any(options().legend)"
+      [markers]="$any(options().markers)"
+      [plotOptions]="$any(options().plotOptions)"
+      [responsive]="$any(options().responsive)"
+      [series]="$any(options().series)"
+      [states]="$any(options().states)"
+      [stroke]="$any(options().stroke)"
+      [theme]="$any(options().theme)"
+      [tooltip]="$any(options().tooltip)"
+      [xaxis]="$any(options().xaxis)"
+      [yaxis]="$any(options().yaxis)"
+    />
+  </div>
+</mat-card>

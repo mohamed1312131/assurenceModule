@@ -1,0 +1,17 @@
+<mat-chip-set aria-label="Source">
+  <mat-chip
+    class="source-badge"
+    [class.compact]="compact()"
+    [class.omnicare]="source() === 'OMNICARE'"
+    [class.manuel]="source() === 'MANUEL'"
+    [class.import-csv]="source() === 'IMPORT_CSV'"
+    [class.website]="source() === 'WEBSITE'"
+    [class.email]="source() === 'EMAIL'"
+    [matTooltip]="compact() ? tooltip() : ''"
+  >
+    <mat-icon matChipAvatar aria-hidden="true">{{ icon() }}</mat-icon>
+    @if (!compact()) {
+      {{ label() }}
+    }
+  </mat-chip>
+</mat-chip-set>

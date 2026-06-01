@@ -1,0 +1,119 @@
+<section class="analytique-page">
+  <header class="page-header">
+    <div>
+      <h1>Analytique</h1>
+      <p>Indicateurs opérationnels, tendances et catégories de la compagnie.</p>
+    </div>
+  </header>
+
+  <section class="kpi-row" aria-label="Indicateurs analytiques">
+    <mat-card>
+      <span>Volume ce mois</span>
+      <strong>{{ facade.kpis().volumeMonth }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Taux approbation</span>
+      <strong>{{ formatPercent(facade.kpis().approvalRate) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Délai moyen</span>
+      <strong>{{ facade.kpis().averageDelay.toFixed(1) }} j</strong>
+    </mat-card>
+    <mat-card>
+      <span>Montant remboursé</span>
+      <strong>{{ formatCurrency(facade.kpis().reimbursed) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Fraudes détectées</span>
+      <strong>{{ facade.kpis().flagged }}</strong>
+    </mat-card>
+  </section>
+
+  <section class="insight-grid" aria-label="Aperçus analytiques">
+    @for (insight of facade.insights(); track insight.title) {
+      <app-insight-card
+        [icon]="insight.icon"
+        [eyebrow]="insight.eyebrow"
+        [title]="insight.title"
+        [description]="insight.description"
+        [actionLabel]="insight.actionLabel"
+        [tone]="insight.tone"
+      />
+    }
+  </section>
+
+  <section class="analytics-section" aria-labelledby="volumes-title">
+    <header class="section-header">
+      <div>
+        <span>Volumes</span>
+        <h2 id="volumes-title">Flux de demandes et canaux</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Demandes par mois"
+        [options]="monthlyDemandesOptions()"
+        [height]="340"
+        (exportCsv)="exportMonthlyDemandes()"
+      />
+
+      <app-chart-card
+        title="Répartition par canal source"
+        [options]="channelMixOptions()"
+        [height]="320"
+        (exportCsv)="exportChannelMix()"
+      />
+    </div>
+  </section>
+
+  <section class="analytics-section" aria-labelledby="performance-title">
+    <header class="section-header">
+      <div>
+        <span>Performance</span>
+        <h2 id="performance-title">Décisions et respect SLA</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Taux d'approbation par mois"
+        [options]="approvalByMonthOptions()"
+        [height]="320"
+        (exportCsv)="exportApprovalByMonth()"
+      />
+
+      <app-chart-card
+        title="Délai moyen de traitement par mois"
+        [options]="delayByMonthOptions()"
+        [height]="320"
+        (exportCsv)="exportDelayByMonth()"
+      />
+    </div>
+  </section>
+
+  <section class="analytics-section" aria-labelledby="categories-title">
+    <header class="section-header">
+      <div>
+        <span>Catégories</span>
+        <h2 id="categories-title">Actes médicaux et montants</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Répartition par catégorie d'acte"
+        [options]="categoryVolumeOptions()"
+        [height]="340"
+        (exportCsv)="exportCategoryVolume()"
+      />
+
+      <app-chart-card
+        title="Montant par catégorie d'acte (TND)"
+        [options]="categoryAmountOptions()"
+        [height]="340"
+        (exportCsv)="exportCategoryAmount()"
+      />
+    </div>
+  </section>
+</section>

@@ -1,0 +1,212 @@
+@use '@angular/material' as mat;
+
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@include mat.core();
+
+:root {
+  --omnicare-primary: #1fbf9a;
+  --omnicare-secondary: #0f6f73;
+  --omnicare-tertiary: #6be3b2;
+  --omnicare-background: #f4f5f7;
+  --omnicare-error: #ef4444;
+  --omnicare-warning: #f59e0b;
+  --omnicare-success: #10b981;
+  --omnicare-text: #102a2d;
+  --omnicare-muted: #64747b;
+  --omnicare-radius: 12px;
+  --color-success-bg: #ecfdf5;
+  --color-success-fg: #047857;
+  --color-warning-bg: #fffbeb;
+  --color-warning-fg: #b45309;
+  --color-error-bg: #fef2f2;
+  --color-error-fg: #b91c1c;
+  --color-info-bg: #eff6ff;
+  --color-info-fg: #1d4ed8;
+}
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$spring-green-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: (
+        plain-family: ('Plus Jakarta Sans', sans-serif),
+        brand-family: ('Plus Jakarta Sans', sans-serif),
+        regular-weight: 400,
+        medium-weight: 500,
+        bold-weight: 700,
+      ),
+      density: 0,
+    ),
+    (
+      primary: #1fbf9a,
+      on-primary: #043a34,
+      primary-container: #d8f8ee,
+      on-primary-container: #043a34,
+      secondary: #0f6f73,
+      on-secondary: #ffffff,
+      secondary-container: #d7f0ef,
+      on-secondary-container: #063f42,
+      tertiary: #6be3b2,
+      on-tertiary: #053a2d,
+      tertiary-container: #def9ee,
+      on-tertiary-container: #053a2d,
+      background: #f4f5f7,
+      on-background: #102a2d,
+      surface: #ffffff,
+      on-surface: #102a2d,
+      surface-container-lowest: #ffffff,
+      surface-container-low: #fafafa,
+      surface-container: #f4f5f7,
+      surface-container-high: #eef2f4,
+      surface-container-highest: #e3eaed,
+      outline: #b7c5c9,
+      outline-variant: #d8e1e4,
+      error: #ef4444,
+      on-error: #ffffff,
+    )
+  );
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--omnicare-background);
+  color: var(--omnicare-text);
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mat-icon,
+.material-symbols-rounded {
+  direction: ltr;
+  display: inline-block;
+  font-family: 'Material Symbols Rounded';
+  font-feature-settings: 'liga';
+  font-size: 24px;
+  font-style: normal;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.mat-mdc-card {
+  border-radius: var(--omnicare-radius);
+}
+
+.shell-content,
+.dashboard-page,
+.demandes-page,
+.autorisations-page,
+.adherents-page,
+.entreprises-page,
+.reseau-page,
+.analytique-page,
+.ftusa-dashboard-page,
+.companies-page,
+.communications-page,
+.settings-page,
+.export-page {
+  animation: route-enter 150ms ease-out;
+}
+
+.mat-mdc-card {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+button,
+.mat-mdc-chip-option {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.mat-mdc-chip-option:active,
+button:active {
+  transform: translateY(1px);
+}
+
+.cdk-overlay-pane {
+  animation: overlay-enter 140ms ease-out;
+}
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes overlay-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notification-success {
+  --mdc-snackbar-container-color: var(--omnicare-success);
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.notification-info {
+  --mdc-snackbar-container-color: var(--omnicare-secondary);
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}
+
+.notification-warning {
+  --mdc-snackbar-container-color: var(--omnicare-warning);
+  --mdc-snackbar-supporting-text-color: #1f2937;
+  --mat-snack-bar-button-color: #1f2937;
+}
+
+.notification-error {
+  --mdc-snackbar-container-color: var(--omnicare-error);
+  --mdc-snackbar-supporting-text-color: #ffffff;
+  --mat-snack-bar-button-color: #ffffff;
+}

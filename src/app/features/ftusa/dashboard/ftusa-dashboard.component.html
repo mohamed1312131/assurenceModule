@@ -1,0 +1,125 @@
+<section class="ftusa-dashboard-page">
+  <header class="page-header">
+    <div>
+      <h1>Tableau de bord marché</h1>
+      <p>Agrégation anonyme des compagnies ayant activé le partage analytique.</p>
+    </div>
+  </header>
+
+  <section class="kpi-grid" aria-label="Indicateurs marché">
+    <mat-card class="kpi-card">
+      <span>Compagnies actives</span>
+      <strong>{{ kpis().activeCompanies }} sur {{ kpis().totalCompanies }}</strong>
+      <small>Base FTUSA complète</small>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <span>Demandes ce mois</span>
+      <strong>{{ formatNumber(kpis().demandesThisMonth) }}</strong>
+      <small>Marché opt-in uniquement</small>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <span>Volume via OmniCare</span>
+      <strong>{{ formatNumber(kpis().omnicareVolume) }}</strong>
+      <small>{{ formatPercent(kpis().omnicarePercent) }} du volume agrégé</small>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <span>Taux d’approbation</span>
+      <strong>{{ formatPercent(kpis().approvalRate) }}</strong>
+      <small>Décisions finales agrégées</small>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <span>Délai moyen marché</span>
+      <strong>{{ formatDelay(kpis().averageDelay) }}</strong>
+      <small>Dossiers clôturés</small>
+    </mat-card>
+
+    <mat-card class="kpi-card">
+      <span>Fraudes détectées</span>
+      <strong>{{ formatNumber(kpis().flaggedCount) }}</strong>
+      <small>Dossiers flagués ce mois</small>
+    </mat-card>
+
+    <mat-card class="kpi-card warning">
+      <span>Hors délai SLA</span>
+      <strong>{{ formatNumber(kpis().companiesOverSla) }}</strong>
+      <small>Compagnies au-dessus du SLA cible</small>
+    </mat-card>
+  </section>
+
+  <p class="kpi-period-caption">Indicateurs du mois en cours — {{ facade.currentMonthLabel() }}</p>
+
+  <section class="hero-chart-grid" aria-label="Graphiques marché principaux">
+    <app-chart-card
+      title="Volume marché par mois"
+      [options]="marketVolumeOptions()"
+      [height]="330"
+      (exportCsv)="exportMarketVolume()"
+    />
+
+    <app-chart-card
+      title="Évolution du canal OmniCare"
+      [options]="omnicareShiftOptions()"
+      [height]="330"
+      (exportCsv)="exportOmnicareShift()"
+    />
+
+    <app-chart-card
+      title="Performance SLA par compagnie"
+      note="Comparaison limitée aux compagnies opt-in. Les libellés réels sont autorisés pour les participantes analytiques ; les autres restent anonymisées."
+      [options]="slaPerformanceOptions()"
+      [height]="330"
+      (exportCsv)="exportSlaPerformance()"
+    />
+  </section>
+
+  <section class="content-grid">
+    <section class="insights-section" aria-label="Aperçus marché">
+      @for (insight of insights(); track insight.title) {
+        <app-insight-card
+          [icon]="insight.icon"
+          [eyebrow]="insight.eyebrow"
+          [title]="insight.title"
+          [description]="insight.description"
+          [supportingData]="insight.supportingData"
+          [actionLabel]="insight.actionLabel"
+          [tone]="insight.tone"
+          (action)="navigate(insight.actionRoute)"
+        />
+      }
+    </section>
+
+    <mat-card class="activity-card">
+      <header>
+        <div>
+          <h2>Activité récente</h2>
+          <p>Derniers événements inter-compagnies opt-in.</p>
+        </div>
+      </header>
+
+      <div class="timeline">
+        @for (event of activityFeed(); track event.id) {
+          <article [class.success]="event.tone === 'success'" [class.warning]="event.tone === 'warning'" [class.error]="event.tone === 'error'">
+            <span class="icon-frame">
+              <mat-icon aria-hidden="true">{{ event.icon }}</mat-icon>
+            </span>
+            <div>
+              <strong>{{ event.description }}</strong>
+              <span>{{ relativeDate(event.timestamp) }}</span>
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (activityFeed().length === 0) {
+        <section class="empty-state">
+          <mat-icon aria-hidden="true">timeline</mat-icon>
+          <p>Aucune activité récente.</p>
+        </section>
+      }
+    </mat-card>
+  </section>
+</section>

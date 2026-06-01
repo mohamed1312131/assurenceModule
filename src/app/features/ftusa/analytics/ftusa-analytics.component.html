@@ -1,0 +1,125 @@
+<section class="analytics-page">
+  <header class="page-header">
+    <div>
+      <h1>Analytique marché</h1>
+      <p>Comparaisons anonymisées et indicateurs agrégés des compagnies participantes.</p>
+    </div>
+  </header>
+
+  <section class="analytics-section" aria-labelledby="volumes-title">
+    <header class="section-header">
+      <div>
+        <span>Volumes</span>
+        <h2 id="volumes-title">Dynamique du marché opt-in</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Demandes par mois"
+        [wide]="true"
+        [options]="monthlyClaimsOptions()"
+        [height]="340"
+        (exportCsv)="exportMonthlyClaims()"
+      />
+
+      <app-chart-card
+        title="Répartition par canal source"
+        note="Canaux agrégés sur les compagnies opt-in analytique uniquement."
+        [options]="sourceDistributionOptions()"
+        [height]="320"
+        (exportCsv)="exportSourceDistribution()"
+      />
+
+      <app-chart-card
+        title="Évolution des canaux dans le temps"
+        [options]="channelTimelineOptions()"
+        [height]="340"
+        (exportCsv)="exportChannelTimeline()"
+      />
+
+      <app-chart-card
+        title="Volume par compagnie"
+        [wide]="true"
+        [note]="privacyNote"
+        [options]="volumeByCompanyOptions()"
+        [height]="330"
+        (exportCsv)="exportCompanyVolume()"
+      />
+    </div>
+  </section>
+
+  <section class="analytics-section" aria-labelledby="performance-title">
+    <header class="section-header">
+      <div>
+        <span>Performance</span>
+        <h2 id="performance-title">Délais, SLA et décisions</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Délai moyen par compagnie vs SLA cible"
+        [note]="privacyNote"
+        [options]="delayByCompanyOptions()"
+        [height]="330"
+        (exportCsv)="exportCompanyDelay()"
+      />
+
+      <app-chart-card
+        title="Taux d'approbation par compagnie"
+        [note]="privacyNote"
+        [options]="approvalByCompanyOptions()"
+        [height]="330"
+        (exportCsv)="exportCompanyApproval()"
+      />
+    </div>
+  </section>
+
+  <section class="analytics-section" aria-labelledby="categories-title">
+    <header class="section-header">
+      <div>
+        <span>Catégories</span>
+        <h2 id="categories-title">Actes et montants remboursables</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Top 10 catégories d'actes par volume"
+        note="Catégories agrégées sur le volume anonymisé du marché opt-in."
+        [options]="categoriesByVolumeOptions()"
+        [height]="330"
+        (exportCsv)="exportCategoryVolume()"
+      />
+
+      <app-chart-card
+        title="Top 10 catégories par montant (TND)"
+        note="Montants agrégés par catégorie sans détail unitaire par compagnie."
+        [options]="categoriesByAmountOptions()"
+        [height]="330"
+        (exportCsv)="exportCategoryAmount()"
+      />
+    </div>
+  </section>
+
+  <section class="analytics-section" aria-labelledby="fraud-title">
+    <header class="section-header">
+      <div>
+        <span>Fraude</span>
+        <h2 id="fraud-title">Signaux inter-compagnies</h2>
+      </div>
+    </header>
+
+    <div class="chart-grid">
+      <app-chart-card
+        title="Fraude — doublons inter-compagnies par mois"
+        note="Comptage limité aux compagnies ayant activé à la fois l'analytique marché et le partage fraude."
+        [wide]="true"
+        [options]="fraudDuplicatesOptions()"
+        [height]="320"
+        (exportCsv)="exportFraudDuplicates()"
+      />
+    </div>
+  </section>
+</section>

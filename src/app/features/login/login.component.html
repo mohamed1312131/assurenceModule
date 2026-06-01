@@ -1,0 +1,32 @@
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-title">
+    <div class="brand-mark">OmniCare</div>
+    <h1 id="login-title">Démonstration — Choisir un profil</h1>
+    <app-alert-banner
+      tone="info"
+      icon="school"
+      message="Démo FTUSA — choisissez un profil pour commencer."
+      [dismissible]="true"
+    />
+
+    <div class="profile-grid">
+      @for (profile of profiles; track profile.id) {
+        <mat-card class="profile-card" appearance="outlined">
+          <mat-card-content>
+            <mat-icon aria-hidden="true">{{ profile.icon }}</mat-icon>
+            <div>
+              <h2>{{ profile.title }}</h2>
+              <p>{{ profile.description }}</p>
+            </div>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button type="button" (click)="login(profile.id)">
+              <mat-icon aria-hidden="true">login</mat-icon>
+              Se connecter
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  </section>
+</main>

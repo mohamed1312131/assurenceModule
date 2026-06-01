@@ -1,0 +1,146 @@
+.reseau-page {
+  display: grid;
+  gap: 22px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
+}
+
+h1 {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.page-header p,
+.provider-card p {
+  color: var(--omnicare-muted);
+  margin: 0;
+}
+
+.filter-card,
+.provider-card,
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.filter-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.filter-row,
+.filter-grid,
+.badge-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filter-label {
+  color: var(--omnicare-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.provider-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.provider-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.provider-card header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.provider-card h2 {
+  color: var(--omnicare-text);
+  font-size: 1.1rem;
+  margin: 0 0 6px;
+}
+
+.tiers,
+.badge-row span {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.tiers.enabled {
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #047857;
+}
+
+.metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metrics div {
+  display: grid;
+  gap: 5px;
+}
+
+.metrics span {
+  color: var(--omnicare-muted);
+  font-size: 0.82rem;
+}
+
+.metrics strong {
+  color: var(--omnicare-text);
+}
+
+.empty-state {
+  align-items: center;
+  color: var(--omnicare-muted);
+  display: grid;
+  justify-items: center;
+  min-height: 260px;
+  padding: 32px;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  color: #94a3b8;
+  font-size: 64px;
+  height: 64px;
+  width: 64px;
+}
+
+@media (max-width: 920px) {
+  .provider-grid,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+}

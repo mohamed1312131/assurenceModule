@@ -1,0 +1,31 @@
+.status-chip {
+  --mdc-chip-elevated-container-color: #eef2f4;
+  --mdc-chip-label-text-color: var(--omnicare-text);
+
+  border-radius: 999px;
+  min-height: 30px;
+}
+
+:host {
+  display: inline-flex;
+}
+
+.status-chip.success {
+  --mdc-chip-elevated-container-color: rgba(16, 185, 129, 0.14);
+  --mdc-chip-label-text-color: #047857;
+}
+
+.status-chip.warning {
+  --mdc-chip-elevated-container-color: rgba(245, 158, 11, 0.16);
+  --mdc-chip-label-text-color: #92400e;
+}
+
+.status-chip.error {
+  --mdc-chip-elevated-container-color: rgba(239, 68, 68, 0.14);
+  --mdc-chip-label-text-color: #b91c1c;
+}
+
+.status-chip.info {
+  --mdc-chip-elevated-container-color: rgba(15, 111, 115, 0.12);
+  --mdc-chip-label-text-color: var(--omnicare-secondary);
+}

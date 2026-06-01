@@ -1,0 +1,121 @@
+<section class="fraud-page">
+  <header class="page-header">
+    <div>
+      <h1>Centre de détection inter-compagnies</h1>
+      <p>Données partagées: signaux anonymisés uniquement (hash patient + hash facture).</p>
+    </div>
+  </header>
+
+  <mat-card class="phase-card">
+    <div>
+      <span class="phase-badge">Phase 2 — intégration prévue</span>
+      <h2>Intégration ALFA</h2>
+      <p>Aucune synchronisation active n’est simulée dans cette démonstration.</p>
+    </div>
+    <div class="participants">
+      <strong>{{ facade.participatingCompanies() }} / {{ facade.totalCompanies() }}</strong>
+      <span>Compagnies participant au partage de fraude</span>
+      <button mat-button color="primary" type="button" (click)="showParticipantList()">
+        Voir la liste
+      </button>
+    </div>
+  </mat-card>
+
+  <section class="kpi-row" aria-label="Indicateurs fraude marché">
+    <mat-card>
+      <span>Doublons détectés ce mois</span>
+      <strong>{{ facade.kpis().duplicateCount }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Compagnies participantes</span>
+      <strong>{{ facade.kpis().participants }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Prestataires multi-alertes</span>
+      <strong>{{ facade.kpis().multiAlertProviders }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Économies estimées</span>
+      <strong>{{ facade.formatCurrency(facade.kpis().estimatedSavings) }}</strong>
+    </mat-card>
+    <mat-card>
+      <span>Cas transmis à ALFA</span>
+      <strong>0</strong>
+      <small>En attente intégration</small>
+    </mat-card>
+  </section>
+
+  <section class="section-grid">
+    <mat-card class="section-card">
+      <header>
+        <h2>Doublons inter-compagnies</h2>
+        <p>Hash calculé depuis patient, facture, date facture et montant.</p>
+      </header>
+
+      <div class="alert-list">
+        @for (alert of facade.duplicateAlerts(); track alert.id) {
+          <article class="duplicate-card">
+            <header>
+              <div>
+                <span>Hash patient</span>
+                <strong>{{ alert.patientHash }}…</strong>
+              </div>
+              <strong>{{ facade.formatCurrency(alert.totalAmount) }}</strong>
+            </header>
+
+            <div class="case-list">
+              @for (item of alert.cases; track item.companyName + item.demandeId) {
+                <div>
+                  <strong>{{ item.companyName }}</strong>
+                  <span>{{ item.demandeId }} · {{ facade.formatCurrency(item.amount) }} · {{ formatDate(item.submittedAt) }}</span>
+                </div>
+              }
+            </div>
+
+            <button mat-flat-button color="primary" type="button" (click)="notifyCompanies()">
+              Notifier les deux compagnies
+            </button>
+          </article>
+        }
+      </div>
+
+      @if (facade.duplicateAlerts().length === 0) {
+        <section class="empty-state">
+          <mat-icon aria-hidden="true">join_inner</mat-icon>
+          <p>Aucun doublon inter-compagnies détecté.</p>
+        </section>
+      }
+    </mat-card>
+
+    <mat-card class="section-card">
+      <header>
+        <h2>Prestataires suspects</h2>
+        <p>Motifs partagés sur plusieurs compagnies participantes.</p>
+      </header>
+
+      <div class="provider-list">
+        @for (pattern of facade.providerPatterns(); track pattern.providerName) {
+          <article class="provider-card">
+            <h3>{{ pattern.providerName }}</h3>
+            <div class="breakdown-list">
+              @for (row of pattern.breakdown; track row.companyName) {
+                <div>
+                  <strong>{{ row.companyName }} · {{ row.count }} alerte(s)</strong>
+                  <mat-chip-set aria-label="Drapeaux">
+                    @for (flag of row.flags; track flag) {
+                      <mat-chip>{{ flagLabel(flag) }}</mat-chip>
+                    }
+                  </mat-chip-set>
+                </div>
+              }
+            </div>
+            <p>{{ pattern.recommendation }}</p>
+            <button mat-stroked-button color="primary" type="button" (click)="createAlfaSignal()">
+              Créer un signalement ALFA
+            </button>
+          </article>
+        }
+      </div>
+    </mat-card>
+  </section>
+</section>

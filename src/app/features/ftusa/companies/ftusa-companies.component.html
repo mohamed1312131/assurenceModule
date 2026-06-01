@@ -1,0 +1,117 @@
+<section class="companies-page">
+  <header class="page-header">
+    <div>
+      <h1>Compagnies</h1>
+      <p>{{ facade.allCompanies().length }} compagnies membres FTUSA</p>
+    </div>
+
+    <button mat-flat-button color="primary" type="button" (click)="openWizard()">
+      <mat-icon aria-hidden="true">domain_add</mat-icon>
+      Nouvelle compagnie
+    </button>
+  </header>
+
+  <mat-card class="filter-card">
+    <div class="filter-row">
+      <span class="filter-label">Statut</span>
+      <mat-chip-listbox multiple aria-label="Filtrer par statut">
+        @for (status of statuses; track status) {
+          <mat-chip-option
+            [selected]="facade.filters().statuses.includes(status)"
+            (click)="toggleStatus(status)"
+          >
+            {{ statusLabel(status) }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Recherche code ou nom</mat-label>
+      <input
+        matInput
+        type="search"
+        [value]="facade.filters().search ?? ''"
+        (input)="setSearch($any($event.target).value)"
+        placeholder="STAR, COMAR..."
+      />
+    </mat-form-field>
+  </mat-card>
+
+  <mat-card class="table-card">
+    <div class="results-header">
+      <strong>{{ facade.filteredCompanies().length }} résultat(s)</strong>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Compagnie</th>
+            <th>Code</th>
+            <th>Statut</th>
+            <th>Admin</th>
+            <th>Dernière connexion</th>
+            <th>Adhésion partage</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (company of facade.filteredCompanies(); track company.id) {
+            <tr>
+              <td>
+                <strong>{{ company.name }}</strong>
+                <span>{{ company.contactEmail }}</span>
+              </td>
+              <td>{{ company.code }}</td>
+              <td>
+                <app-status-chip
+                  [status]="company.status"
+                  [label]="statusLabel(company.status)"
+                  [tone]="company.status === 'ACTIVE' ? 'success' : company.status === 'EN_ATTENTE' ? 'warning' : 'error'"
+                />
+              </td>
+              <td>{{ facade.adminFor(company.id)?.email ?? '—' }}</td>
+              <td>{{ relativeDate(facade.adminFor(company.id)?.lastLoginAt) }}</td>
+              <td>
+                <span
+                  class="sharing-chip"
+                  [class.success]="sharingTone(company) === 'success'"
+                  [class.warning]="sharingTone(company) === 'warning'"
+                >
+                  {{ sharingLabel(company) }}
+                </span>
+              </td>
+              <td>
+                <button mat-icon-button type="button" [matMenuTriggerFor]="menu" aria-label="Actions compagnie">
+                  <mat-icon aria-hidden="true">more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item type="button" (click)="manage(company)">
+                    <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                    <span>Gérer</span>
+                  </button>
+                  @if (company.status === 'SUSPENDUE') {
+                    <button mat-menu-item type="button" (click)="reactivate(company)">
+                      <mat-icon aria-hidden="true">play_circle</mat-icon>
+                      <span>Réactiver</span>
+                    </button>
+                  } @else {
+                    <button mat-menu-item type="button" (click)="suspend(company)">
+                      <mat-icon aria-hidden="true">block</mat-icon>
+                      <span>Suspendre</span>
+                    </button>
+                  }
+                  <button mat-menu-item type="button" (click)="resetAccess(company)">
+                    <mat-icon aria-hidden="true">lock_reset</mat-icon>
+                    <span>Réinitialiser accès</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </mat-card>
+</section>

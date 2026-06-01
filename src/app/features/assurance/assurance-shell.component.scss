@@ -1,0 +1,86 @@
+.shell-container {
+  min-height: 100vh;
+}
+
+.shell-sidenav {
+  background: #ffffff;
+  border-right: 1px solid rgba(15, 111, 115, 0.12);
+  padding: 18px 12px;
+  width: 304px;
+}
+
+.shell-logo {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px 20px;
+}
+
+.shell-logo span {
+  color: var(--omnicare-secondary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.shell-logo small {
+  color: var(--omnicare-muted);
+  font-size: 0.8rem;
+}
+
+.active-link {
+  background: rgba(31, 191, 154, 0.12);
+  color: var(--omnicare-secondary);
+}
+
+.shell-spacer {
+  min-height: 24px;
+}
+
+.shell-user {
+  display: grid;
+  gap: 4px;
+  padding: 16px 8px 0;
+}
+
+.shell-user strong {
+  color: var(--omnicare-text);
+  font-size: 0.95rem;
+}
+
+.shell-user span {
+  color: var(--omnicare-muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.shell-user button {
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.shell-user .reset-demo {
+  color: var(--omnicare-muted);
+  font-size: 0.82rem;
+}
+
+.shell-toolbar {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(15, 111, 115, 0.1);
+  color: var(--omnicare-text);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-user {
+  color: var(--omnicare-muted);
+  font-size: 0.875rem;
+}
+
+.shell-content {
+  padding: 28px;
+}

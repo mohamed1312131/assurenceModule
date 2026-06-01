@@ -1,0 +1,170 @@
+<section class="configuration-page">
+  <header class="page-header">
+    <div>
+      <h1>Configuration</h1>
+      <p>Plans tarifaires, profil compagnie et paramètres opérationnels.</p>
+    </div>
+  </header>
+
+  <mat-accordion multi="false">
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Plans tarifaires</mat-panel-title>
+        <mat-panel-description>{{ planTiers().length }} plans</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="panel-actions">
+        <button mat-flat-button color="primary" type="button" (click)="openPlanDialog()">
+          <mat-icon aria-hidden="true">add</mat-icon>
+          Nouveau plan
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prime mensuelle</th>
+              <th>Seuil auto</th>
+              <th>SLA</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of planTiers(); track plan.id) {
+              <tr>
+                <td>
+                  <strong>{{ plan.name }}</strong>
+                  <span>{{ plan.description }}</span>
+                </td>
+                <td>{{ formatCurrency(plan.monthlyPremium) }}</td>
+                <td>{{ formatCurrency(plan.autoApproveThreshold) }}</td>
+                <td>{{ plan.slaTargetDays }} jours</td>
+                <td>
+                  <button mat-button color="primary" type="button" (click)="openPlanDialog(plan)">
+                    Modifier
+                  </button>
+                  <button mat-button color="warn" type="button" (click)="archivePlan(plan)">
+                    Archiver
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Profil compagnie</mat-panel-title>
+        <mat-panel-description>{{ company()?.name ?? 'Compagnie' }}</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      @if (company(); as company) {
+        <div class="profile-layout">
+          <div class="logo-placeholder">
+            <mat-icon aria-hidden="true">apartment</mat-icon>
+            <span>Logo</span>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nom</mat-label>
+              <input matInput [value]="company.name" (input)="patchCompany('name', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Email contact</mat-label>
+              <input matInput [value]="company.contactEmail" (input)="patchCompany('contactEmail', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Téléphone</mat-label>
+              <input matInput [value]="company.contactPhone" (input)="patchCompany('contactPhone', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Adresse</mat-label>
+              <input matInput [value]="company.address" (input)="patchCompany('address', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Déclaration INPDP</mat-label>
+              <input matInput [value]="company.inpdpDeclarationNumber" (input)="patchCompany('inpdpDeclarationNumber', $any($event.target).value)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Immatriculation CGA</mat-label>
+              <input matInput [value]="company.cgaRegistrationNumber" (input)="patchCompany('cgaRegistrationNumber', $any($event.target).value)" />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="panel-actions">
+          <button mat-flat-button color="primary" type="button" (click)="saveCompany()">
+            Enregistrer
+          </button>
+        </div>
+      }
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>Paramètres compagnie</mat-panel-title>
+        <mat-panel-description>Fraude, analytique et SLA</mat-panel-description>
+      </mat-expansion-panel-header>
+
+      @if (settings(); as settings) {
+        <div class="settings-grid">
+          <div class="toggle-row warning">
+            <div>
+              <strong>Détection fraude inter-compagnies</strong>
+              <span>Activation soumise à validation contractuelle FTUSA.</span>
+            </div>
+            <mat-slide-toggle
+              [checked]="settings.participatesInCrossFraudDetection"
+              (change)="patchSettings('participatesInCrossFraudDetection', $event.checked)"
+            />
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <strong>Partage analytique marché</strong>
+              <span>Comparaison anonyme avec les compagnies opt-in.</span>
+            </div>
+            <mat-slide-toggle
+              [checked]="settings.participatesInMarketAnalytics"
+              (change)="patchSettings('participatesInMarketAnalytics', $event.checked)"
+            />
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>SLA par défaut</mat-label>
+            <input
+              matInput
+              type="number"
+              [value]="settings.defaultSlaDays"
+              (input)="patchSettings('defaultSlaDays', +$any($event.target).value)"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Actes avec autorisation préalable</mat-label>
+            <mat-select
+              multiple
+              [value]="settings.priorAuthCategories"
+              (selectionChange)="patchSettings('priorAuthCategories', $event.value)"
+            >
+              @for (category of actCategories; track category) {
+                <mat-option [value]="category">{{ actLabel(category) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="panel-actions">
+          <button mat-flat-button color="primary" type="button" (click)="saveSettings()">
+            Enregistrer
+          </button>
+        </div>
+      }
+    </mat-expansion-panel>
+  </mat-accordion>
+</section>
