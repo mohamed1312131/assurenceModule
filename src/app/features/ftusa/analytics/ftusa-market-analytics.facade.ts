@@ -1,6 +1,9 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-import { DemandeRemboursement } from '../../../models/demande-remboursement.model';
+import {
+  DemandeRemboursement,
+  DemandeStatus,
+} from '../../../models/demande-remboursement.model';
 import { InsuranceCompany } from '../../../models/insurance-company.model';
 import {
   ActCategory,
@@ -52,6 +55,22 @@ export interface MarketCompanyMetricRow {
   color?: string;
 }
 
+export interface MarketCompanyStatusRow {
+  companyId: string;
+  label: string;
+  statuses: Record<DemandeStatus, number>;
+  total: number;
+}
+
+const DEMANDE_STATUS_ORDER: DemandeStatus[] = [
+  'SOUMISE',
+  'DOCUMENTS_INCOMPLETS',
+  'EN_EXAMEN',
+  'APPROUVEE',
+  'APPROUVEE_PARTIELLEMENT',
+  'APPROUVEE_AUTO',
+  'REFUSEE',
+];
 const MARKET_CHANNELS: ClaimSource[] = ['OMNICARE', 'MANUEL', 'WEBSITE', 'EMAIL', 'IMPORT_CSV'];
 const TRAILING_MONTH_COUNT = 12;
 
@@ -59,6 +78,7 @@ const TRAILING_MONTH_COUNT = 12;
 export class FtusaMarketAnalyticsFacade {
   readonly companies = signal<InsuranceCompany[]>([]);
   readonly aggregates = signal<MarketCompanyAggregate[]>([]);
+  readonly allCompanyAggregates = signal<MarketCompanyAggregate[]>([]);
   readonly platformSettings = signal<PlatformSettings>({
     legalAutoApprovalDays: 15,
     mandatoryPriorAuthCategories: ['CHIRURGIE', 'HOSPITALISATION'],
@@ -66,6 +86,8 @@ export class FtusaMarketAnalyticsFacade {
   });
 
   readonly allDemandes = computed(() => this.aggregates().flatMap((aggregate) => aggregate.demandes));
+
+  readonly statusMonthOptions = computed<MarketMonthRow[]>(() => this.emptyMonthRows());
 
   readonly monthlyClaims = computed<MarketMonthRow[]>(() =>
     this.monthlyRows((demande) => demande.submittedAt, this.allDemandes()),
@@ -321,6 +343,15 @@ export class FtusaMarketAnalyticsFacade {
     this.platformSettings.set(
       this.readJson<PlatformSettings>('omnicare_ftusa_platform_settings', this.platformSettings()),
     );
+    this.allCompanyAggregates.set(
+      companies.map((company) => ({
+        company,
+        demandes: this.readJson<DemandeRemboursement[]>(
+          `omnicare_ins_${company.id}_demandes`,
+          [],
+        ),
+      })),
+    );
     this.aggregates.set(
       companies
         .filter((company) => this.readSettings(company.id)?.participatesInMarketAnalytics)
@@ -332,6 +363,30 @@ export class FtusaMarketAnalyticsFacade {
           ),
         })),
     );
+  }
+
+  companyStatusRows(monthKey: string): MarketCompanyStatusRow[] {
+    return this.allCompanyAggregates()
+      .map((aggregate) => {
+        const statuses = this.emptyStatusCounts();
+
+        for (const demande of aggregate.demandes) {
+          if (demande.submittedAt.startsWith(monthKey)) {
+            statuses[demande.status] += 1;
+          }
+        }
+
+        const total = DEMANDE_STATUS_ORDER.reduce((sum, status) => sum + statuses[status], 0);
+
+        return {
+          companyId: aggregate.company.id,
+          label: aggregate.company.name,
+          statuses,
+          total,
+        };
+      })
+      .filter((row) => row.total > 0)
+      .sort((left, right) => right.total - left.total || left.label.localeCompare(right.label, 'fr'));
   }
 
   exportCsv(name: string, rows: Array<Array<string | number>>): void {
@@ -374,6 +429,18 @@ export class FtusaMarketAnalyticsFacade {
         value: 0,
       };
     });
+  }
+
+  private emptyStatusCounts(): Record<DemandeStatus, number> {
+    return {
+      APPROUVEE: 0,
+      APPROUVEE_AUTO: 0,
+      APPROUVEE_PARTIELLEMENT: 0,
+      DOCUMENTS_INCOMPLETS: 0,
+      EN_EXAMEN: 0,
+      REFUSEE: 0,
+      SOUMISE: 0,
+    };
   }
 
   private monthlyRows(

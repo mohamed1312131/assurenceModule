@@ -103,22 +103,31 @@
     </div>
   </section>
 
-  <section class="analytics-section" aria-labelledby="fraud-title">
+  <section class="analytics-section" aria-labelledby="status-title">
     <header class="section-header">
       <div>
-        <span>Fraude</span>
-        <h2 id="fraud-title">Signaux inter-compagnies</h2>
+        <span>Statuts</span>
+        <h2 id="status-title">Demandes par statut et par compagnie</h2>
       </div>
+
+      <mat-form-field appearance="outline" class="month-filter">
+        <mat-label>Mois</mat-label>
+        <mat-select [value]="selectedStatusMonth()" (selectionChange)="setStatusMonth($event.value)">
+          @for (month of facade.statusMonthOptions(); track month.key) {
+            <mat-option [value]="month.key">{{ month.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </header>
 
     <div class="chart-grid">
       <app-chart-card
-        title="Fraude — doublons inter-compagnies par mois"
-        note="Comptage limité aux compagnies ayant activé à la fois l'analytique marché et le partage fraude."
+        title="Statuts des demandes par compagnie"
+        [note]="'Vue opérationnelle FTUSA sur toutes les compagnies ayant des demandes en ' + selectedStatusMonthLabel() + '.'"
         [wide]="true"
-        [options]="fraudDuplicatesOptions()"
-        [height]="320"
-        (exportCsv)="exportFraudDuplicates()"
+        [options]="companyStatusOptions()"
+        [height]="companyStatusChartHeight()"
+        (exportCsv)="exportCompanyStatusBreakdown()"
       />
     </div>
   </section>

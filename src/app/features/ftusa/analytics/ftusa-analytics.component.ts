@@ -1,10 +1,13 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import type { ApexOptions } from 'ng-apexcharts';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
+import { DemandeStatus } from '../../../models/demande-remboursement.model';
 import { ChartCardComponent } from '../../../shared/chart-card/chart-card.component';
 import {
   FTUSA_CHART_COLORS,
@@ -18,9 +21,23 @@ import {
 } from '../charts/ftusa-apex-theme';
 import { ChartRow, FtusaMarketAnalyticsFacade, MonthlyChartRow } from './ftusa-market-analytics.facade';
 
+type StatusSeriesConfig = {
+  status: DemandeStatus;
+  label: string;
+  color: string;
+};
+
 @Component({
   selector: 'app-ftusa-analytics',
-  imports: [ChartCardComponent, MatButtonModule, MatCardModule, MatIconModule, MatSnackBarModule],
+  imports: [
+    ChartCardComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatSelectModule,
+    MatSnackBarModule,
+  ],
   templateUrl: './ftusa-analytics.component.html',
   styleUrl: './ftusa-analytics.component.scss',
 })
@@ -31,6 +48,27 @@ export class FtusaAnalyticsComponent implements OnInit {
   protected readonly privacyNote =
     'Comparaison limitée aux compagnies opt-in. Les libellés réels sont autorisés pour les participantes analytiques ; les autres restent anonymisées.';
   private readonly sourceLabels = ['OmniCare', 'Manuel', 'Site web', 'Email', 'Import CSV'];
+  protected readonly statusSeries: StatusSeriesConfig[] = [
+    { color: FTUSA_CHART_COLORS.primary, label: 'Soumise', status: 'SOUMISE' },
+    { color: FTUSA_CHART_COLORS.amber, label: 'Docs incomplets', status: 'DOCUMENTS_INCOMPLETS' },
+    { color: FTUSA_CHART_COLORS.deepTeal, label: 'En examen', status: 'EN_EXAMEN' },
+    { color: FTUSA_CHART_COLORS.mint, label: 'Approuvée', status: 'APPROUVEE' },
+    { color: '#22C55E', label: 'Partielle', status: 'APPROUVEE_PARTIELLEMENT' },
+    { color: '#14B8A6', label: 'Auto approuvée', status: 'APPROUVEE_AUTO' },
+    { color: FTUSA_CHART_COLORS.error, label: 'Refusée', status: 'REFUSEE' },
+  ];
+  protected readonly selectedStatusMonth = signal(this.currentMonthKey());
+  protected readonly selectedStatusMonthLabel = computed(
+    () =>
+      this.facade.statusMonthOptions().find((month) => month.key === this.selectedStatusMonth())
+        ?.label ?? this.selectedStatusMonth(),
+  );
+  protected readonly companyStatusRows = computed(() =>
+    this.facade.companyStatusRows(this.selectedStatusMonth()),
+  );
+  protected readonly companyStatusChartHeight = computed(() =>
+    Math.max(360, this.companyStatusRows().length * 46 + 120),
+  );
 
   protected readonly monthlyClaimsOptions = computed<ApexOptions>(() => {
     const rows = this.facade.monthlyClaims();
@@ -304,43 +342,50 @@ export class FtusaAnalyticsComponent implements OnInit {
     ),
   );
 
-  protected readonly fraudDuplicatesOptions = computed<ApexOptions>(() => {
-    const rows = this.facade.crossCompanyDuplicatesByMonth();
+  protected readonly companyStatusOptions = computed<ApexOptions>(() => {
+    const rows = this.companyStatusRows();
 
     return {
-      chart: ftusaChartBase('bar', 320),
-      colors: [FTUSA_CHART_COLORS.error],
+      chart: ftusaChartBase('bar', this.companyStatusChartHeight(), true),
+      colors: this.statusSeries.map((item) => item.color),
       dataLabels: ftusaDataLabels(false),
+      fill: {
+        opacity: 0.95,
+      },
       grid: ftusaGrid(),
+      legend: ftusaLegend('top'),
       plotOptions: {
         bar: {
           borderRadius: 5,
-          columnWidth: '44%',
+          horizontal: true,
         },
       },
       series: [
-        {
-          data: rows.map((row) => row.value),
-          name: 'Doublons',
-        },
+        ...this.statusSeries.map((item) => ({
+          data: rows.map((row) => row.statuses[item.status]),
+          name: item.label,
+        })),
       ],
       states: ftusaStates(),
       theme: ftusaTheme,
       tooltip: {
         ...ftusaTooltip(),
         y: {
-          formatter: (value) => `${Number(value).toFixed(0)} paire(s)`,
+          formatter: (value) => `${Number(value).toFixed(0)} demandes`,
         },
       },
       xaxis: {
         categories: rows.map((row) => row.label),
-        tooltip: {
-          enabled: false,
+        labels: {
+          formatter: (value) => this.formatNumber(Number(value)),
         },
       },
       yaxis: {
         labels: {
-          formatter: (value) => Number(value).toFixed(0),
+          style: {
+            fontFamily: 'Plus Jakarta Sans, Arial, sans-serif',
+            fontWeight: 700,
+          },
         },
       },
     };
@@ -348,6 +393,10 @@ export class FtusaAnalyticsComponent implements OnInit {
 
   ngOnInit(): void {
     this.facade.load();
+  }
+
+  protected setStatusMonth(monthKey: string): void {
+    this.selectedStatusMonth.set(monthKey);
   }
 
   protected exportRows(name: string, title: string, rows: Array<ChartRow | MonthlyChartRow>): void {
@@ -438,11 +487,15 @@ export class FtusaAnalyticsComponent implements OnInit {
     );
   }
 
-  protected exportFraudDuplicates(): void {
+  protected exportCompanyStatusBreakdown(): void {
     this.exportCsv(
-      'fraude-doublons-par-mois',
-      ['Mois', 'Paires de doublons'],
-      this.facade.crossCompanyDuplicatesByMonth().map((row) => [row.label, row.value]),
+      `statuts-demandes-compagnies-${this.selectedStatusMonth()}`,
+      ['Compagnie', 'Total', ...this.statusSeries.map((item) => item.label)],
+      this.companyStatusRows().map((row) => [
+        row.label,
+        row.total,
+        ...this.statusSeries.map((item) => row.statuses[item.status]),
+      ]),
     );
   }
 
@@ -506,5 +559,9 @@ export class FtusaAnalyticsComponent implements OnInit {
       maximumFractionDigits: 0,
       style: 'currency',
     }).format(value);
+  }
+
+  private currentMonthKey(): string {
+    return new Date().toISOString().slice(0, 7);
   }
 }

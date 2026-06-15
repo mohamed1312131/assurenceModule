@@ -59,8 +59,23 @@ h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.month-filter {
+  width: 220px;
+}
+
 @media (max-width: 980px) {
   .chart-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .section-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .month-filter {
+    width: 100%;
   }
 }
