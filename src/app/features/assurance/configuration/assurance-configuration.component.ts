@@ -1,15 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { InsuranceCompany } from '../../../models/insurance-company.model';
 import { PlanTier } from '../../../models/plan-tier.model';
@@ -38,13 +38,13 @@ const ACT_CATEGORIES: ActCategory[] = [
     MatButtonModule,
     MatChipsModule,
     MatDialogModule,
-    MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
     MatSlideToggleModule,
     MatSnackBarModule,
+    MatTabsModule,
   ],
   templateUrl: './assurance-configuration.component.html',
   styleUrl: './assurance-configuration.component.scss',
@@ -59,6 +59,38 @@ export class AssuranceConfigurationComponent implements OnInit {
   protected readonly company = signal<InsuranceCompany | null>(null);
   protected readonly settings = signal<CompanySettings | null>(null);
   protected readonly actCategories = ACT_CATEGORIES;
+  protected readonly activePlansCount = computed(() => this.planTiers().length);
+  protected readonly averageSlaTarget = computed(() => {
+    const plans = this.planTiers();
+
+    if (plans.length === 0) {
+      return this.settings()?.defaultSlaDays ?? 0;
+    }
+
+    const total = plans.reduce((sum, plan) => sum + plan.slaTargetDays, 0);
+
+    return Math.round(total / plans.length);
+  });
+  protected readonly priorAuthLabels = computed(() =>
+    (this.settings()?.priorAuthCategories ?? []).map((category) => this.actLabel(category)),
+  );
+  protected readonly coverageRuleCount = computed(() =>
+    this.planTiers().reduce((total, plan) => total + plan.coverageRules.length, 0),
+  );
+  protected readonly maxAutoApproveThreshold = computed(() =>
+    Math.max(0, ...this.planTiers().map((plan) => plan.autoApproveThreshold)),
+  );
+  protected readonly maxReinsuranceThreshold = computed(() =>
+    Math.max(0, ...this.planTiers().map((plan) => plan.reinsuranceThreshold)),
+  );
+  protected readonly overridePolicyItems = [
+    'Décision finale administrateur',
+    'Motif obligatoire si montant modifié',
+    'Motif obligatoire si statut modifié',
+    'Justification exceptionnelle pour conflit légal',
+    'Validation senior au-dessus d’un seuil',
+    'Seuil de validation senior',
+  ];
 
   ngOnInit(): void {
     const companyId = this.companyId();
@@ -164,6 +196,24 @@ export class AssuranceConfigurationComponent implements OnInit {
       style: 'currency',
       currency: 'TND',
     }).format(value);
+  }
+
+  protected averageCoverage(plan: PlanTier): number {
+    if (plan.coverageRules.length === 0) {
+      return 0;
+    }
+
+    const total = plan.coverageRules.reduce((sum, rule) => sum + rule.coveragePercent, 0);
+
+    return Math.round(total / plan.coverageRules.length);
+  }
+
+  protected planPriorAuthLabels(plan: PlanTier): string {
+    if (plan.requiresPriorAuth.length === 0) {
+      return 'Aucun acte configuré';
+    }
+
+    return plan.requiresPriorAuth.map((category) => this.actLabel(category)).join(', ');
   }
 
   private planKey(companyId: string): string {

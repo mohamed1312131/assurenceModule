@@ -1,170 +1,402 @@
 <section class="configuration-page">
-  <header class="page-header">
-    <div>
-      <h1>Configuration</h1>
-      <p>Plans tarifaires, profil compagnie et paramètres opérationnels.</p>
-    </div>
-  </header>
-
-  <mat-accordion multi="false">
-    <mat-expansion-panel>
-      <mat-expansion-panel-header>
-        <mat-panel-title>Plans tarifaires</mat-panel-title>
-        <mat-panel-description>{{ planTiers().length }} plans</mat-panel-description>
-      </mat-expansion-panel-header>
-
-      <div class="panel-actions">
-        <button mat-flat-button color="primary" type="button" (click)="openPlanDialog()">
-          <mat-icon aria-hidden="true">add</mat-icon>
-          Nouveau plan
-        </button>
+  <div class="configuration-shell">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Configuration compagnie</span>
+        <h1>Centre de contrôle STAR</h1>
+        <p>Règles opérationnelles, garanties et paramètres qui alimentent les recommandations.</p>
       </div>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Prime mensuelle</th>
-              <th>Seuil auto</th>
-              <th>SLA</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div class="header-actions">
+        <span class="status-chip info">Phase 1 UI</span>
+        <span class="status-chip neutral">Recommandation uniquement</span>
+      </div>
+    </header>
+
+    <section class="principle-banner" aria-label="Principe de décision">
+      <mat-icon aria-hidden="true">verified_user</mat-icon>
+      <div>
+        <strong>Le système recommande, l’administrateur décide, l’audit trace.</strong>
+        <span>Cette page prépare le centre de règles sans modifier les décisions de remboursement.</span>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Synthèse configuration">
+      <article class="summary-card">
+        <span>Plans actifs</span>
+        <strong>{{ activePlansCount() }}</strong>
+        <small>{{ coverageRuleCount() }} règles de couverture</small>
+      </article>
+      <article class="summary-card">
+        <span>SLA par défaut</span>
+        <strong>{{ settings()?.defaultSlaDays ?? averageSlaTarget() }} j</strong>
+        <small>Moyenne plans : {{ averageSlaTarget() }} j</small>
+      </article>
+      <article class="summary-card">
+        <span>Autorisations préalables</span>
+        <strong>{{ settings()?.priorAuthCategories?.length ?? 0 }}</strong>
+        <small>Catégories configurées</small>
+      </article>
+      <article class="summary-card">
+        <span>Détection fraude</span>
+        <strong>{{ settings()?.participatesInCrossFraudDetection ? 'Active' : 'Inactive' }}</strong>
+        <small>Partage inter-compagnies</small>
+      </article>
+      <article class="summary-card">
+        <span>Partage analytique</span>
+        <strong>{{ settings()?.participatesInMarketAnalytics ? 'Opt-in' : 'Désactivé' }}</strong>
+        <small>Comparaison marché FTUSA</small>
+      </article>
+      <article class="summary-card">
+        <span>Décision finale admin</span>
+        <strong>Planned</strong>
+        <small>Future-ready</small>
+      </article>
+    </section>
+
+    <mat-tab-group class="configuration-tabs" animationDuration="180ms" mat-stretch-tabs="false">
+      <mat-tab label="Général">
+        <section class="tab-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Identité compagnie</h2>
+              <p>Profil légal et coordonnées utilisées par les consoles FTUSA et assurance.</p>
+            </div>
+            <button mat-flat-button color="primary" type="button" (click)="saveCompany()">
+              <mat-icon aria-hidden="true">save</mat-icon>
+              Enregistrer
+            </button>
+          </div>
+
+          @if (company(); as company) {
+            <div class="profile-layout">
+              <div class="identity-card">
+                <div class="logo-placeholder">
+                  <mat-icon aria-hidden="true">apartment</mat-icon>
+                </div>
+                <strong>{{ company.name }}</strong>
+                <span>{{ company.code }}</span>
+                <span class="status-chip success">{{ company.status }}</span>
+              </div>
+
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nom</mat-label>
+                  <input matInput [value]="company.name" (input)="patchCompany('name', $any($event.target).value)" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Email contact</mat-label>
+                  <input matInput [value]="company.contactEmail" (input)="patchCompany('contactEmail', $any($event.target).value)" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Téléphone</mat-label>
+                  <input matInput [value]="company.contactPhone" (input)="patchCompany('contactPhone', $any($event.target).value)" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Adresse</mat-label>
+                  <input matInput [value]="company.address" (input)="patchCompany('address', $any($event.target).value)" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Déclaration INPDP</mat-label>
+                  <input matInput [value]="company.inpdpDeclarationNumber" (input)="patchCompany('inpdpDeclarationNumber', $any($event.target).value)" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Immatriculation CGA</mat-label>
+                  <input matInput [value]="company.cgaRegistrationNumber" (input)="patchCompany('cgaRegistrationNumber', $any($event.target).value)" />
+                </mat-form-field>
+              </div>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Plans & garanties">
+        <section class="tab-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Plans tarifaires et garanties</h2>
+              <p>Les seuils existants alimentent les recommandations, sans forcer la décision finale.</p>
+            </div>
+            <button mat-flat-button color="primary" type="button" (click)="openPlanDialog()">
+              <mat-icon aria-hidden="true">add</mat-icon>
+              Nouveau plan
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Prime</th>
+                  <th>Couverture moy.</th>
+                  <th>Seuil auto</th>
+                  <th>Réassurance</th>
+                  <th>SLA</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (plan of planTiers(); track plan.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ plan.name }}</strong>
+                      <span>{{ plan.description }}</span>
+                    </td>
+                    <td>{{ formatCurrency(plan.monthlyPremium) }}</td>
+                    <td>{{ averageCoverage(plan) }}%</td>
+                    <td>{{ formatCurrency(plan.autoApproveThreshold) }}</td>
+                    <td>{{ formatCurrency(plan.reinsuranceThreshold) }}</td>
+                    <td>{{ plan.slaTargetDays }} j</td>
+                    <td class="row-actions">
+                      <button mat-button color="primary" type="button" (click)="openPlanDialog(plan)">
+                        Modifier
+                      </button>
+                      <button mat-button color="warn" type="button" (click)="archivePlan(plan)">
+                        Archiver
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="empty-cell">Aucun plan configuré.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="rule-grid">
             @for (plan of planTiers(); track plan.id) {
-              <tr>
-                <td>
-                  <strong>{{ plan.name }}</strong>
-                  <span>{{ plan.description }}</span>
-                </td>
-                <td>{{ formatCurrency(plan.monthlyPremium) }}</td>
-                <td>{{ formatCurrency(plan.autoApproveThreshold) }}</td>
-                <td>{{ plan.slaTargetDays }} jours</td>
-                <td>
-                  <button mat-button color="primary" type="button" (click)="openPlanDialog(plan)">
-                    Modifier
-                  </button>
-                  <button mat-button color="warn" type="button" (click)="archivePlan(plan)">
-                    Archiver
-                  </button>
-                </td>
-              </tr>
+              <article class="rule-card">
+                <div>
+                  <span class="status-chip info">{{ plan.name }}</span>
+                  <h3>Règles de couverture</h3>
+                  <p>{{ plan.coverageRules.length }} catégories, dépôt dossier {{ plan.claimFilingDeadlineDays }} jours.</p>
+                </div>
+                <small>Autorisation préalable : {{ planPriorAuthLabels(plan) }}</small>
+              </article>
             }
-          </tbody>
-        </table>
-      </div>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel>
-      <mat-expansion-panel-header>
-        <mat-panel-title>Profil compagnie</mat-panel-title>
-        <mat-panel-description>{{ company()?.name ?? 'Compagnie' }}</mat-panel-description>
-      </mat-expansion-panel-header>
-
-      @if (company(); as company) {
-        <div class="profile-layout">
-          <div class="logo-placeholder">
-            <mat-icon aria-hidden="true">apartment</mat-icon>
-            <span>Logo</span>
           </div>
+        </section>
+      </mat-tab>
 
-          <div class="form-grid">
-            <mat-form-field appearance="outline">
-              <mat-label>Nom</mat-label>
-              <input matInput [value]="company.name" (input)="patchCompany('name', $any($event.target).value)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Email contact</mat-label>
-              <input matInput [value]="company.contactEmail" (input)="patchCompany('contactEmail', $any($event.target).value)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Téléphone</mat-label>
-              <input matInput [value]="company.contactPhone" (input)="patchCompany('contactPhone', $any($event.target).value)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Adresse</mat-label>
-              <input matInput [value]="company.address" (input)="patchCompany('address', $any($event.target).value)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Déclaration INPDP</mat-label>
-              <input matInput [value]="company.inpdpDeclarationNumber" (input)="patchCompany('inpdpDeclarationNumber', $any($event.target).value)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Immatriculation CGA</mat-label>
-              <input matInput [value]="company.cgaRegistrationNumber" (input)="patchCompany('cgaRegistrationNumber', $any($event.target).value)" />
-            </mat-form-field>
-          </div>
-        </div>
-
-        <div class="panel-actions">
-          <button mat-flat-button color="primary" type="button" (click)="saveCompany()">
-            Enregistrer
-          </button>
-        </div>
-      }
-    </mat-expansion-panel>
-
-    <mat-expansion-panel>
-      <mat-expansion-panel-header>
-        <mat-panel-title>Paramètres compagnie</mat-panel-title>
-        <mat-panel-description>Fraude, analytique et SLA</mat-panel-description>
-      </mat-expansion-panel-header>
-
-      @if (settings(); as settings) {
-        <div class="settings-grid">
-          <div class="toggle-row warning">
+      <mat-tab label="Règles de remboursement">
+        <section class="tab-panel">
+          <div class="section-heading">
             <div>
-              <strong>Détection fraude inter-compagnies</strong>
-              <span>Activation soumise à validation contractuelle FTUSA.</span>
+              <h2>Entrées de recommandation</h2>
+              <p>Lecture structurée des champs existants de plans et garanties.</p>
             </div>
-            <mat-slide-toggle
-              [checked]="settings.participatesInCrossFraudDetection"
-              (change)="patchSettings('participatesInCrossFraudDetection', $event.checked)"
-            />
+            <span class="status-chip neutral">UI only</span>
           </div>
 
-          <div class="toggle-row">
+          <div class="rule-grid">
+            <article class="rule-card">
+              <mat-icon aria-hidden="true">percent</mat-icon>
+              <h3>Couverture plan</h3>
+              <p>Chaque catégorie d’acte conserve son pourcentage, son plafond par acte et son plafond annuel.</p>
+            </article>
+            <article class="rule-card">
+              <mat-icon aria-hidden="true">schedule</mat-icon>
+              <h3>Délai de dépôt</h3>
+              <p>Le champ existant `claimFilingDeadlineDays` reste une entrée de contrôle, sans nouveau blocage.</p>
+            </article>
+            <article class="rule-card">
+              <mat-icon aria-hidden="true">bolt</mat-icon>
+              <h3>Seuil auto-approbation</h3>
+              <p>Seuil maximal configuré : {{ formatCurrency(maxAutoApproveThreshold()) }}.</p>
+            </article>
+            <article class="rule-card">
+              <mat-icon aria-hidden="true">policy</mat-icon>
+              <h3>Seuil réassurance</h3>
+              <p>Seuil maximal configuré : {{ formatCurrency(maxReinsuranceThreshold()) }}.</p>
+            </article>
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Entreprises & contrats">
+        <section class="tab-panel">
+          <div class="readiness-panel">
+            <span class="status-chip neutral">Phase 1</span>
+            <h2>Exceptions contrats entreprises</h2>
+            <p>Cette zone préparera les offres spéciales par contrat, sans ajouter de règle locale pour l’instant.</p>
+            <div class="readiness-list">
+              <span>Offres employeur</span>
+              <span>Plans éligibles par contrat</span>
+              <span>Surbonus ou plafond spécifique</span>
+            </div>
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Autorisations préalables">
+        <section class="tab-panel">
+          <div class="section-heading">
             <div>
-              <strong>Partage analytique marché</strong>
-              <span>Comparaison anonyme avec les compagnies opt-in.</span>
+              <h2>Catégories soumises à autorisation</h2>
+              <p>Paramètre compagnie existant, conservé dans `CompanySettings.priorAuthCategories`.</p>
             </div>
-            <mat-slide-toggle
-              [checked]="settings.participatesInMarketAnalytics"
-              (change)="patchSettings('participatesInMarketAnalytics', $event.checked)"
-            />
+            <button mat-flat-button color="primary" type="button" (click)="saveSettings()">
+              <mat-icon aria-hidden="true">save</mat-icon>
+              Enregistrer
+            </button>
           </div>
 
-          <mat-form-field appearance="outline">
-            <mat-label>SLA par défaut</mat-label>
-            <input
-              matInput
-              type="number"
-              [value]="settings.defaultSlaDays"
-              (input)="patchSettings('defaultSlaDays', +$any($event.target).value)"
-            />
-          </mat-form-field>
+          @if (settings(); as settings) {
+            <div class="settings-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Actes avec autorisation préalable</mat-label>
+                <mat-select
+                  multiple
+                  [value]="settings.priorAuthCategories"
+                  (selectionChange)="patchSettings('priorAuthCategories', $event.value)"
+                >
+                  @for (category of actCategories; track category) {
+                    <mat-option [value]="category">{{ actLabel(category) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Actes avec autorisation préalable</mat-label>
-            <mat-select
-              multiple
-              [value]="settings.priorAuthCategories"
-              (selectionChange)="patchSettings('priorAuthCategories', $event.value)"
-            >
-              @for (category of actCategories; track category) {
-                <mat-option [value]="category">{{ actLabel(category) }}</mat-option>
+              <div class="note-card warning">
+                <strong>Point d’attention</strong>
+                <span>Les plans possèdent aussi `requiresPriorAuth`. Phase 1 affiche l’écart sans modifier la logique.</span>
+              </div>
+            </div>
+          }
+
+          <div class="chip-list">
+            @for (label of priorAuthLabels(); track label) {
+              <span class="status-chip info">{{ label }}</span>
+            } @empty {
+              <span class="status-chip neutral">Aucune catégorie</span>
+            }
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Documents & contrôles">
+        <section class="tab-panel">
+          <div class="readiness-panel">
+            <span class="status-chip neutral">Future rules</span>
+            <h2>Documents requis et contrôles</h2>
+            <p>Prévu pour définir les documents par acte, source, montant et comportement en cas de pièce manquante.</p>
+            <div class="readiness-list">
+              <span>Facture</span>
+              <span>Bulletin de soins</span>
+              <span>Ordonnance</span>
+              <span>Compte rendu opératoire</span>
+            </div>
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Fraude & risque">
+        <section class="tab-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Partage fraude et seuils de risque</h2>
+              <p>Conserve les toggles existants et expose les seuils des plans comme signaux de recommandation.</p>
+            </div>
+            <button mat-flat-button color="primary" type="button" (click)="saveSettings()">
+              <mat-icon aria-hidden="true">save</mat-icon>
+              Enregistrer
+            </button>
+          </div>
+
+          @if (settings(); as settings) {
+            <div class="settings-grid">
+              <div class="toggle-row warning">
+                <div>
+                  <strong>Détection fraude inter-compagnies</strong>
+                  <span>Activation soumise à validation contractuelle FTUSA.</span>
+                </div>
+                <mat-slide-toggle
+                  [checked]="settings.participatesInCrossFraudDetection"
+                  (change)="patchSettings('participatesInCrossFraudDetection', $event.checked)"
+                />
+              </div>
+
+              <div class="toggle-row">
+                <div>
+                  <strong>Partage analytique marché</strong>
+                  <span>Comparaison anonyme avec les compagnies opt-in.</span>
+                </div>
+                <mat-slide-toggle
+                  [checked]="settings.participatesInMarketAnalytics"
+                  (change)="patchSettings('participatesInMarketAnalytics', $event.checked)"
+                />
+              </div>
+
+              <div class="note-card">
+                <strong>Seuil auto maximal</strong>
+                <span>{{ formatCurrency(maxAutoApproveThreshold()) }}</span>
+              </div>
+
+              <div class="note-card">
+                <strong>Seuil réassurance maximal</strong>
+                <span>{{ formatCurrency(maxReinsuranceThreshold()) }}</span>
+              </div>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Politique de décision & override">
+        <section class="tab-panel">
+          <div class="readiness-panel decision-policy">
+            <span class="status-chip info">Future-ready</span>
+            <h2>Le système recommande, l’administrateur décide, l’audit trace.</h2>
+            <p>Les paramètres ci-dessous sont prévus pour la future politique d’override. Phase 1 ne persiste aucune nouvelle règle.</p>
+            <div class="policy-list">
+              @for (item of overridePolicyItems; track item) {
+                <div>
+                  <mat-icon aria-hidden="true">rule</mat-icon>
+                  <span>{{ item }}</span>
+                  <small>Planifié</small>
+                </div>
               }
-            </mat-select>
-          </mat-form-field>
-        </div>
+            </div>
+          </div>
+        </section>
+      </mat-tab>
 
-        <div class="panel-actions">
-          <button mat-flat-button color="primary" type="button" (click)="saveSettings()">
-            Enregistrer
-          </button>
-        </div>
-      }
-    </mat-expansion-panel>
-  </mat-accordion>
+      <mat-tab label="Notifications">
+        <section class="tab-panel">
+          <div class="readiness-panel">
+            <span class="status-chip neutral">Future rules</span>
+            <h2>Notifications opérationnelles</h2>
+            <p>Prévu pour les rappels SLA, pièces manquantes, expiration d’autorisation et décisions de remboursement.</p>
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Import & intégrations">
+        <section class="tab-panel">
+          <div class="readiness-panel">
+            <span class="status-chip neutral">Future-ready</span>
+            <h2>Import, paiement et intégrations</h2>
+            <p>Prévu pour CSV, export paiement, API OmniCare et webhooks. Aucune connexion réelle n’est ajoutée en Phase 1.</p>
+          </div>
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Audit">
+        <section class="tab-panel">
+          <div class="readiness-panel">
+            <span class="status-chip neutral">Future audit</span>
+            <h2>Traçabilité configuration et overrides</h2>
+            <p>Prévu pour historiser les changements de règles et les décisions admin différentes des recommandations.</p>
+            <div class="readiness-list">
+              <span>Avant / après</span>
+              <span>Administrateur</span>
+              <span>Horodatage</span>
+              <span>Règles affectées</span>
+            </div>
+          </div>
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
 </section>
