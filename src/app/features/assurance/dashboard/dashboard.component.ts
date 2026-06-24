@@ -3,19 +3,20 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { CommunicationsService } from '../../../core/communications/communications.service';
 import { Communication } from '../../../models/communication.model';
-import { InsightCardComponent } from '../../../shared/insight-card/insight-card.component';
 import { CountUpDirective } from '../../../shared/utils/count-up.directive';
 import { AssuranceMessageDialogComponent } from '../communications/assurance-message-dialog.component';
 import { AlertBannerComponent } from '../../../shared/alert-banner/alert-banner.component';
 import {
   AssuranceDashboardFacade,
   DashboardInsight,
+  DashboardPriorityItem,
   QuickAction,
 } from './dashboard.facade';
 
@@ -24,11 +25,11 @@ import {
   imports: [
     CountUpDirective,
     AlertBannerComponent,
-    InsightCardComponent,
     LucideAngularModule,
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
+    MatIconModule,
     MatTooltipModule,
   ],
   providers: [AssuranceDashboardFacade],
@@ -77,6 +78,12 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  protected openPriority(priority: DashboardPriorityItem): void {
+    void this.router.navigate(priority.commands, {
+      queryParams: priority.queryParams,
+    });
+  }
+
   protected runQuickAction(action: QuickAction): void {
     if (action.disabled || !action.commands) {
       return;
@@ -85,6 +92,14 @@ export class DashboardComponent implements OnInit {
     void this.router.navigate(action.commands, {
       queryParams: action.queryParams,
     });
+  }
+
+  protected viewDemandes(): void {
+    void this.router.navigate(['/assurance', this.companyId(), 'demandes']);
+  }
+
+  protected exportDashboard(): void {
+    this.facade.exportDashboardSnapshot();
   }
 
   protected openMessage(message: Communication): void {

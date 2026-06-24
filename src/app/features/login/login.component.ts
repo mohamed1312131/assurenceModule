@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/notifications/notification.service';
-import { AlertBannerComponent } from '../../shared/alert-banner/alert-banner.component';
 
 type DemoProfile = {
   id: 'ftusa' | 'star' | 'comar';
@@ -17,7 +16,7 @@ type DemoProfile = {
 
 @Component({
   selector: 'app-login',
-  imports: [AlertBannerComponent, MatButtonModule, MatCardModule, MatIconModule],
+  imports: [MatButtonModule, MatCardModule, MatIconModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -30,20 +29,14 @@ export class LoginComponent {
     {
       id: 'ftusa',
       icon: 'account_balance',
-      title: 'Connexion FTUSA — Administrateur',
-      description: 'Accès complet plateforme',
+      title: 'Espace FTUSA — Régulateur',
+      description: 'Superviser les indicateurs marché, les compagnies et les échanges réglementaires.',
     },
     {
       id: 'star',
       icon: 'domain',
-      title: 'Connexion STAR Assurances — Admin',
-      description: 'Tenant STAR avec sections pré-remplies',
-    },
-    {
-      id: 'comar',
-      icon: 'business',
-      title: 'Connexion COMAR Assurances — Admin',
-      description: 'Tenant COMAR pour démontrer le multi-tenant',
+      title: 'Espace STAR Assurances — Assureur',
+      description: 'Accéder aux demandes, adhérents, contrats entreprises et opérations assurance.',
     },
   ];
 

@@ -34,6 +34,47 @@ export interface DemandeRemboursement {
   riskScore: 'FAIBLE' | 'MOYEN' | 'ELEVE';
   crossCompanyDuplicateDetected?: boolean;
   internalNotes?: string;
+  comarBulletin?: ComarBulletinData;
+}
+
+export interface ComarBulletinData {
+  identity: {
+    identifiantUnique: string;
+    societyName: string;
+    adherentFullName: string;
+    address: string;
+    contractNumber: string;
+    matricule: string;
+    patientFirstName: string;
+  };
+  provider: {
+    specialistNameAndAddress: string;
+    establishmentStamp: string;
+    doctorSignatureLabel: string;
+    providerFiscalNumber: string;
+  };
+  medicalActs: Array<{
+    actDate: string;
+    actDesignation: string;
+    actCoefficient: string;
+    honorairesAmount: string;
+    ordonnanceDelivered: string;
+    invoiceAmount: string;
+  }>;
+  pharmacy: {
+    pharmacyOrSupplierStamp: string;
+  };
+  declaration: {
+    declarationDate: string;
+    adherentVisa: string;
+    employerVisa: string;
+  };
+  assuranceDecision?: {
+    label: string;
+    approvedAmount: string;
+    reviewerName: string;
+    reviewedDate: string;
+  };
 }
 
 export type DemandeStatus =

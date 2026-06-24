@@ -8,13 +8,16 @@ import {
 import { ClaimSource } from '../../../models/shared.model';
 
 export interface DemandesFilter {
+  search: string | null;
   statuts: DemandeStatus[];
   sources: ClaimSource[];
   riskScores: Array<'FAIBLE' | 'MOYEN' | 'ELEVE'>;
   actCategories: string[];
   planTiers: string[];
   employer: string | null;
+  provider: string | null;
   inNetworkOnly: boolean;
+  networkMode: 'IN_NETWORK' | 'OUT_OF_NETWORK' | null;
   flags: ClaimFlag[];
   dateFrom: string | null;
   dateTo: string | null;
@@ -23,13 +26,16 @@ export interface DemandesFilter {
 }
 
 const EMPTY_FILTERS: DemandesFilter = {
+  search: null,
   statuts: [],
   sources: [],
   riskScores: [],
   actCategories: [],
   planTiers: [],
   employer: null,
+  provider: null,
   inNetworkOnly: false,
+  networkMode: null,
   flags: [],
   dateFrom: null,
   dateTo: null,
@@ -108,6 +114,12 @@ export class DemandesFacade {
   }
 
   private matchesFilters(demande: DemandeRemboursement, filters: DemandesFilter): boolean {
+    const searchFilter = filters.search?.trim().toLowerCase();
+
+    if (searchFilter && !this.matchesSearch(demande, searchFilter)) {
+      return false;
+    }
+
     if (filters.statuts.length > 0 && !filters.statuts.includes(demande.status)) {
       return false;
     }
@@ -137,7 +149,17 @@ export class DemandesFacade {
       return false;
     }
 
-    if (filters.inNetworkOnly && !demande.providerInNetwork) {
+    const providerFilter = filters.provider?.trim().toLowerCase();
+
+    if (providerFilter && !demande.providerName.toLowerCase().includes(providerFilter)) {
+      return false;
+    }
+
+    if ((filters.inNetworkOnly || filters.networkMode === 'IN_NETWORK') && !demande.providerInNetwork) {
+      return false;
+    }
+
+    if (filters.networkMode === 'OUT_OF_NETWORK' && demande.providerInNetwork) {
       return false;
     }
 
@@ -166,13 +188,16 @@ export class DemandesFacade {
 
   private countActiveFilters(filters: DemandesFilter): number {
     return [
+      filters.search ? 1 : 0,
       filters.statuts.length,
       filters.sources.length,
       filters.riskScores.length,
       filters.actCategories.length,
       filters.planTiers.length,
       filters.employer ? 1 : 0,
+      filters.provider ? 1 : 0,
       filters.inNetworkOnly ? 1 : 0,
+      filters.networkMode ? 1 : 0,
       filters.flags.length,
       filters.dateFrom ? 1 : 0,
       filters.dateTo ? 1 : 0,
@@ -211,6 +236,18 @@ export class DemandesFacade {
 
   private storageKey(companyId: string): string {
     return `omnicare_ins_${companyId}_demandes`;
+  }
+
+  private matchesSearch(demande: DemandeRemboursement, searchFilter: string): boolean {
+    return [
+      demande.patientName,
+      demande.patientMemberId,
+      demande.factureNumber,
+      demande.id,
+      demande.providerName,
+      demande.employerName ?? '',
+      demande.actDescription,
+    ].some((value) => value.toLowerCase().includes(searchFilter));
   }
 
   private dateOnly(isoDate: string): string {

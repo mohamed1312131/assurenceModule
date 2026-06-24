@@ -1,13 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -23,6 +21,7 @@ import { ActCategory, ClaimSource } from '../../../models/shared.model';
 import { DemandesFacade, DemandesFilter } from './demandes.facade';
 
 type RiskScore = 'FAIBLE' | 'MOYEN' | 'ELEVE';
+type NetworkMode = 'IN_NETWORK' | 'OUT_OF_NETWORK' | null;
 type ArrayFilterKey =
   | 'statuts'
   | 'sources'
@@ -50,10 +49,8 @@ interface ActiveFilterChip {
     MatBadgeModule,
     MatButtonModule,
     MatCardModule,
-    MatCheckboxModule,
     MatChipsModule,
     MatDatepickerModule,
-    MatExpansionModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -64,50 +61,97 @@ interface ActiveFilterChip {
   providers: [provideNativeDateAdapter()],
   template: `
     <mat-card class="filter-card" appearance="outlined">
-      <div class="quick-row">
-        <span class="filter-label">Statut :</span>
-        <mat-chip-listbox multiple aria-label="Filtre statut">
-          @for (option of statusOptions; track option.value) {
-            <mat-chip-option
-              class="filter-chip"
-              [class]="option.tone"
-              [selected]="filters().statuts.includes(option.value)"
-              (selectionChange)="toggleArrayValue('statuts', option.value, $event.selected)"
-            >
-              <span class="chip-dot"></span>
-              {{ option.label }}
-            </mat-chip-option>
+      <div class="filter-toolbar">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+          <mat-label>Recherche</mat-label>
+          <input
+            matInput
+            type="search"
+            [value]="filters().search ?? ''"
+            placeholder="Rechercher patient, référence, prestataire…"
+            (input)="setSearchFilter($event)"
+          />
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          type="button"
+          [class.active-advanced]="advancedOpen()"
+          (click)="toggleAdvanced()"
+        >
+          <mat-icon aria-hidden="true">tune</mat-icon>
+          Filtres avancés
+          @if (secondaryFilterCount() > 0) {
+            <span class="filter-count">{{ secondaryFilterCount() }}</span>
           }
-        </mat-chip-listbox>
+        </button>
+
+        @if (activeFilterCount() > 0) {
+          <button mat-button color="primary" type="button" (click)="resetFilters()">
+            <mat-icon aria-hidden="true">filter_list_off</mat-icon>
+            Réinitialiser
+          </button>
+        }
       </div>
 
-      <div class="quick-row source-risk-row">
-        <span class="filter-label">Canal :</span>
-        <mat-chip-listbox multiple aria-label="Filtre canal">
-          @for (option of sourceOptions; track option.value) {
-            <mat-chip-option
-              class="filter-chip neutral"
-              [selected]="filters().sources.includes(option.value)"
-              (selectionChange)="toggleArrayValue('sources', option.value, $event.selected)"
-            >
-              {{ option.label }}
-            </mat-chip-option>
-          }
-        </mat-chip-listbox>
+      <div class="chip-toolbar">
+        <div class="chip-group">
+          <span class="filter-label">Statut</span>
+          <mat-chip-listbox multiple aria-label="Filtre statut">
+            @for (option of statusOptions; track option.value) {
+              <mat-chip-option
+                class="filter-chip"
+                [class]="option.tone"
+                [class.is-selected]="filters().statuts.includes(option.value)"
+                [selected]="filters().statuts.includes(option.value)"
+                (selectionChange)="toggleArrayValue('statuts', option.value, $event.selected)"
+              >
+                <span class="chip-dot"></span>
+                {{ option.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
 
-        <span class="filter-label risk-label">Risque :</span>
-        <mat-chip-listbox multiple aria-label="Filtre risque">
-          @for (option of riskOptions; track option.value) {
-            <mat-chip-option
-              class="filter-chip"
-              [class]="option.tone"
-              [selected]="filters().riskScores.includes(option.value)"
-              (selectionChange)="toggleArrayValue('riskScores', option.value, $event.selected)"
-            >
-              {{ option.label }}
-            </mat-chip-option>
-          }
-        </mat-chip-listbox>
+        <div class="chip-group">
+          <span class="filter-label">Canal</span>
+          <mat-chip-listbox multiple aria-label="Filtre canal">
+            @for (option of sourceOptions; track option.value) {
+              <mat-chip-option
+                class="filter-chip source-chip"
+                [class.source-omnicare]="option.value === 'OMNICARE'"
+                [class.source-manuel]="option.value === 'MANUEL'"
+                [class.source-import]="option.value === 'IMPORT_CSV'"
+                [class.source-website]="option.value === 'WEBSITE'"
+                [class.source-email]="option.value === 'EMAIL'"
+                [class.source-other]="option.value === 'AUTRE'"
+                [class.is-selected]="filters().sources.includes(option.value)"
+                [selected]="filters().sources.includes(option.value)"
+                (selectionChange)="toggleArrayValue('sources', option.value, $event.selected)"
+              >
+                {{ option.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
+
+        <div class="chip-group risk-group">
+          <span class="filter-label">Risque</span>
+          <mat-chip-listbox multiple aria-label="Filtre risque">
+            @for (option of riskOptions; track option.value) {
+              <mat-chip-option
+                class="filter-chip"
+                [class]="option.tone"
+                [class.is-selected]="filters().riskScores.includes(option.value)"
+                [selected]="filters().riskScores.includes(option.value)"
+                (selectionChange)="toggleArrayValue('riskScores', option.value, $event.selected)"
+              >
+                {{ option.label }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
       </div>
 
       @if (activeFilterCount() > 0) {
@@ -115,31 +159,21 @@ interface ActiveFilterChip {
           @for (chip of activeFilterChips(); track chip.id) {
             <mat-chip class="active-filter-chip">
               {{ chip.label }}
-              <button matChipRemove type="button" [attr.aria-label]="'Retirer ' + chip.label" (click)="chip.remove()">
+              <button
+                matChipRemove
+                type="button"
+                [attr.aria-label]="'Retirer ' + chip.label"
+                (click)="chip.remove()"
+              >
                 <mat-icon>close</mat-icon>
               </button>
             </mat-chip>
           }
-          <button mat-button color="warn" type="button" (click)="resetFilters()">
-            Réinitialiser tout
-          </button>
         </mat-chip-set>
       }
 
-      <mat-expansion-panel class="advanced-panel">
-        <mat-expansion-panel-header collapsedHeight="48px" expandedHeight="48px">
-          <mat-panel-title>
-            <span
-              [matBadge]="secondaryFilterCount()"
-              [matBadgeHidden]="secondaryFilterCount() === 0"
-              matBadgeColor="primary"
-              matBadgeOverlap="false"
-            >
-              Filtres avancés
-            </span>
-          </mat-panel-title>
-        </mat-expansion-panel-header>
-
+      @if (advancedOpen()) {
+        <section class="advanced-panel" aria-label="Filtres avancés">
         <div class="advanced-grid" [formGroup]="advancedForm">
           <mat-form-field appearance="outline">
             <mat-label>Catégorie d'acte</mat-label>
@@ -177,13 +211,27 @@ interface ActiveFilterChip {
             />
           </mat-form-field>
 
-          <mat-checkbox
-            class="network-checkbox"
-            formControlName="inNetworkOnly"
-            (change)="facade.updateFilter({ inNetworkOnly: $event.checked })"
-          >
-            Réseau agréé uniquement
-          </mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>Prestataire</mat-label>
+            <input
+              matInput
+              formControlName="provider"
+              type="text"
+              (input)="setProviderFilter($event)"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Réseau</mat-label>
+            <mat-select
+              formControlName="networkMode"
+              (selectionChange)="setNetworkMode($event.value)"
+            >
+              <mat-option [value]="null">Tous réseaux</mat-option>
+              <mat-option value="IN_NETWORK">Réseau agréé</mat-option>
+              <mat-option value="OUT_OF_NETWORK">Hors réseau</mat-option>
+            </mat-select>
+          </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Drapeaux</mat-label>
@@ -248,65 +296,252 @@ interface ActiveFilterChip {
             </mat-form-field>
           </div>
         </div>
-      </mat-expansion-panel>
+        </section>
+      }
     </mat-card>
   `,
   styles: `
     .filter-card {
-      background: #ffffff;
+      background: #eef8f5;
       border-color: rgba(15, 111, 115, 0.12);
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(15, 111, 115, 0.06);
+      border-radius: 14px;
+      box-shadow: none;
       display: grid;
-      gap: 14px;
-      padding: 16px;
+      gap: 10px;
+      padding: 12px;
     }
 
-    .quick-row {
+    .filter-toolbar {
+      align-items: center;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(280px, 420px) auto auto;
+      justify-content: start;
+    }
+
+    .search-field {
+      font-size: 0.86rem;
+      width: 100%;
+    }
+
+    .filter-toolbar button {
+      font-size: 0.8rem;
+      min-height: 36px;
+      white-space: nowrap;
+    }
+
+    .filter-toolbar button[mat-stroked-button] {
+      background: rgba(15, 111, 115, 0.1);
+      border-color: rgba(15, 111, 115, 0.2);
+      color: var(--omnicare-secondary);
+      font-weight: 800;
+      padding: 0 14px;
+    }
+
+    .active-advanced,
+    .filter-toolbar button[mat-stroked-button]:hover {
+      background: var(--omnicare-secondary);
+      border-color: rgba(15, 111, 115, 0.28);
+      color: #ffffff;
+    }
+
+    .filter-count {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+      color: currentColor;
+      display: inline-flex;
+      font-size: 0.72rem;
+      font-weight: 800;
+      height: 20px;
+      justify-content: center;
+      margin-left: 4px;
+      min-width: 20px;
+      padding: 0 6px;
+    }
+
+    .filter-toolbar mat-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+
+    .chip-toolbar {
+      align-items: center;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(220px, 0.55fr);
+    }
+
+    .chip-group {
       align-items: center;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .filter-label {
-      color: var(--omnicare-muted);
-      font-size: 0.86rem;
-      font-weight: 700;
+      color: var(--omnicare-secondary);
+      flex: 0 0 auto;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
 
-    .risk-label {
-      margin-left: 10px;
+    mat-chip-listbox {
+      min-width: 0;
     }
 
     .filter-chip {
-      --mdc-chip-elevated-container-color: #f8fafc;
-      --mdc-chip-label-text-color: var(--omnicare-text);
-      border: 1px solid #e5e7eb;
+      --chip-bg: #475569;
+      --chip-bg-selected: #334155;
+      --chip-text: #ffffff;
+      --mdc-chip-elevated-container-color: var(--chip-bg);
+      --mdc-chip-flat-selected-container-color: var(--chip-bg-selected);
+      --mdc-chip-selected-container-color: var(--chip-bg-selected);
+      --mdc-chip-unselected-container-color: var(--chip-bg);
+      --mdc-chip-label-text-color: var(--chip-text);
+      --mdc-chip-selected-label-text-color: var(--chip-text);
+      --mdc-chip-disabled-label-text-color: rgba(255, 255, 255, 0.72);
+      --mdc-chip-outline-color: transparent;
+      --mdc-chip-selected-outline-color: transparent;
+      --mdc-chip-with-icon-icon-color: var(--chip-text);
+      --mdc-chip-selected-icon-color: var(--chip-text);
+      background: var(--chip-bg);
+      border: 0;
+      border-radius: 999px;
+      color: var(--chip-text);
+      font-size: 0.74rem;
+      font-weight: 800;
+      min-height: 24px;
+      overflow: hidden;
+      opacity: 0.78;
+      transition:
+        box-shadow 160ms ease,
+        opacity 160ms ease,
+        transform 160ms ease;
+    }
+
+    .filter-chip.neutral {
+      --chip-bg: #475569;
+      --chip-bg-selected: #334155;
     }
 
     .filter-chip.success {
-      --mdc-chip-elevated-container-color: #ecfdf5;
-      --mdc-chip-label-text-color: #047857;
-      border-color: #bbf7d0;
+      --chip-bg: #047857;
+      --chip-bg-selected: #065f46;
     }
 
     .filter-chip.warning {
-      --mdc-chip-elevated-container-color: #fffbeb;
-      --mdc-chip-label-text-color: #b45309;
-      border-color: #fde68a;
+      --chip-bg: #b45309;
+      --chip-bg-selected: #92400e;
     }
 
     .filter-chip.error {
-      --mdc-chip-elevated-container-color: #fef2f2;
-      --mdc-chip-label-text-color: #b91c1c;
-      border-color: #fecaca;
+      --chip-bg: #b91c1c;
+      --chip-bg-selected: #991b1b;
     }
 
     .filter-chip.info {
-      --mdc-chip-elevated-container-color: #eff6ff;
-      --mdc-chip-label-text-color: #1d4ed8;
-      border-color: #bfdbfe;
+      --chip-bg: #1d4ed8;
+      --chip-bg-selected: #1e40af;
+    }
+
+    .filter-chip.source-omnicare {
+      --chip-bg: #0f766e;
+      --chip-bg-selected: #115e59;
+    }
+
+    .filter-chip.source-manuel {
+      --chip-bg: #334155;
+      --chip-bg-selected: #1e293b;
+    }
+
+    .filter-chip.source-import {
+      --chip-bg: #4338ca;
+      --chip-bg-selected: #3730a3;
+    }
+
+    .filter-chip.source-website {
+      --chip-bg: #0891b2;
+      --chip-bg-selected: #0e7490;
+    }
+
+    .filter-chip.source-email {
+      --chip-bg: #7c3aed;
+      --chip-bg-selected: #6d28d9;
+    }
+
+    .filter-chip.source-other {
+      --chip-bg: #475569;
+      --chip-bg-selected: #334155;
+    }
+
+    .filter-chip.is-selected,
+    .filter-chip[aria-selected='true'],
+    .filter-chip.mat-mdc-chip-selected {
+      background: var(--chip-bg-selected);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.32),
+        0 0 0 2px #ffffff,
+        0 0 0 4px rgba(15, 111, 115, 0.24),
+        0 6px 14px rgba(15, 111, 115, 0.16);
+      color: #ffffff;
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
+    :host ::ng-deep .filter-chip .mdc-evolution-chip__text-label,
+    :host ::ng-deep .filter-chip .mat-mdc-chip-action-label,
+    :host ::ng-deep .filter-chip mat-icon,
+    :host ::ng-deep .filter-chip .mdc-evolution-chip__graphic {
+      color: #ffffff !important;
+    }
+
+    :host ::ng-deep .filter-chip .mdc-evolution-chip__action--primary {
+      background: var(--chip-bg);
+      border-radius: 999px;
+      color: #ffffff !important;
+      overflow: hidden;
+    }
+
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__action--primary,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__action--primary,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__action--primary {
+      background: var(--chip-bg-selected);
+    }
+
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__graphic,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__graphic,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__graphic {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      display: inline-flex;
+      height: 16px;
+      justify-content: center;
+      margin-left: 2px;
+      width: 16px;
+    }
+
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__checkmark,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__checkmark,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__checkmark {
+      color: #ffffff !important;
+    }
+
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__checkmark-svg,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__checkmark-svg,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__checkmark-svg {
+      stroke: #ffffff !important;
+    }
+
+    :host ::ng-deep .filter-chip .mdc-evolution-chip__cell,
+    :host ::ng-deep .filter-chip .mat-mdc-chip-action {
+      border-radius: 999px;
+      overflow: hidden;
     }
 
     .chip-dot {
@@ -314,7 +549,7 @@ interface ActiveFilterChip {
       border-radius: 999px;
       display: inline-block;
       height: 7px;
-      margin-right: 6px;
+      margin-right: 5px;
       width: 7px;
     }
 
@@ -322,33 +557,32 @@ interface ActiveFilterChip {
       align-items: center;
       border-top: 1px solid #eef2f4;
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      padding-top: 12px;
+      padding-top: 8px;
     }
 
     .active-filter-chip {
-      --mdc-chip-elevated-container-color: rgba(31, 191, 154, 0.1);
-      --mdc-chip-label-text-color: var(--omnicare-secondary);
-      border: 1px solid var(--omnicare-tertiary);
+      --mdc-chip-elevated-container-color: var(--omnicare-secondary);
+      --mdc-chip-label-text-color: #ffffff;
+      border: 0;
+      font-size: 0.74rem;
+      font-weight: 800;
+      min-height: 24px;
     }
 
     .advanced-panel {
-      border: 1px solid #e5e7eb;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(15, 111, 115, 0.12);
       border-radius: 12px;
       box-shadow: none;
+      padding: 12px;
     }
 
     .advanced-grid {
       display: grid;
-      gap: 14px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      padding-top: 14px;
-    }
-
-    .network-checkbox {
-      align-self: center;
-      min-height: 56px;
-      padding-top: 10px;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .range-row {
@@ -358,13 +592,14 @@ interface ActiveFilterChip {
     }
 
     @media (max-width: 760px) {
-      .advanced-grid,
-      .range-row {
+      .filter-toolbar {
         grid-template-columns: 1fr;
       }
 
-      .risk-label {
-        margin-left: 0;
+      .chip-toolbar,
+      .advanced-grid,
+      .range-row {
+        grid-template-columns: 1fr;
       }
     }
   `,
@@ -373,6 +608,7 @@ export class DemandesFilterBarComponent {
   protected readonly facade = inject(DemandesFacade);
   protected readonly filters = this.facade.filters;
   protected readonly activeFilterCount = this.facade.activeFilterCount;
+  protected readonly advancedOpen = signal(false);
 
   protected readonly statusOptions: Array<OptionItem<DemandeStatus>> = [
     { value: 'SOUMISE', label: 'Soumise', tone: 'info' },
@@ -425,7 +661,8 @@ export class DemandesFilterBarComponent {
     actCategories: new FormControl<ActCategory[]>([], { nonNullable: true }),
     planTiers: new FormControl<string[]>([], { nonNullable: true }),
     employer: new FormControl('', { nonNullable: true }),
-    inNetworkOnly: new FormControl(false, { nonNullable: true }),
+    provider: new FormControl('', { nonNullable: true }),
+    networkMode: new FormControl<NetworkMode>(null),
     flags: new FormControl<ClaimFlag[]>([], { nonNullable: true }),
     dateFrom: new FormControl<Date | null>(null),
     dateTo: new FormControl<Date | null>(null),
@@ -444,7 +681,9 @@ export class DemandesFilterBarComponent {
       filters.actCategories.length,
       filters.planTiers.length,
       filters.employer ? 1 : 0,
+      filters.provider ? 1 : 0,
       filters.inNetworkOnly ? 1 : 0,
+      filters.networkMode ? 1 : 0,
       filters.flags.length,
       filters.dateFrom ? 1 : 0,
       filters.dateTo ? 1 : 0,
@@ -456,6 +695,14 @@ export class DemandesFilterBarComponent {
   protected readonly activeFilterChips = computed<ActiveFilterChip[]>(() => {
     const filters = this.filters();
     const chips: ActiveFilterChip[] = [];
+
+    if (filters.search) {
+      chips.push({
+        id: 'search',
+        label: `Recherche : ${filters.search}`,
+        remove: () => this.facade.updateFilter({ search: null }),
+      });
+    }
 
     this.addArrayChips(chips, filters.statuts, this.statusOptions, 'statuts');
     this.addArrayChips(chips, filters.sources, this.sourceOptions, 'sources');
@@ -477,11 +724,27 @@ export class DemandesFilterBarComponent {
       });
     }
 
+    if (filters.provider) {
+      chips.push({
+        id: 'provider',
+        label: `Prestataire : ${filters.provider}`,
+        remove: () => this.facade.updateFilter({ provider: null }),
+      });
+    }
+
     if (filters.inNetworkOnly) {
       chips.push({
         id: 'network',
         label: 'Réseau agréé uniquement',
         remove: () => this.facade.updateFilter({ inNetworkOnly: false }),
+      });
+    }
+
+    if (filters.networkMode) {
+      chips.push({
+        id: 'networkMode',
+        label: filters.networkMode === 'IN_NETWORK' ? 'Réseau agréé' : 'Hors réseau',
+        remove: () => this.facade.updateFilter({ networkMode: null }),
       });
     }
 
@@ -528,7 +791,8 @@ export class DemandesFilterBarComponent {
         actCategories: filters.actCategories as ActCategory[],
         planTiers: filters.planTiers,
         employer: filters.employer ?? '',
-        inNetworkOnly: filters.inNetworkOnly,
+        provider: filters.provider ?? '',
+        networkMode: filters.networkMode,
         flags: filters.flags,
         dateFrom: filters.dateFrom ? new Date(filters.dateFrom) : null,
         dateTo: filters.dateTo ? new Date(filters.dateTo) : null,
@@ -554,9 +818,27 @@ export class DemandesFilterBarComponent {
     this.facade.updateFilter({ [key]: value } as Partial<DemandesFilter>);
   }
 
+  protected toggleAdvanced(): void {
+    this.advancedOpen.update((current) => !current);
+  }
+
+  protected setSearchFilter(event: Event): void {
+    const value = (event.target as HTMLInputElement).value.trim();
+    this.facade.updateFilter({ search: value || null });
+  }
+
   protected setEmployerFilter(event: Event): void {
     const value = (event.target as HTMLInputElement).value.trim();
     this.facade.updateFilter({ employer: value || null });
+  }
+
+  protected setProviderFilter(event: Event): void {
+    const value = (event.target as HTMLInputElement).value.trim();
+    this.facade.updateFilter({ provider: value || null });
+  }
+
+  protected setNetworkMode(value: NetworkMode): void {
+    this.facade.updateFilter({ networkMode: value, inNetworkOnly: false });
   }
 
   protected setDateFilter(key: 'dateFrom' | 'dateTo', value: Date | null): void {

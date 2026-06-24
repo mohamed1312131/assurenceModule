@@ -1,21 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { ActCategory } from '../../../models/shared.model';
 import { CompagniesFacade } from './compagnies.facade';
-
-type PlanTemplate = 'BASIQUE' | 'CONFORT' | 'PREMIUM' | 'PERSONNALISE';
 
 interface CompanyForm {
   name: string;
@@ -33,319 +27,133 @@ interface AdminForm {
   phone: string;
 }
 
+interface WizardStep {
+  id: 'company' | 'admin' | 'access' | 'activation';
+  label: string;
+  eyebrow: string;
+}
+
+interface AccessModule {
+  id:
+    | 'assurance-space'
+    | 'claims'
+    | 'prior-authorizations'
+    | 'adherents'
+    | 'corporate-contracts'
+    | 'provider-network'
+    | 'company-settings'
+    | 'assurance-analytics'
+    | 'fraud-risk';
+  title: string;
+  description: string;
+  enabled: boolean;
+}
+
 @Component({
   selector: 'app-onboarding-wizard',
   imports: [
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
-    MatChipsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatRadioModule,
     MatSnackBarModule,
-    MatStepperModule,
     MatTooltipModule,
   ],
-  template: `
-    <h2 mat-dialog-title>Nouvelle compagnie</h2>
-
-    <mat-dialog-content>
-      <mat-stepper linear #stepper>
-        <mat-step [completed]="isCompanyValid()">
-          <ng-template matStepLabel>Informations compagnie</ng-template>
-          <section class="step-content">
-            <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Nom compagnie</mat-label>
-                <input matInput [value]="company().name" (input)="patchCompany('name', $any($event.target).value)" required />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Code</mat-label>
-                <input matInput [value]="company().code" (input)="patchCompany('code', uppercase($any($event.target).value))" required />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Immatriculation CGA</mat-label>
-                <input matInput [value]="company().cgaRegistrationNumber" (input)="patchCompany('cgaRegistrationNumber', $any($event.target).value)" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Déclaration INPDP</mat-label>
-                <input matInput [value]="company().inpdpDeclarationNumber" (input)="patchCompany('inpdpDeclarationNumber', $any($event.target).value)" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Email contact</mat-label>
-                <input matInput type="email" [value]="company().contactEmail" (input)="patchCompany('contactEmail', $any($event.target).value)" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Téléphone</mat-label>
-                <input matInput [value]="company().contactPhone" (input)="patchCompany('contactPhone', $any($event.target).value)" />
-              </mat-form-field>
-              <mat-form-field appearance="outline" class="full">
-                <mat-label>Adresse</mat-label>
-                <input matInput [value]="company().address" (input)="patchCompany('address', $any($event.target).value)" />
-              </mat-form-field>
-            </div>
-
-            <button mat-stroked-button disabled matTooltip="Upload simulé — démo uniquement">
-              <mat-icon aria-hidden="true">upload_file</mat-icon>
-              Logo compagnie
-            </button>
-          </section>
-          <div class="step-actions">
-            <button mat-flat-button color="primary" type="button" [disabled]="!isCompanyValid()" matStepperNext>
-              Suivant
-            </button>
-          </div>
-        </mat-step>
-
-        <mat-step [completed]="isAdminValid()">
-          <ng-template matStepLabel>Compte administrateur</ng-template>
-          <section class="step-content">
-            <div class="form-grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Nom complet</mat-label>
-                <input matInput [value]="admin().name" (input)="patchAdmin('name', $any($event.target).value)" required />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Email professionnel</mat-label>
-                <input matInput type="email" [value]="admin().email" (input)="patchAdmin('email', $any($event.target).value)" required />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Téléphone direct</mat-label>
-                <input matInput [value]="admin().phone" (input)="patchAdmin('phone', $any($event.target).value)" />
-              </mat-form-field>
-            </div>
-            <p class="info-note">
-              Un mot de passe temporaire sera généré et envoyé par email.
-            </p>
-          </section>
-          <div class="step-actions">
-            <button mat-button type="button" matStepperPrevious>Retour</button>
-            <button mat-flat-button color="primary" type="button" [disabled]="!isAdminValid()" matStepperNext>
-              Suivant
-            </button>
-          </div>
-        </mat-step>
-
-        <mat-step [completed]="true">
-          <ng-template matStepLabel>Premier plan tarifaire</ng-template>
-          <section class="step-content">
-            <mat-radio-group class="template-grid" [value]="template()" (change)="template.set($event.value)">
-              <mat-radio-button value="BASIQUE">Basique · 25 %</mat-radio-button>
-              <mat-radio-button value="CONFORT">Confort · 40 % recommandé</mat-radio-button>
-              <mat-radio-button value="PREMIUM">Premium · 60 %</mat-radio-button>
-              <mat-radio-button value="PERSONNALISE">Personnalisé</mat-radio-button>
-            </mat-radio-group>
-
-            @if (template() === 'PERSONNALISE') {
-              <div class="form-grid">
-                <mat-form-field appearance="outline">
-                  <mat-label>Nom du plan</mat-label>
-                  <input matInput [value]="customPlanName()" (input)="customPlanName.set($any($event.target).value)" />
-                </mat-form-field>
-                @for (category of customCategories; track category) {
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ actLabel(category) }} (%)</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      [value]="customCoverage()[category] ?? 40"
-                      (input)="patchCoverage(category, +$any($event.target).value)"
-                    />
-                  </mat-form-field>
-                }
-              </div>
-            }
-
-            <mat-card class="coverage-preview">
-              <h3>Aperçu de couverture</h3>
-              <div class="coverage-table">
-                @for (rule of selectedPlan().coverageRules.slice(0, 6); track rule.actCategory) {
-                  <div>
-                    <span>{{ actLabel(rule.actCategory) }}</span>
-                    <strong>{{ rule.coveragePercent }} %</strong>
-                  </div>
-                }
-              </div>
-            </mat-card>
-          </section>
-          <div class="step-actions">
-            <button mat-button type="button" matStepperPrevious>Retour</button>
-            <button mat-flat-button color="primary" type="button" matStepperNext>Suivant</button>
-          </div>
-        </mat-step>
-
-        <mat-step [completed]="true">
-          <ng-template matStepLabel>Import adhérents</ng-template>
-          <section class="step-content">
-            <p class="info-note">
-              Format attendu : matricule, nom, email, téléphone, plan, employeur.
-            </p>
-            <div class="import-actions">
-              <button mat-stroked-button type="button" (click)="downloadTemplate()">
-                <mat-icon aria-hidden="true">download</mat-icon>
-                Télécharger modèle
-              </button>
-              <button mat-flat-button color="primary" type="button" (click)="fileInput.click()">
-                <mat-icon aria-hidden="true">upload_file</mat-icon>
-                Choisir CSV
-              </button>
-              <input #fileInput hidden type="file" accept=".csv" (change)="parseFile($event)" />
-            </div>
-            <mat-chip-set aria-label="Import">
-              <mat-chip>{{ importedRows() }} ligne(s) détectée(s)</mat-chip>
-            </mat-chip-set>
-          </section>
-          <div class="step-actions">
-            <button mat-button type="button" matStepperPrevious>Retour</button>
-            <button mat-button type="button" (click)="importedRows.set(0)" matStepperNext>
-              Passer cette étape
-            </button>
-            <button mat-flat-button color="primary" type="button" matStepperNext>Suivant</button>
-          </div>
-        </mat-step>
-
-        <mat-step>
-          <ng-template matStepLabel>Activation</ng-template>
-          <section class="step-content">
-            <mat-card class="recap-card">
-              <h3>Récapitulatif</h3>
-              <p><strong>Compagnie :</strong> {{ company().name }} · {{ company().code }}</p>
-              <p><strong>Administrateur :</strong> {{ admin().name }} · {{ admin().email }}</p>
-              <p><strong>Plans configurés :</strong> 1</p>
-              <p><strong>Adhérents importés :</strong> {{ importedRows() }}</p>
-            </mat-card>
-
-            <mat-checkbox [checked]="fraudOptIn()" (change)="fraudOptIn.set($event.checked)">
-              Partager les signaux de fraude avec FTUSA (ALFA)
-            </mat-checkbox>
-            <mat-checkbox [checked]="analyticsOptIn()" (change)="analyticsOptIn.set($event.checked)">
-              Inclure les données dans l’analytique marché agrégée
-            </mat-checkbox>
-
-            <p class="warning-note">
-              Ces partages requièrent un accord contractuel séparé. Valeurs par défaut OFF.
-            </p>
-          </section>
-          <div class="step-actions">
-            <button mat-button type="button" matStepperPrevious>Retour</button>
-            <button mat-flat-button color="primary" type="button" (click)="activate()">
-              Activer la compagnie
-            </button>
-          </div>
-        </mat-step>
-      </mat-stepper>
-    </mat-dialog-content>
-  `,
-  styles: `
-    mat-dialog-content {
-      min-width: min(720px, 82vw);
-    }
-
-    .step-content {
-      display: grid;
-      gap: 16px;
-      padding: 18px 0;
-    }
-
-    .form-grid {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .full {
-      grid-column: 1 / -1;
-    }
-
-    .step-actions,
-    .import-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .info-note {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 12px;
-      color: #1d4ed8;
-      margin: 0;
-      padding: 12px;
-    }
-
-    .warning-note {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 12px;
-      color: #92400e;
-      margin: 0;
-      padding: 12px;
-    }
-
-    .template-grid {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .coverage-preview,
-    .recap-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 16px;
-      box-shadow: none;
-      padding: 14px;
-    }
-
-    h3 {
-      color: var(--omnicare-text);
-      font-size: 1rem;
-      margin: 0 0 12px;
-    }
-
-    .coverage-table {
-      display: grid;
-      gap: 8px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .coverage-table div {
-      align-items: center;
-      border: 1px solid #edf2f7;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      padding: 10px;
-    }
-
-    .coverage-table span {
-      color: var(--omnicare-muted);
-    }
-
-    @media (max-width: 720px) {
-      .form-grid,
-      .template-grid,
-      .coverage-table {
-        grid-template-columns: 1fr;
-      }
-    }
-  `,
+  templateUrl: './onboarding-wizard.component.html',
+  styleUrl: './onboarding-wizard.component.scss',
 })
 export class OnboardingWizardComponent {
   private readonly dialogRef = inject(MatDialogRef<OnboardingWizardComponent>);
   private readonly facade = inject(CompagniesFacade);
   private readonly snackBar = inject(MatSnackBar);
 
-  protected readonly data = inject(MAT_DIALOG_DATA, { optional: true });
-  protected readonly customCategories: ActCategory[] = [
-    'CONSULTATION',
-    'CHIRURGIE',
-    'HOSPITALISATION',
-    'DENTAIRE',
+  protected readonly steps: WizardStep[] = [
+    {
+      eyebrow: 'Identité tenant',
+      id: 'company',
+      label: 'Informations compagnie',
+    },
+    {
+      eyebrow: 'Accès initial',
+      id: 'admin',
+      label: 'Compte administrateur',
+    },
+    {
+      eyebrow: 'Modules assureur',
+      id: 'access',
+      label: 'Droits & accès',
+    },
+    {
+      eyebrow: 'Contrôles finaux',
+      id: 'activation',
+      label: 'Activation',
+    },
   ];
+  protected readonly accessModules = signal<AccessModule[]>([
+    {
+      description: 'Connexion au portail assurance après activation du tenant.',
+      enabled: true,
+      id: 'assurance-space',
+      title: 'Accès espace assureur',
+    },
+    {
+      description: 'Traitement des demandes de remboursement et dossiers courants.',
+      enabled: true,
+      id: 'claims',
+      title: 'Gestion des demandes',
+    },
+    {
+      description: 'Suivi des autorisations médicales avant prise en charge.',
+      enabled: true,
+      id: 'prior-authorizations',
+      title: 'Gestion des autorisations préalables',
+    },
+    {
+      description: 'Référentiel adhérents et données de couverture associées.',
+      enabled: true,
+      id: 'adherents',
+      title: 'Gestion des adhérents',
+    },
+    {
+      description: 'Contrats groupe, entreprises clientes et populations rattachées.',
+      enabled: true,
+      id: 'corporate-contracts',
+      title: 'Gestion des entreprises / contrats groupe',
+    },
+    {
+      description: 'Prestataires, conventions et réseau agréé assurance.',
+      enabled: true,
+      id: 'provider-network',
+      title: 'Réseau agréé',
+    },
+    {
+      description: 'Paramètres compagnie, règles SLA et préférences opérationnelles.',
+      enabled: true,
+      id: 'company-settings',
+      title: 'Configuration compagnie',
+    },
+    {
+      description: 'Indicateurs internes de l’assureur dans son espace dédié.',
+      enabled: true,
+      id: 'assurance-analytics',
+      title: 'Analytique assureur',
+    },
+    {
+      description: 'Analyse des signaux et files de revue fraude côté assureur.',
+      enabled: true,
+      id: 'fraud-risk',
+      title: 'Fraude & risque',
+    },
+  ]);
+
+  protected readonly currentStep = signal(0);
+  protected readonly highestVisitedStep = signal(0);
+  protected readonly companyTouched = signal<Partial<Record<keyof CompanyForm, boolean>>>({});
+  protected readonly adminTouched = signal<Partial<Record<keyof AdminForm, boolean>>>({});
+  protected readonly attemptedSteps = signal<Record<number, boolean>>({});
   protected readonly company = signal<CompanyForm>({
     address: 'Tunis',
     cgaRegistrationNumber: '',
@@ -360,26 +168,26 @@ export class OnboardingWizardComponent {
     name: '',
     phone: '',
   });
-  protected readonly template = signal<PlanTemplate>('CONFORT');
-  protected readonly customPlanName = signal('Personnalisé');
-  protected readonly customCoverage = signal<Partial<Record<ActCategory, number>>>({});
-  protected readonly importedRows = signal(0);
   protected readonly fraudOptIn = signal(false);
   protected readonly analyticsOptIn = signal(false);
 
-  protected readonly isCompanyValid = computed(
-    () => this.company().name.trim().length > 0 && this.company().code.trim().length > 0,
-  );
-  protected readonly isAdminValid = computed(
-    () => this.admin().name.trim().length > 0 && this.admin().email.trim().length > 0,
-  );
-  protected readonly selectedPlan = computed(() =>
-    this.facade.planFromTemplate(
-      'new-company',
-      this.template(),
-      this.customPlanName().trim() || 'Personnalisé',
-      this.customCoverage(),
-    ),
+  protected readonly currentStepInfo = computed(() => this.steps[this.currentStep()]);
+  protected readonly isCompanyValid = computed(() => {
+    const company = this.company();
+
+    return (
+      company.name.trim().length > 0 &&
+      company.code.trim().length > 0 &&
+      company.contactEmail.trim().length > 0
+    );
+  });
+  protected readonly isAdminValid = computed(() => {
+    const admin = this.admin();
+
+    return admin.name.trim().length > 0 && admin.email.trim().length > 0;
+  });
+  protected readonly enabledModules = computed(() =>
+    this.accessModules().filter((module) => module.enabled),
   );
 
   protected patchCompany<K extends keyof CompanyForm>(key: K, value: CompanyForm[K]): void {
@@ -390,54 +198,123 @@ export class OnboardingWizardComponent {
     this.admin.update((current) => ({ ...current, [key]: value }));
   }
 
-  protected patchCoverage(category: ActCategory, value: number): void {
-    this.customCoverage.update((current) => ({
-      ...current,
-      [category]: Number.isFinite(value) ? value : 0,
-    }));
+  protected markCompanyTouched(field: keyof CompanyForm): void {
+    this.companyTouched.update((current) => ({ ...current, [field]: true }));
+  }
+
+  protected markAdminTouched(field: keyof AdminForm): void {
+    this.adminTouched.update((current) => ({ ...current, [field]: true }));
+  }
+
+  protected companyError(field: keyof CompanyForm): string | null {
+    if (!this.shouldShowCompanyError(field)) {
+      return null;
+    }
+
+    const value = this.company()[field].trim();
+
+    if (field === 'name' && !value) {
+      return 'Le nom de la compagnie est requis.';
+    }
+
+    if (field === 'code' && !value) {
+      return 'Le code court est requis.';
+    }
+
+    if (field === 'contactEmail' && !value) {
+      return 'L’email contact est requis.';
+    }
+
+    return null;
+  }
+
+  protected adminError(field: keyof AdminForm): string | null {
+    if (!this.shouldShowAdminError(field)) {
+      return null;
+    }
+
+    const value = this.admin()[field].trim();
+
+    if (field === 'name' && !value) {
+      return 'Le nom complet de l’administrateur est requis.';
+    }
+
+    if (field === 'email' && !value) {
+      return 'L’email professionnel est requis.';
+    }
+
+    return null;
   }
 
   protected uppercase(value: string): string {
     return value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
 
-  protected parseFile(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  protected toggleAccessModule(moduleId: AccessModule['id'], enabled: boolean): void {
+    this.accessModules.update((modules) =>
+      modules.map((module) => (module.id === moduleId ? { ...module, enabled } : module)),
+    );
+  }
 
-    if (!file) {
+  protected canOpenStep(index: number): boolean {
+    return index <= this.highestVisitedStep();
+  }
+
+  protected isStepValid(index: number): boolean {
+    if (index === 0) {
+      return this.isCompanyValid();
+    }
+
+    if (index === 1) {
+      return this.isAdminValid();
+    }
+
+    return true;
+  }
+
+  protected goToStep(index: number): void {
+    if (this.canOpenStep(index)) {
+      this.currentStep.set(index);
+    }
+  }
+
+  protected continue(): void {
+    const step = this.currentStep();
+    this.markStepAttempted(step);
+
+    if (!this.isStepValid(step)) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result ?? '');
-      const rows = text
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean);
-      this.importedRows.set(Math.max(0, rows.length - 1));
-    };
-    reader.readAsText(file);
+    const nextStep = Math.min(step + 1, this.steps.length - 1);
+    this.currentStep.set(nextStep);
+    this.highestVisitedStep.update((current) => Math.max(current, nextStep));
   }
 
-  protected downloadTemplate(): void {
-    const csv = [
-      'matricule,nom,email,telephone,plan,employeur',
-      'NEW-001,Sonia Gharbi,sonia@example.tn,+216 20 000 001,Confort,',
-      'NEW-002,Karim Mansour,karim@example.tn,+216 20 000 002,Confort,',
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
+  protected back(): void {
+    this.currentStep.update((step) => Math.max(step - 1, 0));
+  }
 
-    anchor.href = url;
-    anchor.download = 'modele-adherents.csv';
-    anchor.click();
-    URL.revokeObjectURL(url);
+  protected cancel(): void {
+    this.dialogRef.close();
   }
 
   protected activate(): void {
+    this.markStepAttempted(0);
+    this.markStepAttempted(1);
+
+    if (!this.isCompanyValid()) {
+      this.currentStep.set(0);
+      this.highestVisitedStep.update((current) => Math.max(current, 0));
+      return;
+    }
+
+    if (!this.isAdminValid()) {
+      this.currentStep.set(1);
+      this.highestVisitedStep.update((current) => Math.max(current, 1));
+      return;
+    }
+
     const companyForm = this.company();
     const adminForm = this.admin();
     const company = this.facade.createTenant({
@@ -445,7 +322,8 @@ export class OnboardingWizardComponent {
       adminName: adminForm.name.trim(),
       company: {
         address: companyForm.address.trim(),
-        cgaRegistrationNumber: companyForm.cgaRegistrationNumber.trim() || `CGA-${companyForm.code}-2026`,
+        cgaRegistrationNumber:
+          companyForm.cgaRegistrationNumber.trim() || `CGA-${companyForm.code}-2026`,
         code: companyForm.code.trim(),
         contactEmail: companyForm.contactEmail.trim(),
         contactPhone: companyForm.contactPhone.trim(),
@@ -455,10 +333,10 @@ export class OnboardingWizardComponent {
         participatesInCrossFraudDetection: this.fraudOptIn(),
         participatesInMarketAnalytics: this.analyticsOptIn(),
       },
-      importedAdherentsCount: this.importedRows(),
+      importedAdherentsCount: 0,
       participatesInCrossFraudDetection: this.fraudOptIn(),
       participatesInMarketAnalytics: this.analyticsOptIn(),
-      planTier: this.selectedPlan(),
+      planTier: this.facade.planFromTemplate('new-company', 'CONFORT'),
     });
 
     this.snackBar.open(
@@ -469,23 +347,32 @@ export class OnboardingWizardComponent {
     this.dialogRef.close({ created: true });
   }
 
-  protected actLabel(category: ActCategory): string {
-    const labels: Record<ActCategory, string> = {
-      AUTRE: 'Autre',
-      BIOLOGIE: 'Biologie',
-      CHIRURGIE: 'Chirurgie',
-      CONSULTATION: 'Consultation',
-      DENTAIRE: 'Dentaire',
-      HOSPITALISATION: 'Hospitalisation',
-      KINESITHERAPIE: 'Kinésithérapie',
-      MATERNITE: 'Maternité',
-      OPTIQUE: 'Optique',
-      PSYCHIATRIE: 'Psychiatrie',
-      RADIOLOGIE: 'Radiologie',
-      SOINS_INFIRMIERS: 'Soins infirmiers',
-      URGENCES: 'Urgences',
-    };
+  private shouldShowCompanyError(field: keyof CompanyForm): boolean {
+    return !!this.companyTouched()[field] || !!this.attemptedSteps()[0];
+  }
 
-    return labels[category];
+  private shouldShowAdminError(field: keyof AdminForm): boolean {
+    return !!this.adminTouched()[field] || !!this.attemptedSteps()[1];
+  }
+
+  private markStepAttempted(step: number): void {
+    this.attemptedSteps.update((current) => ({ ...current, [step]: true }));
+
+    if (step === 0) {
+      this.companyTouched.update((current) => ({
+        ...current,
+        code: true,
+        contactEmail: true,
+        name: true,
+      }));
+    }
+
+    if (step === 1) {
+      this.adminTouched.update((current) => ({
+        ...current,
+        email: true,
+        name: true,
+      }));
+    }
   }
 }

@@ -3,33 +3,64 @@
 }
 
 .shell-sidenav {
-  background: #ffffff;
-  border-right: 1px solid rgba(15, 111, 115, 0.12);
+  background: #0077b6;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   padding: 18px 12px;
-  width: 292px;
+  width: 304px;
 }
 
 .shell-logo {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   display: grid;
   gap: 4px;
-  padding: 10px 12px 20px;
+  margin-bottom: 14px;
+  padding: 10px 12px 18px;
 }
 
 .shell-logo span {
-  color: var(--omnicare-secondary);
-  font-size: 1.25rem;
-  font-weight: 700;
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 800;
   letter-spacing: 0;
 }
 
 .shell-logo small {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.76);
   font-size: 0.8rem;
 }
 
+.nav-group-label {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0;
+  padding: 4px 12px 8px;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item {
+  border-radius: 12px;
+  margin: 2px 0;
+}
+
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item .mdc-list-item__primary-text,
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item mat-icon {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .active-link {
-  background: rgba(31, 191, 154, 0.12);
-  color: var(--omnicare-secondary);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+:host ::ng-deep .shell-sidenav .active-link .mdc-list-item__primary-text,
+:host ::ng-deep .shell-sidenav .active-link mat-icon {
+  color: #ffffff;
 }
 
 .shell-spacer {
@@ -37,29 +68,31 @@
 }
 
 .shell-user {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   display: grid;
   gap: 4px;
   padding: 16px 8px 0;
 }
 
 .shell-user strong {
-  color: var(--omnicare-text);
+  color: #ffffff;
   font-size: 0.95rem;
 }
 
 .shell-user span {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.78rem;
   overflow-wrap: anywhere;
 }
 
 .shell-user button {
+  color: rgba(255, 255, 255, 0.84);
   justify-content: flex-start;
   margin-top: 8px;
 }
 
 .shell-user .reset-demo {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.82rem;
 }
 
@@ -67,9 +100,28 @@
   background: #ffffff;
   border-bottom: 1px solid rgba(15, 111, 115, 0.1);
   color: var(--omnicare-text);
+  min-height: 72px;
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+.toolbar-context {
+  display: grid;
+  gap: 3px;
+}
+
+.toolbar-context strong {
+  color: var(--omnicare-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.toolbar-context span,
+.toolbar-user {
+  color: var(--omnicare-muted);
+  font-size: 0.82rem;
 }
 
 .toolbar-spacer {
@@ -77,10 +129,25 @@
 }
 
 .toolbar-user {
-  color: var(--omnicare-muted);
-  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .shell-content {
   padding: 28px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(31, 191, 154, 0.35);
+  outline-offset: 2px;
+}
+
+@media (max-width: 940px) {
+  .shell-sidenav {
+    width: 276px;
+  }
+
+  .shell-content {
+    padding: 20px;
+  }
 }

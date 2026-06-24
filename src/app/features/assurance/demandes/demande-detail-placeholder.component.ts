@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -25,6 +25,10 @@ import { RequestDocument } from '../../../models/request-document.model';
 import { ActCategory } from '../../../models/shared.model';
 import { SourceBadgeComponent } from '../../../shared/source-badge/source-badge.component';
 import { StatusChipComponent } from '../../../shared/status-chip/status-chip.component';
+import {
+  ComarBulletinPdfMode,
+  ComarBulletinPdfService,
+} from '../services/comar-bulletin-pdf.service';
 import { DemandesFacade } from './demandes.facade';
 import { MockPdfDialogComponent } from './mock-pdf-dialog.component';
 
@@ -182,6 +186,25 @@ interface BudgetRow {
 
               <mat-tab label="Documents PDF">
                 <div class="tab-content">
+                  <article class="document-row generated-document-row">
+                    <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+                    <div>
+                      <strong>Bulletin de soins COMAR</strong>
+                      <p>Document généré · {{ comarBulletinModeLabel(demande) }}</p>
+                    </div>
+                    <mat-chip class="document-mode-chip">{{ comarBulletinModeLabel(demande) }}</mat-chip>
+                    <div class="document-actions">
+                      <button mat-stroked-button type="button" (click)="previewComarBulletin(demande)">
+                        <mat-icon aria-hidden="true">visibility</mat-icon>
+                        Prévisualiser
+                      </button>
+                      <button mat-stroked-button type="button" (click)="downloadComarBulletin(demande)">
+                        <mat-icon aria-hidden="true">download</mat-icon>
+                        Télécharger
+                      </button>
+                    </div>
+                  </article>
+
                   @if (demande.documents.length === 0) {
                     <div class="empty-inline">Aucun document associé à ce dossier.</div>
                   } @else {
@@ -642,6 +665,28 @@ interface BudgetRow {
       grid-template-columns: auto minmax(0, 1fr) auto auto;
     }
 
+    .generated-document-row {
+      background: #ffffff;
+      border-color: rgba(15, 111, 115, 0.2);
+    }
+
+    .generated-document-row > mat-icon {
+      color: var(--omnicare-secondary);
+    }
+
+    .document-mode-chip {
+      --mdc-chip-elevated-container-color: #ecfeff;
+      --mdc-chip-label-text-color: #0f6f73;
+      font-weight: 700;
+    }
+
+    .document-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: end;
+    }
+
     .document-row p,
     .compact-list span,
     .budget-row span,
@@ -836,6 +881,10 @@ interface BudgetRow {
         grid-template-columns: 1fr;
       }
 
+      .document-actions {
+        justify-content: start;
+      }
+
       .info-grid,
       .two-cols,
       .metric-grid {
@@ -844,12 +893,14 @@ interface BudgetRow {
     }
   `,
 })
-export class DemandeDetailPlaceholderComponent implements OnInit {
+export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly facade = inject(DemandesFacade);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly comarBulletinPdf = inject(ComarBulletinPdfService);
+  private lastComarBulletinUrl: string | null = null;
 
   protected readonly demandeSignal = signal<DemandeRemboursement | undefined>(undefined);
   protected readonly approvedAmount = signal(0);
@@ -1063,6 +1114,10 @@ export class DemandeDetailPlaceholderComponent implements OnInit {
     this.internalNotes.set(this.demandeSignal()?.internalNotes ?? '');
   }
 
+  ngOnDestroy(): void {
+    this.revokeLastComarBulletinUrl();
+  }
+
   protected goBack(): void {
     void this.router.navigate(['/assurance', this.companyId(), 'demandes']);
   }
@@ -1075,6 +1130,51 @@ export class DemandeDetailPlaceholderComponent implements OnInit {
       },
       width: '860px',
     });
+  }
+
+  protected async previewComarBulletin(demande: DemandeRemboursement): Promise<void> {
+    const previewWindow = window.open('about:blank', '_blank');
+
+    if (previewWindow) {
+      previewWindow.opener = null;
+    }
+
+    try {
+      const result = await this.generateComarBulletin(demande);
+
+      if (previewWindow) {
+        previewWindow.location.href = result.objectUrl;
+      } else {
+        this.snackBar.open('Autorisez les pop-ups pour prévisualiser le bulletin COMAR.', 'Fermer', {
+          duration: 3500,
+          horizontalPosition: 'end',
+          verticalPosition: 'top',
+          panelClass: 'notification-info',
+        });
+      }
+    } catch (error) {
+      previewWindow?.close();
+      this.notifyPdfError(error);
+    }
+  }
+
+  protected async downloadComarBulletin(demande: DemandeRemboursement): Promise<void> {
+    try {
+      const result = await this.generateComarBulletin(demande);
+      const anchor = document.createElement('a');
+
+      anchor.href = result.objectUrl;
+      anchor.download = this.comarBulletinPdf.filename(demande);
+      anchor.click();
+    } catch (error) {
+      this.notifyPdfError(error);
+    }
+  }
+
+  protected comarBulletinModeLabel(demande: DemandeRemboursement): string {
+    return this.comarBulletinMode(demande) === 'FINAL_APPROVED'
+      ? 'Final approuvé'
+      : 'Pré-rempli patient';
   }
 
   protected requestDocument(document: RequestDocument): void {
@@ -1247,6 +1347,36 @@ export class DemandeDetailPlaceholderComponent implements OnInit {
     this.demandeSignal.set(updated);
     this.panelLocked.set(true);
     this.rejectionMode.set(false);
+  }
+
+  private async generateComarBulletin(demande: DemandeRemboursement) {
+    const result = await this.comarBulletinPdf.generate(demande, this.comarBulletinMode(demande));
+
+    this.revokeLastComarBulletinUrl();
+    this.lastComarBulletinUrl = result.objectUrl;
+
+    return result;
+  }
+
+  private comarBulletinMode(demande: DemandeRemboursement): ComarBulletinPdfMode {
+    return this.comarBulletinPdf.modeForStatus(demande.status);
+  }
+
+  private revokeLastComarBulletinUrl(): void {
+    if (this.lastComarBulletinUrl) {
+      URL.revokeObjectURL(this.lastComarBulletinUrl);
+      this.lastComarBulletinUrl = null;
+    }
+  }
+
+  private notifyPdfError(error: unknown): void {
+    console.error(error);
+    this.snackBar.open('Le bulletin COMAR n’a pas pu être généré.', 'Fermer', {
+      duration: 3500,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: 'notification-error',
+    });
   }
 
   private toBudgetRow(rule: CoverageRule, demandes: DemandeRemboursement[]): BudgetRow {

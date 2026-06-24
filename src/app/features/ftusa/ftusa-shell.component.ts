@@ -41,6 +41,7 @@ export class FtusaShellComponent {
   protected readonly navItems: ShellNavItem[] = [
     { path: '/ftusa/dashboard', icon: 'dashboard', label: 'Tableau de bord marché' },
     { path: '/ftusa/compagnies', icon: 'domain_add', label: 'Compagnies' },
+    { path: '/ftusa/demandes-adhesion', icon: 'person_add', label: 'Demandes d’adhésion' },
     { path: '/ftusa/analytique', icon: 'monitoring', label: 'Analytique marché' },
     { path: '/ftusa/fraude', icon: 'shield_lock', label: 'Fraude & Risque' },
     { path: '/ftusa/export', icon: 'download', label: "Export d'activité" },

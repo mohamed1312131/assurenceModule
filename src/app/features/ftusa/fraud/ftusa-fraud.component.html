@@ -1,121 +1,356 @@
 <section class="fraud-page">
   <header class="page-header">
-    <div>
-      <h1>Centre de détection inter-compagnies</h1>
-      <p>Données partagées: signaux anonymisés uniquement (hash patient + hash facture).</p>
+    <div class="header-copy">
+      <span class="section-kicker">Supervision FTUSA</span>
+      <h1>Centre fraude & risque FTUSA</h1>
+      <p>Détection inter-compagnies basée sur signaux anonymisés et participation contractuelle.</p>
+      <span class="context-line">
+        ALFA Phase 2 — intégration prévue · Signaux anonymisés · Partage opt-in
+      </span>
     </div>
   </header>
 
-  <mat-card class="phase-card">
-    <div>
-      <span class="phase-badge">Phase 2 — intégration prévue</span>
-      <h2>Intégration ALFA</h2>
-      <p>Aucune synchronisation active n’est simulée dans cette démonstration.</p>
-    </div>
-    <div class="participants">
-      <strong>{{ facade.participatingCompanies() }} / {{ facade.totalCompanies() }}</strong>
-      <span>Compagnies participant au partage de fraude</span>
-      <button mat-button color="primary" type="button" (click)="showParticipantList()">
-        Voir la liste
-      </button>
-    </div>
-  </mat-card>
-
-  <section class="kpi-row" aria-label="Indicateurs fraude marché">
-    <mat-card>
-      <span>Doublons détectés ce mois</span>
-      <strong>{{ facade.kpis().duplicateCount }}</strong>
+  <section class="kpi-row" aria-label="Indicateurs fraude FTUSA">
+    <mat-card class="kpi-card">
+      <span>Doublons ce mois</span>
+      <strong>{{ duplicateCountThisMonth() }}</strong>
+      <small>Hash patient + facture</small>
     </mat-card>
-    <mat-card>
+    <mat-card class="kpi-card">
       <span>Compagnies participantes</span>
-      <strong>{{ facade.kpis().participants }}</strong>
+      <strong>{{ facade.kpis().participants }} / {{ facade.totalCompanies() }}</strong>
+      <small>Partage contractuel actif</small>
     </mat-card>
-    <mat-card>
-      <span>Prestataires multi-alertes</span>
+    <mat-card class="kpi-card">
+      <span>Prestataires suspects</span>
       <strong>{{ facade.kpis().multiAlertProviders }}</strong>
+      <small>Alertes multi-compagnies</small>
     </mat-card>
-    <mat-card>
-      <span>Économies estimées</span>
-      <strong>{{ facade.formatCurrency(facade.kpis().estimatedSavings) }}</strong>
-    </mat-card>
-    <mat-card>
+    <mat-card class="kpi-card">
       <span>Cas transmis à ALFA</span>
       <strong>0</strong>
       <small>En attente intégration</small>
     </mat-card>
   </section>
 
-  <section class="section-grid">
-    <mat-card class="section-card">
-      <header>
-        <h2>Doublons inter-compagnies</h2>
-        <p>Hash calculé depuis patient, facture, date facture et montant.</p>
-      </header>
+  <mat-card class="workspace-card">
+    <mat-tab-group mat-stretch-tabs="false" animationDuration="160ms">
+      <mat-tab label="Signaux inter-compagnies">
+        <section class="table-panel">
+          <div class="toolbar">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Recherche</mat-label>
+              <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+              <input
+                matInput
+                type="search"
+                placeholder="Rechercher hash, compagnie, référence…"
+                [value]="searchTerm()"
+                (input)="setSearchTerm($any($event.target).value)"
+              />
+            </mat-form-field>
 
-      <div class="alert-list">
-        @for (alert of facade.duplicateAlerts(); track alert.id) {
-          <article class="duplicate-card">
-            <header>
-              <div>
-                <span>Hash patient</span>
-                <strong>{{ alert.patientHash }}…</strong>
-              </div>
-              <strong>{{ facade.formatCurrency(alert.totalAmount) }}</strong>
-            </header>
+            <div class="toolbar-actions">
+              <button
+                mat-stroked-button
+                type="button"
+                [attr.aria-expanded]="advancedFiltersOpen()"
+                (click)="advancedFiltersOpen.set(!advancedFiltersOpen())"
+              >
+                <mat-icon aria-hidden="true">tune</mat-icon>
+                Filtres avancés
+              </button>
 
-            <div class="case-list">
-              @for (item of alert.cases; track item.companyName + item.demandeId) {
-                <div>
-                  <strong>{{ item.companyName }}</strong>
-                  <span>{{ item.demandeId }} · {{ facade.formatCurrency(item.amount) }} · {{ formatDate(item.submittedAt) }}</span>
-                </div>
+              @if (activeFilterCount() > 0) {
+                <button mat-button type="button" (click)="resetFilters()">
+                  <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+                  Réinitialiser
+                </button>
               }
             </div>
+          </div>
 
-            <button mat-flat-button color="primary" type="button" (click)="notifyCompanies()">
-              Notifier les deux compagnies
-            </button>
-          </article>
-        }
-      </div>
+          @if (advancedFiltersOpen()) {
+            <div class="advanced-filters">
+              <mat-form-field appearance="outline">
+                <mat-label>Période</mat-label>
+                <mat-select [value]="periodFilter()" (selectionChange)="periodFilter.set($event.value)">
+                  @for (option of periodOptions; track option.value) {
+                    <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-      @if (facade.duplicateAlerts().length === 0) {
-        <section class="empty-state">
-          <mat-icon aria-hidden="true">join_inner</mat-icon>
-          <p>Aucun doublon inter-compagnies détecté.</p>
-        </section>
-      }
-    </mat-card>
+              <mat-form-field appearance="outline">
+                <mat-label>Compagnie</mat-label>
+                <mat-select [value]="companyFilter()" (selectionChange)="companyFilter.set($event.value)">
+                  <mat-option value="ALL">Toutes les compagnies</mat-option>
+                  @for (company of participatingCompanies(); track company.id) {
+                    <mat-option [value]="company.name">{{ companyLabel(company) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
 
-    <mat-card class="section-card">
-      <header>
-        <h2>Prestataires suspects</h2>
-        <p>Motifs partagés sur plusieurs compagnies participantes.</p>
-      </header>
-
-      <div class="provider-list">
-        @for (pattern of facade.providerPatterns(); track pattern.providerName) {
-          <article class="provider-card">
-            <h3>{{ pattern.providerName }}</h3>
-            <div class="breakdown-list">
-              @for (row of pattern.breakdown; track row.companyName) {
-                <div>
-                  <strong>{{ row.companyName }} · {{ row.count }} alerte(s)</strong>
-                  <mat-chip-set aria-label="Drapeaux">
-                    @for (flag of row.flags; track flag) {
-                      <mat-chip>{{ flagLabel(flag) }}</mat-chip>
+              @if (signalFilterOptions().length > 0) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Type de signal</mat-label>
+                  <mat-select [value]="signalFilter()" (selectionChange)="signalFilter.set($event.value)">
+                    <mat-option value="ALL">Tous les signaux</mat-option>
+                    @for (flag of signalFilterOptions(); track flag) {
+                      <mat-option [value]="flag">{{ flagLabel(flag) }}</mat-option>
                     }
-                  </mat-chip-set>
+                  </mat-select>
+                </mat-form-field>
+              }
+
+              <mat-form-field appearance="outline">
+                <mat-label>Montant minimum</mat-label>
+                <input
+                  matInput
+                  inputmode="numeric"
+                  type="number"
+                  [value]="amountMin() ?? ''"
+                  (input)="setAmountMin($any($event.target).value)"
+                />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Montant maximum</mat-label>
+                <input
+                  matInput
+                  inputmode="numeric"
+                  type="number"
+                  [value]="amountMax() ?? ''"
+                  (input)="setAmountMax($any($event.target).value)"
+                />
+              </mat-form-field>
+            </div>
+          }
+
+          <div class="table-meta">
+            <div>
+              <h2>File d’investigation</h2>
+              <p>
+                {{ filteredSignals().length }} signal(aux) affiché(s)
+                @if (activeFilterCount() > 0) {
+                  · {{ activeFilterCount() }} filtre(s) actif(s)
+                }
+              </p>
+            </div>
+            <small>Statut d’investigation affiché uniquement · aucune synchronisation ALFA active.</small>
+          </div>
+
+          @if (enrichedSignals().length === 0) {
+            <section class="empty-state">
+              <mat-icon aria-hidden="true">join_inner</mat-icon>
+              <h3>Aucun signal inter-compagnies</h3>
+              <p>Les doublons apparaîtront lorsque deux compagnies participantes partagent le même hash.</p>
+            </section>
+          } @else if (filteredSignals().length === 0) {
+            <section class="empty-state">
+              <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+              <h3>Aucun résultat filtré</h3>
+              <p>Ajustez la recherche ou réinitialisez les filtres pour revoir tous les signaux.</p>
+              <button mat-stroked-button type="button" (click)="resetFilters()">
+                Réinitialiser les filtres
+              </button>
+            </section>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Signal</th>
+                    <th>Sociétés concernées</th>
+                    <th>Montant</th>
+                    <th>Soumission</th>
+                    <th>Type de risque</th>
+                    <th>Niveau / priorité</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (signal of filteredSignals(); track signal.alert.id) {
+                    <tr [class.selected]="expandedSignalId() === signal.alert.id">
+                      <td>
+                        <strong>{{ shortHash(signal.alert.patientHash) }}</strong>
+                        <span>{{ shortHash(signal.alert.factureHash) }}</span>
+                      </td>
+                      <td>{{ companyListLabel(signal.companies) }}</td>
+                      <td>{{ facade.formatCurrency(signal.alert.totalAmount) }}</td>
+                      <td>{{ submissionRange(signal) }}</td>
+                      <td>{{ riskSummary(signal) }}</td>
+                      <td>
+                        <span class="priority-pill" [class.high]="priorityLabel(signal) === 'Élevée'">
+                          {{ priorityLabel(signal) }}
+                        </span>
+                      </td>
+                      <td>
+                        <button mat-stroked-button type="button" (click)="selectSignal(signal.alert.id)">
+                          Examiner
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (selectedSignal(); as signal) {
+            <aside class="detail-panel" aria-label="Détail du signal sélectionné">
+              <header>
+                <div>
+                  <span class="section-kicker">Signal sélectionné</span>
+                  <h2>Détail anonymisé</h2>
+                  <p>Hash patient et hash facture conservés pour l’investigation inter-compagnies.</p>
+                </div>
+                <button mat-flat-button color="primary" type="button" (click)="notifyCompanies()">
+                  Notifier les compagnies
+                </button>
+              </header>
+
+              <dl class="detail-grid">
+                <div>
+                  <dt>Hash patient</dt>
+                  <dd>{{ signal.alert.patientHash }}</dd>
+                </div>
+                <div>
+                  <dt>Hash facture</dt>
+                  <dd>{{ signal.alert.factureHash }}</dd>
+                </div>
+                <div>
+                  <dt>Compagnies</dt>
+                  <dd>{{ companyListLabel(signal.companies) }}</dd>
+                </div>
+                <div>
+                  <dt>Montant consolidé</dt>
+                  <dd>{{ facade.formatCurrency(signal.alert.totalAmount) }}</dd>
+                </div>
+              </dl>
+
+              <div class="case-list">
+                @for (item of signal.cases; track item.demandeId) {
+                  <article>
+                    <strong>{{ item.companyName }}</strong>
+                    <span>{{ item.demandeId }} · {{ formatDate(item.submittedAt) }}</span>
+                    <span>{{ facade.formatCurrency(item.amount) }}</span>
+                    @if (item.providerName) {
+                      <span>{{ item.providerName }}</span>
+                    }
+                  </article>
+                }
+              </div>
+
+              @if (signal.flags.length > 0) {
+                <div class="flag-list" aria-label="Drapeaux du signal">
+                  @for (flag of signal.flags; track flag) {
+                    <span>{{ flagLabel(flag) }}</span>
+                  }
                 </div>
               }
+            </aside>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Prestataires suspects">
+        <section class="secondary-panel">
+          <header class="table-meta">
+            <div>
+              <h2>Prestataires suspects</h2>
+              <p>Motifs partagés sur plusieurs compagnies participantes.</p>
             </div>
-            <p>{{ pattern.recommendation }}</p>
-            <button mat-stroked-button color="primary" type="button" (click)="createAlfaSignal()">
-              Créer un signalement ALFA
+            <small>ALFA reste Phase 2 — préparation uniquement.</small>
+          </header>
+
+          @if (facade.providerPatterns().length === 0) {
+            <section class="empty-state compact-empty">
+              <mat-icon aria-hidden="true">local_hospital</mat-icon>
+              <h3>Aucun prestataire multi-alerte</h3>
+              <p>Les prestataires apparaîtront lorsque les signaux se recoupent.</p>
+            </section>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Prestataire</th>
+                    <th>Compagnies</th>
+                    <th>Alertes</th>
+                    <th>Motifs</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (pattern of facade.providerPatterns(); track pattern.providerName) {
+                    <tr>
+                      <td>
+                        <strong>{{ pattern.providerName }}</strong>
+                        <span>{{ pattern.recommendation }}</span>
+                      </td>
+                      <td>{{ providerCompanies(pattern) }}</td>
+                      <td>{{ providerAlertCount(pattern) }}</td>
+                      <td>
+                        <span class="muted-list">
+                          @for (flag of providerFlags(pattern); track flag; let last = $last) {
+                            {{ flagLabel(flag) }}@if (!last) { · }
+                          }
+                        </span>
+                      </td>
+                      <td>
+                        <button mat-stroked-button color="primary" type="button" (click)="createAlfaSignal()">
+                          Préparer ALFA
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab label="Participation partage">
+        <section class="secondary-panel">
+          <header class="table-meta">
+            <div>
+              <h2>Participation partage fraude</h2>
+              <p>Seules les compagnies ayant activé le partage contractuel sont incluses.</p>
+            </div>
+            <button mat-button color="primary" type="button" (click)="showParticipantList()">
+              Voir la liste contractuelle
             </button>
-          </article>
-        }
-      </div>
-    </mat-card>
-  </section>
+          </header>
+
+          <div class="participation-grid">
+            <section>
+              <h3>Participantes</h3>
+              <strong>{{ participatingCompanies().length }}</strong>
+              @if (participatingCompanies().length === 0) {
+                <p>Aucune compagnie participante.</p>
+              } @else {
+                @for (company of participatingCompanies(); track company.id) {
+                  <span>{{ companyLabel(company) }}</span>
+                }
+              }
+            </section>
+
+            <section>
+              <h3>Hors partage</h3>
+              <strong>{{ nonParticipatingCompanies().length }}</strong>
+              @if (nonParticipatingCompanies().length === 0) {
+                <p>Toutes les compagnies sont participantes.</p>
+              } @else {
+                @for (company of nonParticipatingCompanies(); track company.id) {
+                  <span>{{ companyLabel(company) }}</span>
+                }
+              }
+            </section>
+          </div>
+        </section>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
 </section>

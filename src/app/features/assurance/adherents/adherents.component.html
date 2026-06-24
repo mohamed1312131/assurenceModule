@@ -1,179 +1,240 @@
 <section class="adherents-page">
-  <header class="page-header">
-    <div>
-      <h1>Adhérents</h1>
-      <p>{{ facade.allAdherents().length }} adhérents · {{ pendingVerification().length }} en attente</p>
-    </div>
-  </header>
+  <section class="dashboard-shell" aria-label="Console adhérents STAR">
+    <header class="page-header">
+      <div class="header-copy">
+        <p class="eyebrow">Population assurée</p>
+        <h1>Adhérents</h1>
+        <p>{{ facade.allAdherents().length }} adhérents · {{ pendingVerification().length }} en attente</p>
+      </div>
+    </header>
 
-  @if (pendingVerification().length > 0) {
-    <app-alert-banner
-      tone="warning"
-      icon="pending_actions"
-      [message]="pendingVerification().length + ' adhérents en attente de vérification.'"
-    />
-  }
+    <section
+      class="operations-row"
+      [class.tone-warning]="pendingVerification().length > 0"
+      [class.tone-success]="pendingVerification().length === 0"
+      aria-label="Synthèse vérification adhérents"
+    >
+      <span class="row-status-dot"></span>
+      <strong>
+        {{ pendingVerification().length > 0
+          ? pendingVerification().length + ' adhérents à vérifier'
+          : 'File de vérification adhérents à jour' }}
+      </strong>
+      <span>{{ verifiedCount() }} profils vérifiés</span>
+    </section>
 
-  <mat-card class="filter-card">
-    <div class="filter-row">
-      <span class="filter-label">Statut</span>
-      <mat-chip-listbox multiple aria-label="Filtrer par statut">
-        @for (status of verificationStatuses; track status) {
-          <mat-chip-option
-            [selected]="facade.filters().verificationStatuses.includes(status)"
-            (click)="toggleVerificationStatus(status)"
-          >
-            {{ verificationLabel(status) }}
-          </mat-chip-option>
-        }
-      </mat-chip-listbox>
-    </div>
+    <section class="primary-kpis" aria-label="Indicateurs adhérents">
+      <mat-card class="kpi-card status-success" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Adhérents actifs</span>
+          <strong class="kpi-value">{{ facade.allAdherents().length }}</strong>
+          <small>{{ groupCount() }} contrats groupe</small>
+        </mat-card-content>
+      </mat-card>
 
-    <div class="filter-row">
-      <span class="filter-label">Type</span>
-      <mat-chip-listbox multiple aria-label="Filtrer par type">
-        @for (type of enrollmentTypes; track type) {
-          <mat-chip-option
-            [selected]="facade.filters().enrollmentTypes.includes(type)"
-            (click)="toggleEnrollmentType(type)"
-          >
-            {{ enrollmentLabel(type) }}
-          </mat-chip-option>
-        }
-      </mat-chip-listbox>
-    </div>
+      <mat-card class="kpi-card status-warning" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">À vérifier</span>
+          <strong class="kpi-value">{{ pendingVerification().length }}</strong>
+          <small>Import ou inscription à valider</small>
+        </mat-card-content>
+      </mat-card>
 
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Plan tarifaire</mat-label>
-        <mat-select
-          [value]="facade.filters().planTier"
-          (selectionChange)="setPlanTier($event.value)"
-        >
-          <mat-option [value]="null">Tous les plans</mat-option>
-          @for (planTier of planTiers(); track planTier) {
-            <mat-option [value]="planTier">{{ planTier }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <mat-card class="kpi-card status-info" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Plans tarifaires</span>
+          <strong class="kpi-value">{{ planTiers().length }}</strong>
+          <small>Répartition couverture STAR</small>
+        </mat-card-content>
+      </mat-card>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Employeur</mat-label>
-        <input
-          matInput
-          type="search"
-          [value]="facade.filters().employer ?? ''"
-          (input)="setEmployer($any($event.target).value)"
-          placeholder="BIAT, STEG..."
-        />
-      </mat-form-field>
+      <mat-card class="kpi-card status-success" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Remboursé année</span>
+          <strong class="kpi-value compact">{{ formatCurrency(totalReimbursedYear()) }}</strong>
+          <small>Dossiers adhérents rattachés</small>
+        </mat-card-content>
+      </mat-card>
+    </section>
 
-      <div class="source-filter">
-        <span class="filter-label">Source</span>
-        <mat-chip-listbox multiple aria-label="Filtrer par source">
-          @for (source of sources; track source) {
+    <mat-card class="filter-card" appearance="outlined">
+      <div class="filter-row">
+        <span class="filter-label">Statut</span>
+        <mat-chip-listbox multiple aria-label="Filtrer par statut">
+          @for (status of verificationStatuses; track status) {
             <mat-chip-option
-              [selected]="facade.filters().sources.includes(source)"
-              (click)="toggleSource(source)"
+              class="filter-chip"
+              [class.status-warning]="status === 'EN_ATTENTE'"
+              [class.status-success]="status === 'VERIFIE'"
+              [class.status-error]="status === 'REJETE'"
+              [class.is-selected]="facade.filters().verificationStatuses.includes(status)"
+              [selected]="facade.filters().verificationStatuses.includes(status)"
+              (click)="toggleVerificationStatus(status)"
             >
-              {{ sourceLabel(source) }}
+              {{ verificationLabel(status) }}
             </mat-chip-option>
           }
         </mat-chip-listbox>
       </div>
-    </div>
 
-    @if (activeFilterCount() > 0) {
-      <div class="active-strip">
-        <span>{{ activeFilterCount() }} filtre(s) actif(s)</span>
-        <button mat-button color="warn" type="button" (click)="resetFilters()">
-          Réinitialiser tout
-        </button>
-      </div>
-    }
-  </mat-card>
-
-  <mat-card class="table-card">
-    <div class="results-header">
-      <strong>{{ filtered().length }} résultats</strong>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Matricule</th>
-            <th>Police</th>
-            <th>Plan</th>
-            <th>Type</th>
-            <th>Employeur</th>
-            <th>Statut</th>
-            <th>Demandes (année)</th>
-            <th>Remboursé (année)</th>
-            <th>Voir</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (adherent of filtered(); track adherent.id) {
-            <tr>
-              <td>
-                <strong>{{ adherent.patientName }}</strong>
-                <app-source-badge [source]="adherent.source" [compact]="true" />
-              </td>
-              <td>{{ adherent.membershipId }}</td>
-              <td>{{ adherent.policyNumber }}</td>
-              <td>{{ adherent.planTierName }}</td>
-              <td>{{ enrollmentLabel(adherent.enrollmentType) }}</td>
-              <td>{{ adherent.employer?.employerName ?? 'Individuel' }}</td>
-              <td><app-status-chip [status]="adherent.verificationStatus" /></td>
-              <td>{{ memberStats(adherent.membershipId).count }}</td>
-              <td>{{ formatCurrency(memberStats(adherent.membershipId).reimbursed) }}</td>
-              <td>
-                <button mat-button color="primary" type="button" (click)="openDrawer(adherent)">
-                  Voir
-                </button>
-              </td>
-            </tr>
+      <div class="filter-row">
+        <span class="filter-label">Type</span>
+        <mat-chip-listbox multiple aria-label="Filtrer par type">
+          @for (type of enrollmentTypes; track type) {
+            <mat-chip-option
+              class="filter-chip neutral"
+              [class.is-selected]="facade.filters().enrollmentTypes.includes(type)"
+              [selected]="facade.filters().enrollmentTypes.includes(type)"
+              (click)="toggleEnrollmentType(type)"
+            >
+              {{ enrollmentLabel(type) }}
+            </mat-chip-option>
           }
-        </tbody>
-      </table>
-    </div>
-
-    @if (filtered().length === 0) {
-      <section class="empty-state">
-        <mat-icon aria-hidden="true">person_search</mat-icon>
-        <h2>Aucun adhérent trouvé</h2>
-      </section>
-    }
-  </mat-card>
-
-  <mat-card class="queue-card">
-    <header>
-      <div>
-        <h2>File de vérification</h2>
-        <p>Adhérents importés ou inscrits à valider.</p>
+        </mat-chip-listbox>
       </div>
-    </header>
 
-    @if (pendingVerification().length === 0) {
-      <p class="muted">Aucune vérification en attente.</p>
-    } @else {
-      <div class="verification-list">
-        @for (adherent of pendingVerification(); track adherent.id) {
-          <article>
-            <div>
-              <strong>{{ adherent.patientName }}</strong>
-              <span>{{ adherent.membershipId }} · {{ adherent.planTierName }} · {{ adherent.employer?.employerName ?? 'Individuel' }}</span>
-            </div>
-            <button mat-flat-button color="primary" type="button" (click)="verify(adherent)">
-              Vérifier
-            </button>
-          </article>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Plan tarifaire</mat-label>
+          <mat-select [value]="facade.filters().planTier" (selectionChange)="setPlanTier($event.value)">
+            <mat-option [value]="null">Tous les plans</mat-option>
+            @for (planTier of planTiers(); track planTier) {
+              <mat-option [value]="planTier">{{ planTier }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Employeur</mat-label>
+          <input
+            matInput
+            type="search"
+            [value]="facade.filters().employer ?? ''"
+            (input)="setEmployer($any($event.target).value)"
+            placeholder="BIAT, STEG..."
+          />
+        </mat-form-field>
+
+        <div class="source-filter">
+          <span class="filter-label">Source</span>
+          <mat-chip-listbox multiple aria-label="Filtrer par source">
+            @for (source of sources; track source) {
+              <mat-chip-option
+                class="filter-chip source-chip"
+                [class.source-omnicare]="source === 'OMNICARE'"
+                [class.source-manuel]="source === 'MANUEL'"
+                [class.source-import]="source === 'IMPORT_CSV'"
+                [class.source-website]="source === 'WEBSITE'"
+                [class.source-email]="source === 'EMAIL'"
+                [class.source-other]="source === 'AUTRE'"
+                [class.is-selected]="facade.filters().sources.includes(source)"
+                [selected]="facade.filters().sources.includes(source)"
+                (click)="toggleSource(source)"
+              >
+                {{ sourceLabel(source) }}
+              </mat-chip-option>
+            }
+          </mat-chip-listbox>
+        </div>
+      </div>
+
+      @if (activeFilterCount() > 0) {
+        <div class="active-strip">
+          <span>{{ activeFilterCount() }} filtre(s) actif(s)</span>
+          <button mat-button color="primary" type="button" (click)="resetFilters()">
+            Réinitialiser
+          </button>
+        </div>
+      }
+    </mat-card>
+
+    <section class="workspace-grid" aria-label="Pilotage adhérents">
+      <mat-card class="table-card" appearance="outlined">
+        <header class="section-heading">
+          <div>
+            <span>Registre</span>
+            <h2>{{ filtered().length }} résultats</h2>
+          </div>
+        </header>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Matricule</th>
+                <th>Police</th>
+                <th>Plan</th>
+                <th>Type</th>
+                <th>Employeur</th>
+                <th>Statut</th>
+                <th>Demandes</th>
+                <th>Remboursé</th>
+                <th>Voir</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (adherent of filtered(); track adherent.id) {
+                <tr>
+                  <td>
+                    <strong>{{ adherent.patientName }}</strong>
+                    <app-source-badge [source]="adherent.source" [compact]="true" />
+                  </td>
+                  <td>{{ adherent.membershipId }}</td>
+                  <td>{{ adherent.policyNumber }}</td>
+                  <td>{{ adherent.planTierName }}</td>
+                  <td>{{ enrollmentLabel(adherent.enrollmentType) }}</td>
+                  <td>{{ adherent.employer?.employerName ?? 'Individuel' }}</td>
+                  <td><app-status-chip [status]="adherent.verificationStatus" /></td>
+                  <td>{{ memberStats(adherent.membershipId).count }}</td>
+                  <td>{{ formatCurrency(memberStats(adherent.membershipId).reimbursed) }}</td>
+                  <td>
+                    <button mat-button color="primary" type="button" (click)="openDrawer(adherent)">
+                      Voir
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (filtered().length === 0) {
+          <section class="empty-state">
+            <mat-icon aria-hidden="true">person_search</mat-icon>
+            <h2>Aucun adhérent trouvé</h2>
+          </section>
         }
-      </div>
-    }
-  </mat-card>
+      </mat-card>
+
+      <mat-card class="queue-card" appearance="outlined">
+        <header class="section-heading">
+          <div>
+            <span>Opérations</span>
+            <h2>File de vérification</h2>
+          </div>
+        </header>
+
+        @if (pendingVerification().length === 0) {
+          <p class="muted">Aucune vérification en attente.</p>
+        } @else {
+          <div class="verification-list">
+            @for (adherent of pendingVerification(); track adherent.id) {
+              <article>
+                <div>
+                  <strong>{{ adherent.patientName }}</strong>
+                  <span>{{ adherent.membershipId }} · {{ adherent.planTierName }} · {{ adherent.employer?.employerName ?? 'Individuel' }}</span>
+                </div>
+                <button mat-flat-button color="primary" type="button" (click)="verify(adherent)">
+                  Vérifier
+                </button>
+              </article>
+            }
+          </div>
+        }
+      </mat-card>
+    </section>
+  </section>
 
   <app-adherent-detail-drawer
     [companyId]="companyId()"

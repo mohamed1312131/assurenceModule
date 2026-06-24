@@ -1,0 +1,368 @@
+<section class="adhesion-requests-page">
+  <header class="page-header">
+    <div>
+      <h1>Demandes d’adhésion OmniCare</h1>
+      <p>Demandes reçues depuis l’app OmniCare avant proposition d’une compagnie d’assurance.</p>
+    </div>
+  </header>
+
+  <section class="stats-grid" aria-label="Indicateurs demandes adhesion">
+    <mat-card class="stat-card">
+      <span>Total demandes</span>
+      <strong>{{ facade.stats().total }}</strong>
+      <small>Canal OmniCare</small>
+    </mat-card>
+    <mat-card class="stat-card info">
+      <span>Nouvelles</span>
+      <strong>{{ facade.stats().newCount }}</strong>
+      <small>À analyser par FTUSA</small>
+    </mat-card>
+    <mat-card class="stat-card warning">
+      <span>À compléter</span>
+      <strong>{{ facade.stats().incomplete }}</strong>
+      <small>Données ou pièces manquantes</small>
+    </mat-card>
+    <mat-card class="stat-card success">
+      <span>Prêtes</span>
+      <strong>{{ facade.stats().ready }}</strong>
+      <small>Offre possible vers OmniCare</small>
+    </mat-card>
+  </section>
+
+  <mat-card class="filter-card">
+    <label class="search-control">
+      <span>Recherche</span>
+      <mat-icon aria-hidden="true">search</mat-icon>
+      <input
+        type="search"
+        [value]="facade.filters().search ?? ''"
+        (input)="setSearch($any($event.target).value)"
+        placeholder="Nom, ID, employeur, ville..."
+      />
+    </label>
+
+    <div class="status-filter">
+      <span class="filter-label">Statut</span>
+      <mat-chip-listbox multiple aria-label="Filtrer les demandes par statut">
+        @for (status of statuses; track status) {
+          <mat-chip-option
+            [selected]="facade.filters().statuses.includes(status)"
+            (click)="toggleStatus(status)"
+          >
+            {{ statusLabel(status) }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+
+    <label class="page-size-control">
+      <span>Par page</span>
+      <select [value]="facade.pageSize()" (change)="setPageSize($any($event.target).value)">
+        @for (size of pageSizes; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </label>
+
+    @if (facade.filters().statuses.length > 0 || facade.filters().search) {
+      <button mat-button type="button" (click)="facade.resetFilters()">
+        <mat-icon aria-hidden="true">restart_alt</mat-icon>
+        Réinitialiser
+      </button>
+    }
+  </mat-card>
+
+  <section class="workspace-grid">
+    <mat-card class="queue-card">
+      <header class="section-header">
+        <div>
+          <h2>File de demandes</h2>
+          <p>
+            {{ facade.visibleRange().start }}-{{ facade.visibleRange().end }}
+            sur {{ facade.visibleRange().total }} résultat(s)
+          </p>
+        </div>
+      </header>
+
+      <div class="request-list">
+        @for (request of facade.pagedRequests(); track request.id) {
+          <button
+            class="request-row"
+            type="button"
+            [class.selected]="isSelected(request)"
+            (click)="selectRequest(request)"
+          >
+            <div class="request-row-top">
+              <strong>{{ request.applicantName }}</strong>
+              <app-status-chip
+                [status]="request.status"
+                [label]="statusLabel(request.status)"
+                [tone]="statusTone(request.status)"
+              />
+            </div>
+            <span>{{ request.externalRequestId }} · {{ relativeDate(request.submittedAt) }}</span>
+            <span>{{ memberSummary(request) }}</span>
+            <span>{{ request.employerName ?? 'Sans employeur déclaré' }}</span>
+            @if (request.missingItems.length > 0) {
+              <span class="missing-line">
+                <mat-icon aria-hidden="true">error</mat-icon>
+                {{ request.missingItems.length }} complément(s)
+              </span>
+            }
+          </button>
+        }
+      </div>
+
+      @if (facade.pagedRequests().length === 0) {
+        <section class="queue-empty">
+          <mat-icon aria-hidden="true">manage_search</mat-icon>
+          <strong>Aucune demande trouvée</strong>
+          <span>Modifiez la recherche ou réinitialisez les filtres.</span>
+        </section>
+      }
+
+      <footer class="queue-pagination">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="facade.currentPageIndex() === 0"
+          (click)="facade.previousPage()"
+        >
+          <mat-icon aria-hidden="true">chevron_left</mat-icon>
+          Précédent
+        </button>
+        <span>Page {{ facade.currentPageIndex() + 1 }} / {{ facade.totalPages() }}</span>
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="facade.currentPageIndex() + 1 >= facade.totalPages()"
+          (click)="facade.nextPage()"
+        >
+          Suivant
+          <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        </button>
+      </footer>
+    </mat-card>
+
+    @if (facade.selectedRequest(); as request) {
+      <section class="detail-column">
+        <mat-card class="detail-card">
+          <header class="detail-header">
+            <div>
+              <p class="eyebrow">Dossier {{ request.externalRequestId }}</p>
+              <h2>{{ request.applicantName }}</h2>
+              <p>{{ memberSummary(request) }} · {{ request.city }}</p>
+            </div>
+            <app-status-chip
+              [status]="request.status"
+              [label]="statusLabel(request.status)"
+              [tone]="statusTone(request.status)"
+            />
+          </header>
+
+          <section class="detail-grid">
+            <article class="info-block">
+              <h3>Identité et emploi</h3>
+              <dl>
+                <div>
+                  <dt>Email</dt>
+                  <dd>{{ request.applicantEmail }}</dd>
+                </div>
+                <div>
+                  <dt>Téléphone</dt>
+                  <dd>{{ request.applicantPhone }}</dd>
+                </div>
+                <div>
+                  <dt>Employeur</dt>
+                  <dd>{{ request.employerName ?? 'Non renseigné' }}</dd>
+                </div>
+                <div>
+                  <dt>Profession</dt>
+                  <dd>{{ request.profession }}</dd>
+                </div>
+                <div>
+                  <dt>Salaire annuel</dt>
+                  <dd>{{ formatCurrency(request.annualSalary) }}</dd>
+                </div>
+                <div>
+                  <dt>Entrée société</dt>
+                  <dd>{{ dateLabel(request.companyEntryDate) }}</dd>
+                </div>
+              </dl>
+            </article>
+
+            <article class="info-block">
+              <h3>Bulletin d’adhésion</h3>
+              <dl>
+                <div>
+                  <dt>Situation familiale</dt>
+                  <dd>{{ familySituationLabel(request.familySituation) }}</dd>
+                </div>
+                <div>
+                  <dt>Date mariage</dt>
+                  <dd>{{ dateLabel(request.marriageDate) }}</dd>
+                </div>
+                <div>
+                  <dt>Adresse</dt>
+                  <dd>{{ request.address }}</dd>
+                </div>
+                <div>
+                  <dt>Effet souhaité</dt>
+                  <dd>{{ dateLabel(request.desiredEffectiveDate) }}</dd>
+                </div>
+                <div>
+                  <dt>Assurance actuelle</dt>
+                  <dd>{{ request.currentHealthCoverage ?? 'Non renseigné' }}</dd>
+                </div>
+                <div>
+                  <dt>Prévoyance</dt>
+                  <dd>{{ request.providentScheme ?? 'Non renseigné' }}</dd>
+                </div>
+              </dl>
+            </article>
+          </section>
+
+          <section class="coverage-block">
+            <h3>Garanties demandées</h3>
+            <mat-chip-set>
+              @for (coverage of request.requestedCoverage; track coverage) {
+                <mat-chip>{{ coverageLabel(coverage) }}</mat-chip>
+              }
+            </mat-chip-set>
+          </section>
+
+          <mat-divider />
+
+          <section class="members-section">
+            <h3>Personnes à couvrir</h3>
+            <div class="member-grid">
+              @for (member of request.members; track member.id) {
+                <article class="member-card" [class.medical-alert]="!member.medical.goodHealth">
+                  <span>{{ relationshipLabel(member.relationship) }}</span>
+                  <strong>{{ member.fullName }}</strong>
+                  <p>{{ dateLabel(member.birthDate) }} · {{ member.profession ?? 'Sans profession' }}</p>
+                  <p>CIN : {{ member.cin ?? 'Non renseignée' }}</p>
+                  <p>
+                    Santé :
+                    {{ member.medical.goodHealth ? 'déclaration simple' : 'signal médical à revoir' }}
+                  </p>
+                  @if (member.medical.chronicDisease || member.medical.currentTreatment || member.medical.notes) {
+                    <small>
+                      {{
+                        member.medical.chronicDisease ??
+                          member.medical.currentTreatment ??
+                          member.medical.notes
+                      }}
+                    </small>
+                  }
+                </article>
+              }
+            </div>
+          </section>
+
+          <section class="documents-section">
+            <h3>Pièces et complétude</h3>
+            <div class="document-list">
+              @for (document of request.documents; track document.id) {
+                <article class="document-row">
+                  <mat-icon aria-hidden="true">description</mat-icon>
+                  <div>
+                    <strong>{{ document.label }}</strong>
+                    <span>{{ document.ownerName ?? 'Dossier famille' }}</span>
+                  </div>
+                  <app-status-chip
+                    [status]="document.status"
+                    [tone]="documentStatusTone(document.status)"
+                  />
+                </article>
+              }
+            </div>
+
+            @if (request.missingItems.length > 0) {
+              <div class="missing-box">
+                <mat-icon aria-hidden="true">priority_high</mat-icon>
+                <div>
+                  <strong>Compléments requis avant offre</strong>
+                  @for (item of request.missingItems; track item) {
+                    <span>{{ item }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        </mat-card>
+
+        <mat-card class="recommendation-card">
+          <header class="section-header">
+            <div>
+              <h2>Compagnies suggérées</h2>
+              <p>Classement démo basé sur couverture, SLA, réseau, contrat groupe et complétude.</p>
+            </div>
+          </header>
+
+          <div class="recommendation-list">
+            @for (recommendation of recommendations(); track recommendation.companyId) {
+              <article class="recommendation-row" [class.best]="recommendation.rank === 1">
+                <div class="rank-badge">#{{ recommendation.rank }}</div>
+                <div class="recommendation-main">
+                  <div class="recommendation-title">
+                    <div>
+                      <strong>{{ recommendation.companyName }}</strong>
+                      <span>{{ recommendation.planTierName }} · {{ recommendation.companyCode }}</span>
+                    </div>
+                    <strong class="score">{{ recommendation.score }}/100</strong>
+                  </div>
+                  <div class="score-track" aria-hidden="true">
+                    <span [style.width]="scoreWidth(recommendation.score)"></span>
+                  </div>
+                  <div class="recommendation-meta">
+                    <span>{{ facade.formatCurrency(recommendation.monthlyPremiumEstimate) }}/mois estimé</span>
+                    <span>{{ recommendation.slaTargetDays }} j SLA</span>
+                    <span>{{ formatInteger(recommendation.averageCoveragePercent) }}% couverture moyenne</span>
+                  </div>
+                  <div class="reason-grid">
+                    @for (reason of recommendation.reasons; track reason) {
+                      <span class="reason">
+                        <mat-icon aria-hidden="true">check_circle</mat-icon>
+                        {{ reason }}
+                      </span>
+                    }
+                    @for (caution of recommendation.cautions; track caution) {
+                      <span class="caution">
+                        <mat-icon aria-hidden="true">warning</mat-icon>
+                        {{ caution }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <footer class="action-bar">
+            <button mat-stroked-button type="button" (click)="requestMoreInfo(request)">
+              <mat-icon aria-hidden="true">edit_note</mat-icon>
+              Demander infos manquantes
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="request.missingItems.length > 0 || request.status === 'OFFRE_ENVOYEE'"
+              (click)="sendOffer(request)"
+            >
+              <mat-icon aria-hidden="true">send</mat-icon>
+              Envoyer l’offre vers OmniCare
+            </button>
+          </footer>
+
+          @if (request.lastAction) {
+            <p class="last-action">
+              Dernière action : {{ request.lastAction.label }} · {{ relativeDate(request.lastAction.at) }}
+            </p>
+          }
+        </mat-card>
+      </section>
+    }
+  </section>
+</section>

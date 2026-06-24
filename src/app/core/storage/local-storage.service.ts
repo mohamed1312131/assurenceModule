@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   companies: 'omnicare_ftusa_companies',
   admins: 'omnicare_ftusa_admins',
   communications: 'omnicare_ftusa_communications',
+  adhesionRequests: 'omnicare_ftusa_adhesion_requests',
   actCategories: 'omnicare_ftusa_act_categories',
   platformSettings: 'omnicare_ftusa_platform_settings',
   currentUser: 'omnicare_ftusa_current_user',

@@ -5,7 +5,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ClaimFlag } from '../../models/demande-remboursement.model';
-import { ClaimSource } from '../../models/shared.model';
+import { ActCategory, ClaimSource } from '../../models/shared.model';
 import { SourceBadgeComponent } from '../source-badge/source-badge.component';
 import { StatusChipComponent } from '../status-chip/status-chip.component';
 
@@ -27,9 +27,12 @@ export class ClaimCardComponent {
   readonly patientName = input.required<string>();
   readonly planTierName = input('');
   readonly membershipId = input('');
+  readonly claimReference = input('');
   readonly employerName = input('');
+  readonly actCategory = input<ActCategory | null>(null);
   readonly actDescription = input('');
   readonly providerName = input('');
+  readonly providerInNetwork = input<boolean | null>(null);
   readonly amount = input<number | null>(null);
   readonly source = input<ClaimSource>('AUTRE');
   readonly riskScore = input<'FAIBLE' | 'MOYEN' | 'ELEVE'>('FAIBLE');
@@ -56,11 +59,11 @@ export class ClaimCardComponent {
   });
 
   protected readonly patientMeta = computed(() =>
-    [this.planTierName(), this.membershipId(), this.employerName()].filter(Boolean).join(' · '),
+    [this.planTierName(), this.claimReference(), this.employerName()].filter(Boolean).join(' · '),
   );
 
   protected readonly careLine = computed(() =>
-    [this.actDescription(), this.providerName()].filter(Boolean).join(' · '),
+    [this.actCategoryLabel(), this.providerName(), this.networkLabel()].filter(Boolean).join(' · '),
   );
 
   protected readonly submittedLabel = computed(() => {
@@ -86,12 +89,23 @@ export class ClaimCardComponent {
     return `Soumise il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
   });
 
+  protected readonly displaySlaLabel = computed(() => {
+    if (this.slaLabel()) {
+      return this.slaLabel();
+    }
+
+    return this.flags().includes('DELAI_SOUMISSION') ? 'Délai à vérifier' : '';
+  });
+
   protected readonly flagLabels = computed(() =>
-    this.flags().map((flag) => ({
+    this.flags().slice(0, 2).map((flag) => ({
       flag,
       label: this.flagLabel(flag),
+      tone: this.flagTone(flag),
     })),
   );
+
+  protected readonly hiddenFlagCount = computed(() => Math.max(0, this.flags().length - 2));
 
   protected onOpen(): void {
     this.opened.emit(this.id());
@@ -109,5 +123,55 @@ export class ClaimCardComponent {
     };
 
     return labels[flag];
+  }
+
+  private flagTone(flag: ClaimFlag): 'error' | 'warning' | 'info' {
+    const tones: Record<ClaimFlag, 'error' | 'warning' | 'info'> = {
+      AUTORISATION_MANQUANTE: 'error',
+      DELAI_SOUMISSION: 'warning',
+      DOCUMENTS_MANQUANTS: 'warning',
+      DOUBLON_SUSPECT: 'error',
+      MONTANT_ELEVE: 'warning',
+      PRESTATAIRE_HORS_RESEAU: 'error',
+      SEUIL_REASSURANCE: 'info',
+    };
+
+    return tones[flag];
+  }
+
+  protected actCategoryLabel(): string {
+    const category = this.actCategory();
+
+    if (!category) {
+      return this.actDescription();
+    }
+
+    const labels: Record<ActCategory, string> = {
+      AUTRE: 'Autre',
+      BIOLOGIE: 'Biologie',
+      CHIRURGIE: 'Chirurgie',
+      CONSULTATION: 'Consultation',
+      DENTAIRE: 'Dentaire',
+      HOSPITALISATION: 'Hospitalisation',
+      KINESITHERAPIE: 'Kinésithérapie',
+      MATERNITE: 'Maternité',
+      OPTIQUE: 'Optique',
+      PSYCHIATRIE: 'Psychiatrie',
+      RADIOLOGIE: 'Radiologie',
+      SOINS_INFIRMIERS: 'Soins infirmiers',
+      URGENCES: 'Urgences',
+    };
+
+    return labels[category];
+  }
+
+  private networkLabel(): string {
+    const inNetwork = this.providerInNetwork();
+
+    if (inNetwork === null) {
+      return '';
+    }
+
+    return inNetwork ? 'Réseau agréé' : 'Hors réseau';
   }
 }

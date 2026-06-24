@@ -18,7 +18,6 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { LocalStorageService, STORAGE_KEYS } from '../../../core/storage/local-storage.service';
 import { AutorisationPrealable } from '../../../models/autorisation-prealable.model';
-import { Communication } from '../../../models/communication.model';
 import { CorporateContract } from '../../../models/corporate-contract.model';
 import { DemandeRemboursement } from '../../../models/demande-remboursement.model';
 import { InsuranceCompany } from '../../../models/insurance-company.model';
@@ -26,9 +25,6 @@ import { PlanTier } from '../../../models/plan-tier.model';
 import {
   daysBetween,
   daysSince,
-  formatDecimal,
-  formatFullDate,
-  formatPercent,
   formatTnd,
   isCurrentMonth,
 } from '../../../shared/utils/formatters';
@@ -36,6 +32,7 @@ import {
 type CountUpFormat = 'integer' | 'decimal' | 'currency' | 'percent';
 type KpiTone = 'primary' | 'secondary' | 'tertiary';
 type InsightTone = 'info' | 'success' | 'warning' | 'error' | 'neutral';
+type OperationalTone = 'info' | 'success' | 'warning' | 'error' | 'neutral';
 
 export interface DashboardKpi {
   id: string;
@@ -46,6 +43,47 @@ export interface DashboardKpi {
   trend?: string;
   icon: LucideIconData;
   tone: KpiTone;
+  statusTone: OperationalTone;
+  progress?: number;
+}
+
+export interface DashboardOperationSummary {
+  treatmentCount: number;
+  lateCount: number;
+  pendingAuthorizations: number;
+  sentence: string;
+  tone: OperationalTone;
+}
+
+export interface DashboardSecondaryMetric {
+  id: string;
+  label: string;
+  value: number;
+  format: CountUpFormat;
+  suffix?: string;
+  trend: string;
+  icon: LucideIconData;
+  tone: OperationalTone;
+}
+
+export interface DashboardPriorityItem {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  actionLabel: string;
+  tone: OperationalTone;
+  commands: string[];
+  queryParams?: Record<string, string>;
+}
+
+export interface DashboardStatusBar {
+  id: string;
+  label: string;
+  value: number;
+  total: number;
+  percent: number;
+  tone: OperationalTone;
 }
 
 export interface DashboardInsight {
@@ -66,6 +104,7 @@ export interface QuickAction {
   label: string;
   disabled: boolean;
   icon: LucideIconData;
+  helper?: string;
   commands?: string[];
   queryParams?: Record<string, string>;
 }
@@ -74,6 +113,12 @@ export interface AssuranceDashboardData {
   companyId: string;
   companyName: string;
   subtitle: string;
+  periodLabel: string;
+  operationsSummary: DashboardOperationSummary;
+  primaryKpis: DashboardKpi[];
+  secondaryMetrics: DashboardSecondaryMetric[];
+  treatmentPriorities: DashboardPriorityItem[];
+  statusBars: DashboardStatusBar[];
   kpiRows: [DashboardKpi[], DashboardKpi[]];
   insights: DashboardInsight[];
   quickActions: QuickAction[];
@@ -84,6 +129,11 @@ export class AssuranceDashboardFacade {
   private readonly storage = inject(LocalStorageService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly waitingStatuses: DemandeRemboursement['status'][] = [
+    'SOUMISE',
+    'DOCUMENTS_INCOMPLETS',
+    'EN_EXAMEN',
+  ];
 
   private readonly companyId = computed(
     () => this.auth.currentUser()?.companyId ?? this.routeCompanyId() ?? 'star',
@@ -115,10 +165,6 @@ export class AssuranceDashboardFacade {
     this.storage.getItem<PlanTier[]>(this.storage.companyKey(this.companyId(), 'plan_tiers'), []),
   );
 
-  private readonly communications = computed(() =>
-    this.storage.getItem<Communication[]>(STORAGE_KEYS.communications, []),
-  );
-
   readonly kpis = computed(() => this.buildKpis());
   readonly insights = computed(() => this.buildInsights());
 
@@ -128,9 +174,15 @@ export class AssuranceDashboardFacade {
     return {
       companyId,
       companyName: this.companyName(),
-      subtitle: `Vue assurance au ${formatFullDate(new Date())}`,
-      kpiRows: [this.kpis().slice(0, 4), this.kpis().slice(4)],
-      insights: this.insights(),
+      subtitle: `Vue opérationnelle assurance — ${this.currentMonthLabel()}`,
+      periodLabel: this.currentMonthLabel(),
+      operationsSummary: this.operationsSummary(),
+      primaryKpis: this.kpis().slice(0, 4),
+      secondaryMetrics: this.secondaryMetrics(),
+      treatmentPriorities: this.treatmentPriorities(companyId),
+      statusBars: this.statusBars(),
+      kpiRows: [this.kpis().slice(0, 4), []],
+      insights: this.insights().slice(0, 4),
       quickActions: this.quickActions(companyId),
     };
   });
@@ -138,27 +190,11 @@ export class AssuranceDashboardFacade {
   private buildKpis(): DashboardKpi[] {
     const demandes = this.demandes();
     const monthDemandes = demandes.filter((demande) => isCurrentMonth(demande.submittedAt));
-    const waitingStatuses = ['SOUMISE', 'DOCUMENTS_INCOMPLETS', 'EN_EXAMEN'];
-    const completedDemandes = demandes.filter((demande) => this.isTerminalStatus(demande.status));
-    const decidedDemandes = completedDemandes.filter((demande) => demande.status !== 'DOCUMENTS_INCOMPLETS');
-    const approvedDemandes = completedDemandes.filter((demande) =>
-      ['APPROUVEE', 'APPROUVEE_AUTO', 'APPROUVEE_PARTIELLEMENT'].includes(demande.status),
-    );
-    const avgDelay =
-      completedDemandes.length === 0
-        ? 0
-        : completedDemandes.reduce((total, demande) => {
-            if (!demande.respondedAt) {
-              return total;
-            }
-
-            return total + daysBetween(demande.submittedAt, demande.respondedAt);
-          }, 0) / completedDemandes.length;
-    const approvalRate =
-      decidedDemandes.length === 0 ? 0 : (approvedDemandes.length / decidedDemandes.length) * 100;
-    const reimbursedThisMonth = completedDemandes
-      .filter((demande) => isCurrentMonth(demande.respondedAt ?? demande.submittedAt))
-      .reduce((total, demande) => total + (demande.approvedAmount ?? 0), 0);
+    const waitingCount = demandes.filter((demande) =>
+      this.waitingStatuses.includes(demande.status),
+    ).length;
+    const pendingAuthorizations = this.pendingAuthorizations().length;
+    const lateCount = this.lateDemandes().length;
 
     return [
       {
@@ -166,66 +202,44 @@ export class AssuranceDashboardFacade {
         label: 'Demandes reçues ce mois',
         value: monthDemandes.length,
         format: 'integer',
-        trend: '+12% vs mois précédent',
+        trend: 'Flux entrant',
         icon: ClipboardList,
         tone: 'primary',
+        statusTone: 'info',
+        progress: this.percent(monthDemandes.length, Math.max(demandes.length, 1)),
       },
       {
         id: 'waiting',
         label: 'En attente de traitement',
-        value: demandes.filter((demande) => waitingStatuses.includes(demande.status)).length,
+        value: waitingCount,
         format: 'integer',
-        trend: 'À prioriser cette semaine',
+        trend: 'File active',
         icon: Hourglass,
         tone: 'secondary',
+        statusTone: waitingCount > 0 ? 'warning' : 'success',
+        progress: this.percent(waitingCount, Math.max(demandes.length, 1)),
       },
       {
         id: 'authorizations',
         label: 'Autorisations en attente',
-        value: this.autorisations().filter((autorisation) =>
-          ['EN_ATTENTE', 'EN_EXAMEN'].includes(autorisation.status),
-        ).length,
+        value: pendingAuthorizations,
         format: 'integer',
-        trend: 'Délai légal de 15 jours',
+        trend: 'Décision médicale',
         icon: FileCheck,
         tone: 'tertiary',
-      },
-      {
-        id: 'avg-delay',
-        label: 'Délai moyen de traitement',
-        value: avgDelay,
-        format: 'decimal',
-        suffix: ' jours',
-        trend: '-0,8 j vs mois précédent',
-        icon: Clock,
-        tone: 'primary',
-      },
-      {
-        id: 'approval-rate',
-        label: "Taux d'approbation",
-        value: approvalRate,
-        format: 'percent',
-        trend: 'Décisions clôturées',
-        icon: Percent,
-        tone: 'secondary',
-      },
-      {
-        id: 'reimbursed-month',
-        label: 'Montant remboursé ce mois',
-        value: reimbursedThisMonth,
-        format: 'currency',
-        trend: 'Tous canaux confondus',
-        icon: Wallet,
-        tone: 'tertiary',
+        statusTone: pendingAuthorizations > 0 ? 'info' : 'success',
+        progress: this.percent(pendingAuthorizations, Math.max(this.autorisations().length, 1)),
       },
       {
         id: 'late',
-        label: 'Demandes en retard SLA',
-        value: this.lateDemandes().length,
+        label: 'Retards SLA',
+        value: lateCount,
         format: 'integer',
-        trend: 'Selon SLA du plan',
+        trend: 'Urgence opérationnelle',
         icon: AlertTriangle,
         tone: 'primary',
+        statusTone: lateCount > 0 ? 'error' : 'success',
+        progress: this.percent(lateCount, Math.max(waitingCount, 1)),
       },
     ];
   }
@@ -234,10 +248,6 @@ export class AssuranceDashboardFacade {
     const companyId = this.companyId();
     const demandes = this.demandes();
     const monthDemandes = demandes.filter((demande) => isCurrentMonth(demande.submittedAt));
-    const kineCount = monthDemandes.filter(
-      (demande) => demande.actCategory === 'KINESITHERAPIE',
-    ).length;
-    const kineShare = monthDemandes.length === 0 ? 0 : (kineCount / monthDemandes.length) * 100;
     const expiringContract = this.contracts().find(
       (contract) => contract.status === 'EXPIRATION_PROCHE',
     );
@@ -250,68 +260,46 @@ export class AssuranceDashboardFacade {
           isCurrentMonth(demande.respondedAt ?? demande.submittedAt),
       )
       .reduce((total, demande) => total + (demande.approvedAmount ?? 0), 0);
-    const unreadCount = this.unreadCommunicationsCount();
 
     return [
       {
-        id: 'kine-opportunity',
-        icon: 'trending_up',
-        eyebrow: 'Opportunité',
-        title: `Kinésithérapie représente ${formatPercent(kineShare)}% des demandes ce mois`,
-        description: `${kineCount} dossier${kineCount > 1 ? 's' : ''} sur ${monthDemandes.length} demande${monthDemandes.length > 1 ? 's' : ''} reçue${monthDemandes.length > 1 ? 's' : ''}.`,
-        supportingData: ['Canal OmniCare majoritaire', 'Potentiel offre dédiée à surveiller'],
-        actionLabel: 'Voir analytique',
-        tone: 'success',
-        commands: ['/assurance', companyId, 'analytique'],
-        queryParams: { categorie: 'KINESITHERAPIE' },
-      },
-      {
-        id: 'contract-renewal',
-        icon: 'apartment',
-        eyebrow: 'Alerte contrat groupe',
-        title: expiringContract
-          ? `Contrat ${expiringContract.employerName} expire dans ${this.daysUntil(expiringContract.renewalNoticeDate)} jours`
-          : 'Aucun contrat groupe en expiration proche',
-        description: expiringContract
-          ? 'Préparer le dossier de renouvellement avec le ratio sinistres à jour.'
-          : 'Les contrats actifs restent dans leurs délais de suivi.',
-        supportingData: expiringContract
-          ? [
-              `Ratio sinistres: ${formatDecimal(expiringContract.claimsRatio * 100)}%`,
-              `Prime annuelle: ${formatTnd(expiringContract.annualPremium)}`,
-            ]
-          : [],
-        actionLabel: 'Voir entreprises',
-        tone: 'warning',
-        commands: ['/assurance', companyId, 'entreprises'],
-        queryParams: expiringContract ? { contrat: expiringContract.id } : undefined,
-      },
-      {
         id: 'late-claims',
         icon: 'schedule',
-        eyebrow: 'Demandes en retard',
-        title: `${lateDemandes.length} dossier${lateDemandes.length > 1 ? 's' : ''} dépasse${lateDemandes.length > 1 ? 'nt' : ''} le délai SLA`,
-        description:
-          lateDemandes.length > 0
-            ? 'Ces dossiers doivent être priorisés avant escalade opérationnelle.'
-            : 'Aucun dossier ouvert ne dépasse actuellement le délai SLA.',
-        supportingData: lateDemandes.slice(0, 2).map((demande) => demande.patientName),
-        actionLabel: 'Voir demandes',
+        eyebrow: 'Retards SLA',
+        title: 'Retards SLA',
+        description: '',
+        supportingData: [`${lateDemandes.length} dossier${lateDemandes.length > 1 ? 's' : ''}`],
+        actionLabel: 'Voir',
         tone: lateDemandes.length > 0 ? 'error' : 'success',
         commands: ['/assurance', companyId, 'demandes'],
         queryParams: { filtre: 'retard' },
       },
       {
+        id: 'contract-renewal',
+        icon: 'apartment',
+        eyebrow: 'Contrat groupe',
+        title: expiringContract
+          ? `Contrat ${expiringContract.employerName}`
+          : 'Contrats groupe',
+        description: '',
+        supportingData: expiringContract
+          ? [`Préavis: ${this.daysUntil(expiringContract.renewalNoticeDate)} jours`]
+          : ['Aucun préavis proche'],
+        actionLabel: 'Voir',
+        tone: expiringContract ? 'warning' : 'success',
+        commands: ['/assurance', companyId, 'entreprises'],
+        queryParams: expiringContract ? { contrat: expiringContract.id } : undefined,
+      },
+      {
         id: 'fraud-alert',
         icon: 'shield_lock',
         eyebrow: 'Alerte fraude',
-        title: `${highRiskCount} demande${highRiskCount > 1 ? 's' : ''} flaguée${highRiskCount > 1 ? 's' : ''} risque ÉLEVÉ ce mois`,
-        description:
-          highRiskCount > 0
-            ? 'Concentration sur dossiers à montant élevé ou autorisation manquante.'
-            : 'Aucune nouvelle demande à risque élevé ce mois.',
-        supportingData: ['Contrôles internes actifs', 'Partage FTUSA soumis à opt-in'],
-        actionLabel: 'Voir fraude',
+        title: 'Alerte fraude',
+        description: '',
+        supportingData: [
+          `${highRiskCount} dossier${highRiskCount > 1 ? 's' : ''} élevé${highRiskCount > 1 ? 's' : ''}`,
+        ],
+        actionLabel: 'Voir',
         tone: highRiskCount > 0 ? 'error' : 'success',
         commands: ['/assurance', companyId, 'fraude'],
       },
@@ -319,28 +307,13 @@ export class AssuranceDashboardFacade {
         id: 'financial-impact',
         icon: 'paid',
         eyebrow: 'Impact financier',
-        title: `Montants approuvés ce mois: ${formatTnd(approvedThisMonth)}`,
-        description: `Économies règles tarifaires: ${formatTnd(8400)}.`,
-        supportingData: ['Montants refusés ou plafonnés selon règles du plan'],
-        actionLabel: 'Voir analytique',
+        title: 'Impact financier',
+        description: '',
+        supportingData: [formatTnd(approvedThisMonth)],
+        actionLabel: 'Voir',
         tone: 'info',
         commands: ['/assurance', companyId, 'analytique'],
         queryParams: { vue: 'financiere' },
-      },
-      {
-        id: 'ftusa-communications',
-        icon: 'campaign',
-        eyebrow: 'Communications FTUSA',
-        title: `${unreadCount} message${unreadCount > 1 ? 's' : ''} FTUSA non lu${unreadCount > 1 ? 's' : ''}`,
-        description:
-          unreadCount > 0
-            ? 'Consulter les messages prioritaires transmis par la fédération.'
-            : 'Tous les messages FTUSA transmis à votre compagnie sont lus.',
-        supportingData: ['Messages urgents affichés à la connexion'],
-        actionLabel: 'Voir communications',
-        tone: unreadCount > 0 ? 'warning' : 'neutral',
-        commands: ['/assurance', companyId, 'dashboard'],
-        queryParams: { section: 'communications-ftusa' },
       },
     ];
   }
@@ -349,15 +322,17 @@ export class AssuranceDashboardFacade {
     return [
       {
         id: 'manual-claim',
-        label: 'Nouvelle demande manuelle',
+        label: 'Nouvelle demande',
         disabled: true,
         icon: Plus,
+        helper: 'Disponible depuis la file demandes.',
       },
       {
         id: 'csv-import',
-        label: 'Importer un lot CSV',
+        label: 'Import CSV',
         disabled: true,
         icon: Upload,
+        helper: 'Import complet dans le module demandes.',
       },
       {
         id: 'late-claims',
@@ -372,6 +347,201 @@ export class AssuranceDashboardFacade {
         label: 'Envoyer relance prestataire',
         disabled: true,
         icon: Send,
+        helper: 'Relance prestataire prévue en workflow.',
+      },
+    ];
+  }
+
+  exportDashboardSnapshot(): void {
+    const data = this.dashboardData();
+    const rows: Array<Array<string | number>> = [
+      ['Indicateur', 'Valeur'],
+      ['Compagnie', data.companyName],
+      ['Période', data.periodLabel],
+      ['Demandes à traiter', data.operationsSummary.treatmentCount],
+      ['Demandes en retard SLA', data.operationsSummary.lateCount],
+      ['Autorisations en attente', data.operationsSummary.pendingAuthorizations],
+      ...data.primaryKpis.map((kpi) => [kpi.label, kpi.value] as Array<string | number>),
+      ...data.secondaryMetrics.map((metric) => [metric.label, metric.value] as Array<string | number>),
+    ];
+
+    this.exportCsv(`cockpit-${data.companyId}-${new Date().toISOString().slice(0, 10)}`, rows);
+  }
+
+  private operationsSummary(): DashboardOperationSummary {
+    const treatmentCount = this.demandes().filter((demande) =>
+      this.waitingStatuses.includes(demande.status),
+    ).length;
+    const lateCount = this.lateDemandes().length;
+    const pendingAuthorizations = this.pendingAuthorizations().length;
+
+    return {
+      treatmentCount,
+      lateCount,
+      pendingAuthorizations,
+      sentence: `${treatmentCount} demandes à traiter · ${lateCount} en retard SLA · ${pendingAuthorizations} autorisations en attente`,
+      tone: lateCount > 0 ? 'error' : treatmentCount > 0 ? 'warning' : 'success',
+    };
+  }
+
+  private secondaryMetrics(): DashboardSecondaryMetric[] {
+    const completedDemandes = this.demandes().filter((demande) =>
+      this.isTerminalStatus(demande.status),
+    );
+    const decidedDemandes = completedDemandes.filter(
+      (demande) => demande.status !== 'DOCUMENTS_INCOMPLETS',
+    );
+    const approvedDemandes = completedDemandes.filter((demande) =>
+      ['APPROUVEE', 'APPROUVEE_AUTO', 'APPROUVEE_PARTIELLEMENT'].includes(demande.status),
+    );
+    const approvalRate =
+      decidedDemandes.length === 0 ? 0 : (approvedDemandes.length / decidedDemandes.length) * 100;
+    const reimbursedThisMonth = completedDemandes
+      .filter((demande) => isCurrentMonth(demande.respondedAt ?? demande.submittedAt))
+      .reduce((total, demande) => total + (demande.approvedAmount ?? 0), 0);
+    const avgDelay =
+      completedDemandes.length === 0
+        ? 0
+        : completedDemandes.reduce((total, demande) => {
+            if (!demande.respondedAt) {
+              return total;
+            }
+
+            return total + daysBetween(demande.submittedAt, demande.respondedAt);
+          }, 0) / completedDemandes.length;
+    const highRiskCount = this.demandes().filter(
+      (demande) => isCurrentMonth(demande.submittedAt) && demande.riskScore === 'ELEVE',
+    ).length;
+
+    return [
+      {
+        id: 'approval-rate',
+        label: "Taux d'approbation",
+        value: approvalRate,
+        format: 'percent',
+        trend: 'Décisions clôturées',
+        icon: Percent,
+        tone: approvalRate >= 70 ? 'success' : 'warning',
+      },
+      {
+        id: 'reimbursed-month',
+        label: 'Montant remboursé ce mois',
+        value: reimbursedThisMonth,
+        format: 'currency',
+        trend: 'Impact validé',
+        icon: Wallet,
+        tone: 'info',
+      },
+      {
+        id: 'avg-delay',
+        label: 'Délai moyen traitement',
+        value: avgDelay,
+        format: 'decimal',
+        suffix: ' jours',
+        trend: 'Dossiers clôturés',
+        icon: Clock,
+        tone: avgDelay > 10 ? 'warning' : 'success',
+      },
+      {
+        id: 'high-risk',
+        label: 'Risque élevé',
+        value: highRiskCount,
+        format: 'integer',
+        suffix: ` dossier${highRiskCount > 1 ? 's' : ''}`,
+        trend: 'Ce mois',
+        icon: AlertTriangle,
+        tone: highRiskCount > 0 ? 'warning' : 'success',
+      },
+    ];
+  }
+
+  private treatmentPriorities(companyId: string): DashboardPriorityItem[] {
+    const lateDemandes = this.lateDemandes();
+    const incompleteCount = this.demandes().filter(
+      (demande) => demande.status === 'DOCUMENTS_INCOMPLETS',
+    ).length;
+    const highRiskCount = this.demandes().filter(
+      (demande) => isCurrentMonth(demande.submittedAt) && demande.riskScore === 'ELEVE',
+    ).length;
+    const pendingAuthorizations = this.pendingAuthorizations().length;
+
+    return [
+      {
+        id: 'late',
+        label: 'Retards SLA',
+        value: `${lateDemandes.length}`,
+        detail: lateDemandes[0] ? lateDemandes[0].patientName : 'Aucun retard ouvert',
+        actionLabel: 'Voir demandes',
+        tone: lateDemandes.length > 0 ? 'error' : 'success',
+        commands: ['/assurance', companyId, 'demandes'],
+        queryParams: { filtre: 'retard' },
+      },
+      {
+        id: 'authorizations',
+        label: 'Autorisations',
+        value: `${pendingAuthorizations}`,
+        detail: pendingAuthorizations > 0 ? 'Décisions médicales à valider' : 'File autorisations stable',
+        actionLabel: 'Voir autorisations',
+        tone: pendingAuthorizations > 0 ? 'info' : 'success',
+        commands: ['/assurance', companyId, 'autorisations'],
+      },
+      {
+        id: 'incomplete',
+        label: 'Pièces à compléter',
+        value: `${incompleteCount}`,
+        detail: incompleteCount > 0 ? 'Relance adhérent ou prestataire' : 'Aucun dossier incomplet',
+        actionLabel: 'Voir dossiers',
+        tone: incompleteCount > 0 ? 'warning' : 'success',
+        commands: ['/assurance', companyId, 'demandes'],
+        queryParams: { statut: 'DOCUMENTS_INCOMPLETS' },
+      },
+      {
+        id: 'risk',
+        label: 'Risque élevé',
+        value: `${highRiskCount}`,
+        detail: highRiskCount > 0 ? 'Contrôle fraude recommandé' : 'Aucun signal élevé ce mois',
+        actionLabel: 'Voir fraude',
+        tone: highRiskCount > 0 ? 'error' : 'success',
+        commands: ['/assurance', companyId, 'fraude'],
+      },
+    ];
+  }
+
+  private statusBars(): DashboardStatusBar[] {
+    const demandes = this.demandes();
+    const total = Math.max(demandes.length, 1);
+    const approved = demandes.filter((demande) =>
+      ['APPROUVEE', 'APPROUVEE_AUTO', 'APPROUVEE_PARTIELLEMENT'].includes(demande.status),
+    ).length;
+    const waiting = demandes.filter((demande) =>
+      this.waitingStatuses.includes(demande.status),
+    ).length;
+    const rejected = demandes.filter((demande) => demande.status === 'REFUSEE').length;
+
+    return [
+      {
+        id: 'approved',
+        label: 'Approuvées',
+        value: approved,
+        total: demandes.length,
+        percent: this.percent(approved, total),
+        tone: 'success',
+      },
+      {
+        id: 'waiting',
+        label: 'En traitement',
+        value: waiting,
+        total: demandes.length,
+        percent: this.percent(waiting, total),
+        tone: 'warning',
+      },
+      {
+        id: 'rejected',
+        label: 'Refusées',
+        value: rejected,
+        total: demandes.length,
+        percent: this.percent(rejected, total),
+        tone: 'error',
       },
     ];
   }
@@ -379,37 +549,70 @@ export class AssuranceDashboardFacade {
   private lateDemandes(): DemandeRemboursement[] {
     const plans = this.planTiers();
 
-    return this.demandes().filter((demande) => {
-      if (this.isTerminalStatus(demande.status)) {
-        return false;
-      }
+    return this.demandes()
+      .filter((demande) => {
+        if (this.isTerminalStatus(demande.status)) {
+          return false;
+        }
 
-      const plan = plans.find((planTier) => planTier.name === demande.planTierName);
-      const slaTargetDays = plan?.slaTargetDays ?? 10;
+        const plan = plans.find((planTier) => planTier.name === demande.planTierName);
+        const slaTargetDays = plan?.slaTargetDays ?? 10;
 
-      return daysSince(demande.submittedAt) > slaTargetDays;
-    });
+        return daysSince(demande.submittedAt) > slaTargetDays;
+      })
+      .sort(
+        (left, right) =>
+          new Date(left.submittedAt).getTime() - new Date(right.submittedAt).getTime(),
+      );
   }
 
-  private unreadCommunicationsCount(): number {
-    const companyId = this.companyId();
-
-    return this.communications().filter((communication) => {
-      const isRecipient =
-        communication.recipientCompanyIds.length === 0 ||
-        communication.recipientCompanyIds.includes(companyId);
-      const hasRead = communication.readReceipts.some((receipt) => receipt.companyId === companyId);
-
-      return isRecipient && !hasRead;
-    }).length;
+  private pendingAuthorizations(): AutorisationPrealable[] {
+    return this.autorisations().filter((autorisation) =>
+      ['EN_ATTENTE', 'EN_EXAMEN'].includes(autorisation.status),
+    );
   }
 
   private companyName(): string {
     return this.companies().find((company) => company.id === this.companyId())?.name ?? 'Assurance';
   }
 
+  private currentMonthLabel(): string {
+    const label = new Intl.DateTimeFormat('fr-TN', {
+      month: 'long',
+      year: 'numeric',
+    })
+      .format(new Date());
+
+    return `${label.charAt(0).toLocaleUpperCase('fr-TN')}${label.slice(1)}`;
+  }
+
   private isTerminalStatus(status: DemandeRemboursement['status']): boolean {
     return ['APPROUVEE', 'APPROUVEE_PARTIELLEMENT', 'APPROUVEE_AUTO', 'REFUSEE'].includes(status);
+  }
+
+  private percent(value: number, total: number): number {
+    return Math.min(100, Math.round((value / Math.max(total, 1)) * 100));
+  }
+
+  private exportCsv(name: string, rows: Array<Array<string | number>>): void {
+    const blob = new Blob(
+      [rows.map((row) => row.map((cell) => this.csvCell(cell)).join(',')).join('\n')],
+      {
+        type: 'text/csv;charset=utf-8',
+      },
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `${name}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private csvCell(value: string | number): string {
+    const cell = `${value}`;
+    return /[",\n]/.test(cell) ? `"${cell.replaceAll('"', '""')}"` : cell;
   }
 
   private daysUntil(isoDate: string): number {

@@ -3,8 +3,9 @@
 }
 
 .shell-sidenav {
-  background: #ffffff;
-  border-right: 1px solid rgba(15, 111, 115, 0.12);
+  background: #0077b6;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   padding: 18px 12px;
   width: 304px;
 }
@@ -16,20 +17,34 @@
 }
 
 .shell-logo span {
-  color: var(--omnicare-secondary);
+  color: #ffffff;
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 .shell-logo small {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.76);
   font-size: 0.8rem;
 }
 
 .active-link {
-  background: rgba(31, 191, 154, 0.12);
-  color: var(--omnicare-secondary);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item .mdc-list-item__primary-text,
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item mat-icon {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+:host ::ng-deep .shell-sidenav .mat-mdc-list-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:host ::ng-deep .shell-sidenav .active-link .mdc-list-item__primary-text,
+:host ::ng-deep .shell-sidenav .active-link mat-icon {
+  color: #ffffff;
 }
 
 .shell-spacer {
@@ -43,23 +58,24 @@
 }
 
 .shell-user strong {
-  color: var(--omnicare-text);
+  color: #ffffff;
   font-size: 0.95rem;
 }
 
 .shell-user span {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.78rem;
   overflow-wrap: anywhere;
 }
 
 .shell-user button {
+  color: rgba(255, 255, 255, 0.84);
   justify-content: flex-start;
   margin-top: 8px;
 }
 
 .shell-user .reset-demo {
-  color: var(--omnicare-muted);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.82rem;
 }
 

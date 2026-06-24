@@ -7,6 +7,7 @@ import {
 import { ActCategory, ClaimSource } from '../../../models/shared.model';
 
 export interface AutorisationsFilter {
+  search: string | null;
   statuts: AutorisationStatus[];
   sources: ClaimSource[];
   actCategories: ActCategory[];
@@ -16,6 +17,7 @@ export interface AutorisationsFilter {
 }
 
 const EMPTY_FILTERS: AutorisationsFilter = {
+  search: null,
   statuts: [],
   sources: [],
   actCategories: [],
@@ -135,6 +137,10 @@ export class AutorisationsFacade {
     autorisation: AutorisationPrealable,
     filters: AutorisationsFilter,
   ): boolean {
+    if (filters.search && !this.matchesSearch(autorisation, filters.search)) {
+      return false;
+    }
+
     if (filters.statuts.length > 0 && !filters.statuts.includes(autorisation.status)) {
       return false;
     }
@@ -167,6 +173,7 @@ export class AutorisationsFacade {
 
   private countActiveFilters(filters: AutorisationsFilter): number {
     return [
+      filters.search ? 1 : 0,
       filters.statuts.length,
       filters.sources.length,
       filters.actCategories.length,
@@ -174,6 +181,30 @@ export class AutorisationsFacade {
       filters.dateTo ? 1 : 0,
       filters.providerInNetwork ? 1 : 0,
     ].reduce((total, count) => total + count, 0);
+  }
+
+  private matchesSearch(autorisation: AutorisationPrealable, rawSearch: string): boolean {
+    const search = rawSearch.trim().toLocaleLowerCase();
+
+    if (!search) {
+      return true;
+    }
+
+    return [
+      autorisation.patientName,
+      autorisation.patientMemberId,
+      autorisation.planTierName,
+      autorisation.employerName,
+      autorisation.authorizationNumber,
+      autorisation.id,
+      autorisation.actType,
+      autorisation.actCategory,
+      autorisation.providerName,
+      autorisation.source,
+      autorisation.status,
+    ]
+      .filter(Boolean)
+      .some((value) => value!.toLocaleLowerCase().includes(search));
   }
 
   private readAutorisations(companyId: string): AutorisationPrealable[] {

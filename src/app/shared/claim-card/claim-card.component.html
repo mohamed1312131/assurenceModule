@@ -3,10 +3,11 @@
   appearance="outlined"
   [class.risk-medium]="riskScore() === 'MOYEN'"
   [class.risk-high]="riskScore() === 'ELEVE'"
+  [class.delay-flag]="displaySlaLabel()"
 >
   <mat-card-content>
-    <div class="claim-header">
-      <div class="chip-row">
+    <div class="claim-row">
+      <div class="chip-row" aria-label="Statuts dossier">
         <app-status-chip [status]="riskScore()" />
         <app-source-badge [source]="source()" />
         @if (status(); as claimStatus) {
@@ -14,46 +15,63 @@
         }
       </div>
 
-      <button mat-button type="button" (click)="onOpen()">
-        {{ actionLabel() }}
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
-      </button>
-    </div>
-
-    <div class="claim-main">
       <div class="claim-copy">
         <h3>{{ patientName() }}</h3>
 
         @if (patientMeta()) {
           <p>{{ patientMeta() }}</p>
         }
+      </div>
 
-        @if (careLine()) {
-          <p>{{ careLine() }}</p>
+      <div class="care-cell">
+        <strong>{{ actCategoryLabel() }}</strong>
+        <span>{{ providerName() }}</span>
+        @if (providerInNetwork() !== null) {
+          <small class="network-tag" [class.out]="!providerInNetwork()">
+            {{ providerInNetwork() ? 'Réseau agréé' : 'Hors réseau' }}
+          </small>
         }
       </div>
 
-      @if (amountLabel()) {
-        <strong>{{ amountLabel() }}</strong>
+      @if (submittedLabel() || displaySlaLabel()) {
+        <div class="claim-timing">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          @if (submittedLabel()) {
+            <span>{{ submittedLabel() }}</span>
+          }
+          @if (displaySlaLabel()) {
+            <span class="sla-pill">{{ displaySlaLabel() }}</span>
+          }
+        </div>
       }
-    </div>
 
-    @if (submittedLabel() || slaLabel()) {
-      <div class="claim-timing">
-        <mat-icon aria-hidden="true">schedule</mat-icon>
-        @if (submittedLabel()) {
-          <span>{{ submittedLabel() }}</span>
-        }
-        @if (slaLabel()) {
-          <span>{{ slaLabel() }}</span>
+      <div class="claim-side">
+        @if (amountLabel()) {
+          <strong>{{ amountLabel() }}</strong>
         }
       </div>
-    }
+
+      <div class="claim-action">
+        <button mat-button type="button" (click)="onOpen()">
+          {{ actionLabel() }}
+          <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+        </button>
+      </div>
+    </div>
 
     @if (flagLabels().length) {
       <mat-chip-set class="flag-row" aria-label="Signaux dossier">
         @for (item of flagLabels(); track item.flag) {
-          <mat-chip>{{ item.label }}</mat-chip>
+          <mat-chip
+            [class.flag-error]="item.tone === 'error'"
+            [class.flag-warning]="item.tone === 'warning'"
+            [class.flag-info]="item.tone === 'info'"
+          >
+            {{ item.label }}
+          </mat-chip>
+        }
+        @if (hiddenFlagCount() > 0) {
+          <mat-chip>+{{ hiddenFlagCount() }}</mat-chip>
         }
       </mat-chip-set>
     }

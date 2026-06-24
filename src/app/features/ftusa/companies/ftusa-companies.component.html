@@ -1,8 +1,9 @@
 <section class="companies-page">
   <header class="page-header">
-    <div>
-      <h1>Compagnies</h1>
-      <p>{{ facade.allCompanies().length }} compagnies membres FTUSA</p>
+    <div class="header-copy">
+      <span class="section-kicker">Console FTUSA</span>
+      <h1>Compagnies FTUSA</h1>
+      <p>Gestion des compagnies membres, accès administrateurs et adhésions au partage.</p>
     </div>
 
     <button mat-flat-button color="primary" type="button" (click)="openWizard()">
@@ -11,69 +12,283 @@
     </button>
   </header>
 
-  <mat-card class="filter-card">
-    <div class="filter-row">
-      <span class="filter-label">Statut</span>
-      <mat-chip-listbox multiple aria-label="Filtrer par statut">
-        @for (status of statuses; track status) {
-          <mat-chip-option
-            [selected]="facade.filters().statuses.includes(status)"
-            (click)="toggleStatus(status)"
-          >
-            {{ statusLabel(status) }}
-          </mat-chip-option>
-        }
-      </mat-chip-listbox>
+  <section class="summary-grid" aria-label="Synthèse compagnies">
+    <mat-card class="summary-card">
+      <span>Total compagnies</span>
+      <strong>{{ summary().total }}</strong>
+      <small>Tenants référencés FTUSA</small>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <span>Actives</span>
+      <strong>{{ summary().active }}</strong>
+      <small>Accès opérationnels</small>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <span>En onboarding</span>
+      <strong>{{ summary().onboarding }}</strong>
+      <small>Activation ou dossier à finaliser</small>
+    </mat-card>
+
+    <mat-card class="summary-card warning">
+      <span>Accès à configurer</span>
+      <strong>{{ summary().adminMissing }}</strong>
+      <small>Administrateur manquant</small>
+    </mat-card>
+  </section>
+
+  <mat-card class="toolbar-card">
+    <div class="toolbar-top">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Recherche compagnie</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="search"
+          [value]="search()"
+          (input)="setSearch($any($event.target).value)"
+          placeholder="Nom, code, email, CGA, administrateur..."
+        />
+      </mat-form-field>
+
+      <div class="view-toggle" aria-label="Mode d’affichage">
+        <button
+          mat-stroked-button
+          type="button"
+          [class.active]="viewMode() === 'table'"
+          (click)="setViewMode('table')"
+        >
+          <mat-icon aria-hidden="true">view_list</mat-icon>
+          Table
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          [class.active]="viewMode() === 'cards'"
+          (click)="setViewMode('cards')"
+        >
+          <mat-icon aria-hidden="true">grid_view</mat-icon>
+          Cartes
+        </button>
+      </div>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Recherche code ou nom</mat-label>
-      <input
-        matInput
-        type="search"
-        [value]="facade.filters().search ?? ''"
-        (input)="setSearch($any($event.target).value)"
-        placeholder="STAR, COMAR..."
-      />
-    </mat-form-field>
+    <div class="filter-groups">
+      <div class="filter-row">
+        <span class="filter-label">Statut</span>
+        <mat-chip-listbox aria-label="Filtrer par statut">
+          @for (filter of statusFilters; track filter.id) {
+            <mat-chip-option
+              [selected]="statusFilter() === filter.id"
+              (click)="setStatusFilter(filter.id)"
+            >
+              {{ filter.label }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-label">Partage</span>
+        <mat-chip-listbox aria-label="Filtrer par adhésion au partage">
+          @for (filter of sharingFilters; track filter.id) {
+            <mat-chip-option
+              [selected]="sharingFilter() === filter.id"
+              (click)="setSharingFilter(filter.id)"
+            >
+              {{ filter.label }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-label">Accès admin</span>
+        <mat-chip-listbox aria-label="Filtrer par accès administrateur">
+          @for (filter of adminFilters; track filter.id) {
+            <mat-chip-option
+              [selected]="adminFilter() === filter.id"
+              (click)="setAdminFilter(filter.id)"
+            >
+              {{ filter.label }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+    </div>
+
+    <div class="toolbar-footer">
+      <span>
+        {{ filteredCompanies().length }} résultat(s)
+        @if (activeFilterCount() > 0) {
+          · {{ activeFilterCount() }} filtre(s) actif(s)
+        }
+      </span>
+      <button mat-button type="button" [disabled]="activeFilterCount() === 0" (click)="resetFilters()">
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+        Réinitialiser
+      </button>
+    </div>
   </mat-card>
 
-  <mat-card class="table-card">
-    <div class="results-header">
-      <strong>{{ facade.filteredCompanies().length }} résultat(s)</strong>
-    </div>
+  @if (filteredCompanies().length === 0) {
+    <mat-card class="empty-state">
+      <mat-icon aria-hidden="true">domain_disabled</mat-icon>
+      <h2>Aucune compagnie trouvée</h2>
+      <p>Ajustez la recherche ou réinitialisez les filtres pour revoir tous les tenants.</p>
+      <button mat-stroked-button type="button" (click)="resetFilters()">
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+        Réinitialiser les filtres
+      </button>
+    </mat-card>
+  } @else if (viewMode() === 'table') {
+    <mat-card class="table-card">
+      <div class="table-header">
+        <div>
+          <h2>Registre des compagnies</h2>
+          <p>Vue de contrôle pour statuts, accès et adhésion au partage.</p>
+        </div>
+      </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Compagnie</th>
-            <th>Code</th>
-            <th>Statut</th>
-            <th>Admin</th>
-            <th>Dernière connexion</th>
-            <th>Adhésion partage</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (company of facade.filteredCompanies(); track company.id) {
+      <div class="table-wrap">
+        <table>
+          <thead>
             <tr>
-              <td>
-                <strong>{{ company.name }}</strong>
-                <span>{{ company.contactEmail }}</span>
-              </td>
-              <td>{{ company.code }}</td>
-              <td>
-                <app-status-chip
-                  [status]="company.status"
-                  [label]="statusLabel(company.status)"
-                  [tone]="company.status === 'ACTIVE' ? 'success' : company.status === 'EN_ATTENTE' ? 'warning' : 'error'"
-                />
-              </td>
-              <td>{{ facade.adminFor(company.id)?.email ?? '—' }}</td>
-              <td>{{ relativeDate(facade.adminFor(company.id)?.lastLoginAt) }}</td>
-              <td>
+              <th>Compagnie</th>
+              <th>Code / CGA</th>
+              <th>Statut</th>
+              <th>Administrateur</th>
+              <th>Dernière connexion</th>
+              <th>Partage activé</th>
+              <th>Onboarding</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (company of filteredCompanies(); track company.id) {
+              <tr>
+                <td>
+                  <strong>{{ company.name }}</strong>
+                  <span>{{ company.contactEmail }}</span>
+                </td>
+                <td>
+                  <strong>{{ company.code }}</strong>
+                  <span>{{ company.cgaRegistrationNumber || 'CGA non renseigné' }}</span>
+                </td>
+                <td>
+                  <app-status-chip
+                    [status]="company.status"
+                    [label]="statusLabel(company.status)"
+                    [tone]="company.status === 'ACTIVE' ? 'success' : company.status === 'EN_ATTENTE' ? 'warning' : 'error'"
+                  />
+                </td>
+                <td>
+                  @if (facade.adminFor(company.id); as admin) {
+                    <strong>{{ admin.name }}</strong>
+                    <span>{{ admin.email }}</span>
+                  } @else {
+                    <strong>À configurer</strong>
+                    <span>Aucun admin déclaré</span>
+                  }
+                </td>
+                <td>{{ relativeDate(facade.adminFor(company.id)?.lastLoginAt) }}</td>
+                <td>
+                  <span
+                    class="sharing-chip"
+                    [class.success]="sharingTone(company) === 'success'"
+                    [class.warning]="sharingTone(company) === 'warning'"
+                  >
+                    {{ sharingLabel(company) }}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    class="state-chip"
+                    [class.success]="onboardingTone(company) === 'success'"
+                    [class.warning]="onboardingTone(company) === 'warning'"
+                  >
+                    {{ onboardingLabel(company) }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [matMenuTriggerFor]="menu"
+                    [attr.aria-label]="'Actions pour ' + company.name"
+                  >
+                    <mat-icon aria-hidden="true">more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item type="button" (click)="manage(company)">
+                      <mat-icon aria-hidden="true">open_in_new</mat-icon>
+                      <span>Gérer</span>
+                    </button>
+                    @if (company.status === 'SUSPENDUE') {
+                      <button mat-menu-item type="button" (click)="reactivate(company)">
+                        <mat-icon aria-hidden="true">play_circle</mat-icon>
+                        <span>Réactiver</span>
+                      </button>
+                    } @else {
+                      <button mat-menu-item type="button" (click)="suspend(company)">
+                        <mat-icon aria-hidden="true">block</mat-icon>
+                        <span>Suspendre</span>
+                      </button>
+                    }
+                    <button mat-menu-item type="button" (click)="resetAccess(company)">
+                      <mat-icon aria-hidden="true">lock_reset</mat-icon>
+                      <span>Réinitialiser accès</span>
+                    </button>
+                  </mat-menu>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </mat-card>
+  } @else {
+    <section class="company-card-grid" aria-label="Compagnies en cartes">
+      @for (company of filteredCompanies(); track company.id) {
+        <mat-card class="company-card">
+          <header>
+            <div>
+              <span class="company-code">{{ company.code }}</span>
+              <h2>{{ company.name }}</h2>
+              <p>{{ company.contactEmail }}</p>
+            </div>
+            <app-status-chip
+              [status]="company.status"
+              [label]="statusLabel(company.status)"
+              [tone]="company.status === 'ACTIVE' ? 'success' : company.status === 'EN_ATTENTE' ? 'warning' : 'error'"
+            />
+          </header>
+
+          <dl class="company-details">
+            <div>
+              <dt>CGA</dt>
+              <dd>{{ company.cgaRegistrationNumber || 'Non renseigné' }}</dd>
+            </div>
+            <div>
+              <dt>Administrateur</dt>
+              <dd>
+                @if (facade.adminFor(company.id); as admin) {
+                  <strong>{{ admin.name }}</strong>
+                  <span>{{ admin.email }}</span>
+                } @else {
+                  <strong>À configurer</strong>
+                  <span>Aucun admin déclaré</span>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Dernière connexion</dt>
+              <dd>{{ relativeDate(facade.adminFor(company.id)?.lastLoginAt) }}</dd>
+            </div>
+            <div>
+              <dt>Partage</dt>
+              <dd>
                 <span
                   class="sharing-chip"
                   [class.success]="sharingTone(company) === 'success'"
@@ -81,37 +296,57 @@
                 >
                   {{ sharingLabel(company) }}
                 </span>
-              </td>
-              <td>
-                <button mat-icon-button type="button" [matMenuTriggerFor]="menu" aria-label="Actions compagnie">
-                  <mat-icon aria-hidden="true">more_vert</mat-icon>
-                </button>
-                <mat-menu #menu="matMenu">
-                  <button mat-menu-item type="button" (click)="manage(company)">
-                    <mat-icon aria-hidden="true">open_in_new</mat-icon>
-                    <span>Gérer</span>
-                  </button>
-                  @if (company.status === 'SUSPENDUE') {
-                    <button mat-menu-item type="button" (click)="reactivate(company)">
-                      <mat-icon aria-hidden="true">play_circle</mat-icon>
-                      <span>Réactiver</span>
-                    </button>
-                  } @else {
-                    <button mat-menu-item type="button" (click)="suspend(company)">
-                      <mat-icon aria-hidden="true">block</mat-icon>
-                      <span>Suspendre</span>
-                    </button>
-                  }
-                  <button mat-menu-item type="button" (click)="resetAccess(company)">
-                    <mat-icon aria-hidden="true">lock_reset</mat-icon>
-                    <span>Réinitialiser accès</span>
-                  </button>
-                </mat-menu>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </mat-card>
+              </dd>
+            </div>
+            <div>
+              <dt>Onboarding</dt>
+              <dd>
+                <span
+                  class="state-chip"
+                  [class.success]="onboardingTone(company) === 'success'"
+                  [class.warning]="onboardingTone(company) === 'warning'"
+                >
+                  {{ onboardingLabel(company) }}
+                </span>
+              </dd>
+            </div>
+            <div>
+              <dt>Accès</dt>
+              <dd>
+                <span
+                  class="state-chip"
+                  [class.success]="adminStateTone(company) === 'success'"
+                  [class.warning]="adminStateTone(company) === 'warning'"
+                >
+                  {{ adminStateLabel(company) }}
+                </span>
+              </dd>
+            </div>
+          </dl>
+
+          <footer class="card-actions">
+            <button mat-stroked-button type="button" (click)="manage(company)">
+              <mat-icon aria-hidden="true">open_in_new</mat-icon>
+              Gérer
+            </button>
+            @if (company.status === 'SUSPENDUE') {
+              <button mat-button type="button" (click)="reactivate(company)">
+                <mat-icon aria-hidden="true">play_circle</mat-icon>
+                Réactiver
+              </button>
+            } @else {
+              <button mat-button type="button" (click)="suspend(company)">
+                <mat-icon aria-hidden="true">block</mat-icon>
+                Suspendre
+              </button>
+            }
+            <button mat-button type="button" (click)="resetAccess(company)">
+              <mat-icon aria-hidden="true">lock_reset</mat-icon>
+              Réinitialiser accès
+            </button>
+          </footer>
+        </mat-card>
+      }
+    </section>
+  }
 </section>

@@ -1,97 +1,248 @@
+:host {
+  display: block;
+}
+
 .login-page {
   align-items: center;
-  background:
-    linear-gradient(135deg, rgba(31, 191, 154, 0.12), rgba(15, 111, 115, 0.08)),
-    var(--omnicare-background);
-  display: flex;
+  background: var(--omnicare-background);
+  color: var(--omnicare-text);
+  display: grid;
   min-height: 100vh;
   padding: 32px;
 }
 
-.login-panel {
+.access-gateway {
+  background: #ffffff;
+  border: 1px solid rgba(15, 111, 115, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(16, 42, 45, 0.08);
+  display: grid;
+  gap: 28px;
   margin: 0 auto;
-  max-width: 1120px;
+  max-width: 980px;
+  padding: 32px;
   width: 100%;
 }
 
-.brand-mark {
-  margin-bottom: 20px;
+.gateway-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
 }
 
 .brand-logo {
-  height: 56px;
+  display: block;
+  height: 48px;
   width: auto;
+}
+
+.demo-badge {
+  align-items: center;
+  background: rgba(31, 191, 154, 0.1);
+  border: 1px solid rgba(31, 191, 154, 0.2);
+  border-radius: 999px;
+  color: var(--omnicare-secondary);
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 8px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.demo-badge mat-icon {
+  color: var(--omnicare-success);
+  font-size: 13px;
+  height: 13px;
+  width: 13px;
+}
+
+.gateway-heading {
+  display: grid;
+  gap: 10px;
+  max-width: 720px;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
 }
 
 h1 {
   color: var(--omnicare-text);
-  font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.15;
-  margin: 0 0 28px;
+  font-size: 2.15rem;
+  font-weight: 800;
+  line-height: 1.12;
+  margin: 0;
 }
 
-.profile-grid {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 18px;
-}
-
-.profile-card {
-  background: #ffffff;
-  border-color: rgba(15, 111, 115, 0.16);
-  min-height: 220px;
-}
-
-mat-card-content {
-  display: grid;
-  gap: 18px;
-  padding: 24px;
-}
-
-mat-card-content > mat-icon {
-  align-items: center;
-  background: rgba(31, 191, 154, 0.14);
-  border-radius: 12px;
-  color: var(--omnicare-secondary);
-  display: inline-flex;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-h2 {
-  color: var(--omnicare-text);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.3;
-  margin: 0 0 8px;
-}
-
-p {
+.gateway-heading p,
+.access-copy p,
+.gateway-footer {
   color: var(--omnicare-muted);
-  font-size: 0.95rem;
   line-height: 1.6;
   margin: 0;
 }
 
-mat-card-actions {
-  padding: 0 16px 16px;
+.access-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width: 900px) {
-  .profile-grid {
-    grid-template-columns: 1fr;
+.access-card {
+  background: #ffffff;
+  border-color: rgba(15, 111, 115, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(16, 42, 45, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+  overflow: hidden;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.access-card:hover,
+.access-card:focus-within {
+  border-color: rgba(15, 111, 115, 0.28);
+  box-shadow: 0 16px 34px rgba(16, 42, 45, 0.08);
+}
+
+.access-card:focus-within {
+  outline: 3px solid rgba(31, 191, 154, 0.28);
+  outline-offset: 3px;
+}
+
+.access-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px;
+}
+
+.access-card-header {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.access-icon {
+  align-items: center;
+  background: rgba(31, 191, 154, 0.12);
+  border: 1px solid rgba(31, 191, 154, 0.2);
+  border-radius: 15px;
+  color: var(--omnicare-secondary);
+  display: inline-flex;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.access-icon mat-icon {
+  font-size: 26px;
+  height: 26px;
+  width: 26px;
+}
+
+.role-label {
+  background: rgba(244, 245, 247, 0.92);
+  border: 1px solid rgba(15, 111, 115, 0.1);
+  border-radius: 999px;
+  color: var(--omnicare-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 7px 11px;
+  white-space: nowrap;
+}
+
+.access-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.access-copy h2 {
+  color: var(--omnicare-text);
+  font-size: 1.16rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.access-copy p {
+  font-size: 0.94rem;
+}
+
+.access-actions {
+  margin: 0;
+  padding: 0 22px 22px;
+}
+
+.access-actions button {
+  border-radius: 12px;
+  min-height: 46px;
+  width: 100%;
+}
+
+.access-actions button:focus-visible {
+  outline: 3px solid rgba(31, 191, 154, 0.4);
+  outline-offset: 2px;
+}
+
+.gateway-footer {
+  border-top: 1px solid rgba(15, 111, 115, 0.1);
+  font-size: 0.84rem;
+  padding-top: 18px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .login-page {
+    padding: 18px;
   }
 
-  .login-page {
-    padding: 20px;
+  .access-gateway {
+    border-radius: 20px;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .gateway-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 1.78rem;
+  }
+
+  .access-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 460px) {
+  .login-page {
+    padding: 12px;
+  }
+
+  .access-gateway {
+    padding: 20px;
+  }
+
+  .brand-logo {
+    height: 42px;
+  }
+
+  .access-card-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

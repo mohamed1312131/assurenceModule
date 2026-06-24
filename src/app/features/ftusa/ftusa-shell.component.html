@@ -2,9 +2,10 @@
   <mat-sidenav class="shell-sidenav" mode="side" opened>
     <div class="shell-logo">
       <span>FTUSA</span>
-      <small>Plateforme Assurance</small>
+      <small>Supervision réglementaire</small>
     </div>
 
+    <p class="nav-group-label">Pilotage marché</p>
     <mat-nav-list>
       @for (item of navItems; track item.path) {
         <a
@@ -40,7 +41,10 @@
 
   <mat-sidenav-content>
     <mat-toolbar class="shell-toolbar">
-      <span>OmniCare — Tableau de Bord Assurance FTUSA</span>
+      <div class="toolbar-context">
+        <strong>FTUSA · Régulateur · Démonstration</strong>
+        <span>Command center de supervision du marché assurance</span>
+      </div>
       <span class="toolbar-spacer"></span>
       @if (user(); as currentUser) {
         <span class="toolbar-user">{{ currentUser.name }}</span>

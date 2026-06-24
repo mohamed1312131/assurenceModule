@@ -11,7 +11,6 @@ import { MatInputModule } from '@angular/material/input';
 
 import { CorporateContract } from '../../../models/corporate-contract.model';
 import { StatusChipComponent } from '../../../shared/status-chip/status-chip.component';
-import { AlertBannerComponent } from '../../../shared/alert-banner/alert-banner.component';
 import { EntreprisesFacade } from './entreprises.facade';
 import { NouveauContratDialogComponent } from './nouveau-contrat-dialog.component';
 
@@ -28,7 +27,6 @@ type ContractStatus = CorporateContract['status'];
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    AlertBannerComponent,
     StatusChipComponent,
   ],
   templateUrl: './entreprises.component.html',
@@ -47,6 +45,15 @@ export class EntreprisesComponent implements OnInit {
   protected readonly expiringSoon = this.facade.expiringSoon;
   protected readonly totalPremium = computed(() =>
     this.facade.allContracts().reduce((total, contract) => total + contract.annualPremium, 0),
+  );
+  protected readonly activeContracts = computed(
+    () => this.facade.allContracts().filter((contract) => contract.status === 'ACTIF').length,
+  );
+  protected readonly totalEmployees = computed(() =>
+    this.facade.allContracts().reduce((total, contract) => total + contract.totalEmployees, 0),
+  );
+  protected readonly enrolledEmployees = computed(() =>
+    this.facade.allContracts().reduce((total, contract) => total + contract.enrolledEmployees, 0),
   );
 
   ngOnInit(): void {
@@ -68,6 +75,10 @@ export class EntreprisesComponent implements OnInit {
 
   protected setRenewalWithin90Days(checked: boolean): void {
     this.facade.updateFilter({ renewalWithin90Days: checked });
+  }
+
+  protected resetFilters(): void {
+    this.facade.resetFilters();
   }
 
   protected openNewContractDialog(): void {

@@ -1,9 +1,19 @@
 .source-badge {
-  --mdc-chip-elevated-container-color: #eef2f4;
-  --mdc-chip-label-text-color: var(--omnicare-text);
+  --source-bg: #475569;
+  --source-text: #ffffff;
+  --mdc-chip-elevated-container-color: var(--source-bg);
+  --mdc-chip-unselected-container-color: var(--source-bg);
+  --mdc-chip-label-text-color: var(--source-text);
+  --mdc-chip-outline-color: transparent;
+  --mdc-chip-with-icon-icon-color: var(--source-text);
 
+  background: var(--source-bg);
   border-radius: 999px;
-  min-height: 30px;
+  color: var(--source-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  min-height: 24px;
+  overflow: hidden;
 }
 
 :host {
@@ -19,26 +29,44 @@
 }
 
 .omnicare {
-  --mdc-chip-elevated-container-color: rgba(31, 191, 154, 0.16);
-  --mdc-chip-label-text-color: #047857;
+  --source-bg: #0f766e;
 }
 
 .manuel {
-  --mdc-chip-elevated-container-color: rgba(59, 130, 246, 0.14);
-  --mdc-chip-label-text-color: #1d4ed8;
+  --source-bg: #334155;
 }
 
 .import-csv {
-  --mdc-chip-elevated-container-color: rgba(245, 158, 11, 0.16);
-  --mdc-chip-label-text-color: #92400e;
+  --source-bg: #4338ca;
 }
 
 .website {
-  --mdc-chip-elevated-container-color: rgba(124, 58, 237, 0.14);
-  --mdc-chip-label-text-color: #6d28d9;
+  --source-bg: #0891b2;
 }
 
 .email {
-  --mdc-chip-elevated-container-color: rgba(100, 116, 139, 0.14);
-  --mdc-chip-label-text-color: #475569;
+  --source-bg: #7c3aed;
+}
+
+.other {
+  --source-bg: #475569;
+}
+
+:host ::ng-deep .source-badge .mdc-evolution-chip__text-label {
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .source-badge .mdc-evolution-chip__action--primary {
+  background: var(--source-bg);
+  border-radius: 999px;
+  color: #ffffff !important;
+  overflow: hidden;
+}
+
+:host ::ng-deep .source-badge .mdc-evolution-chip__cell,
+:host ::ng-deep .source-badge .mat-mdc-chip-action,
+:host ::ng-deep .source-badge mat-icon {
+  border-radius: 999px;
+  color: #ffffff !important;
+  overflow: hidden;
 }

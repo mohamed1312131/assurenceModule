@@ -27,6 +27,17 @@ export const FTUSA_ROUTES: Routes = [
           ]),
       },
       {
+        path: 'demandes-adhesion',
+        loadChildren: () =>
+          import('./adhesion-requests/ftusa-adhesion-requests.component').then((m) => [
+            { path: '', component: m.FtusaAdhesionRequestsComponent },
+          ]),
+      },
+      {
+        path: 'adhesions',
+        redirectTo: 'demandes-adhesion',
+      },
+      {
         path: 'companies',
         redirectTo: 'compagnies',
       },

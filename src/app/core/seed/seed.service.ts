@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { Adherent } from '../../models/adherent.model';
+import { AdhesionRequest } from '../../models/adhesion-request.model';
 import { AdminAccount } from '../../models/admin-account.model';
 import { AutorisationPrealable } from '../../models/autorisation-prealable.model';
 import { Communication } from '../../models/communication.model';
@@ -66,7 +67,7 @@ interface WeightedSeedChoice<T> {
 @Injectable({ providedIn: 'root' })
 export class SeedService {
   private readonly storage = inject(LocalStorageService);
-  private readonly seedVersion = 'v2';
+  private readonly seedVersion = 'v3';
   private readonly crossCompanyFraudKey = 'omnicare_ftusa_cross_company_fraud_alerts';
 
   initialize(): void {
@@ -95,6 +96,7 @@ export class SeedService {
     this.seedComarTenant();
     this.seedMarketClaimBook();
     this.seedCommunications();
+    this.seedAdhesionRequests();
     this.seedCrossCompanyFraud();
   }
 
@@ -545,6 +547,340 @@ export class SeedService {
     ];
 
     this.storage.setItem(STORAGE_KEYS.communications, communications);
+  }
+
+  private seedAdhesionRequests(): void {
+    const requests: AdhesionRequest[] = [
+      {
+        id: 'adh-omni-001',
+        externalRequestId: 'OMNI-ADH-2026-0142',
+        source: 'OMNICARE',
+        status: 'PRETE_A_PROPOSER',
+        submittedAt: this.hoursAgo(7),
+        updatedAt: this.hoursAgo(2),
+        applicantName: 'Karim Mansour',
+        applicantEmail: 'karim.mansour@example.com',
+        applicantPhone: '+216 24 118 540',
+        address: '12 rue Ibn Khaldoun, Mutuelleville',
+        city: 'Tunis',
+        employerName: 'Tunisie Telecom',
+        profession: 'Chef de projet SI',
+        annualSalary: 54000,
+        companyEntryDate: '2018-04-16',
+        familySituation: 'MARIE',
+        marriageDate: '2019-06-22',
+        requestedCoverage: ['SANTE_COMPLEMENTAIRE', 'INCAPACITE_INVALIDITE', 'DECES'],
+        desiredEffectiveDate: this.dateOnly(this.daysFromNow(18)),
+        currentHealthCoverage: 'CNAM uniquement, aucune assurance complémentaire privée',
+        providentScheme: 'Régime employeur de base',
+        deathBeneficiary: 'Sarra Mansour, conjointe',
+        members: [
+          {
+            id: 'adh-omni-001-assure',
+            relationship: 'ASSURE',
+            fullName: 'Karim Mansour',
+            birthDate: '1986-03-14',
+            cin: '08641572',
+            profession: 'Chef de projet SI',
+            medical: {
+              goodHealth: true,
+              heightCm: 178,
+              weightKg: 82,
+              notes: 'Déclaration complète, aucun antécédent signalé.',
+            },
+          },
+          {
+            id: 'adh-omni-001-conjoint',
+            relationship: 'CONJOINT',
+            fullName: 'Sarra Mansour',
+            birthDate: '1990-11-03',
+            cin: '09031184',
+            profession: 'Architecte',
+            medical: {
+              goodHealth: true,
+              heightCm: 166,
+              weightKg: 61,
+            },
+          },
+          {
+            id: 'adh-omni-001-enfant-1',
+            relationship: 'ENFANT',
+            fullName: 'Adam Mansour',
+            birthDate: '2021-09-18',
+            medical: {
+              goodHealth: true,
+              notes: 'Extrait de naissance reçu.',
+            },
+          },
+          {
+            id: 'adh-omni-001-enfant-2',
+            relationship: 'ENFANT',
+            fullName: 'Lina Mansour',
+            birthDate: '2024-02-07',
+            medical: {
+              goodHealth: true,
+              notes: 'Extrait de naissance reçu.',
+            },
+          },
+        ],
+        documents: [
+          {
+            id: 'adh-omni-001-doc-identity',
+            label: "Carte d'identité de l'assuré",
+            ownerName: 'Karim Mansour',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-001-doc-marriage',
+            label: 'Justificatif de mariage',
+            ownerName: 'Karim Mansour',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-001-doc-children',
+            label: 'Extraits de naissance des enfants',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-001-doc-medical',
+            label: 'Questionnaire médical famille',
+            required: true,
+            status: 'RECU',
+          },
+        ],
+        missingItems: [],
+        internalNotes:
+          'Demande complète avec conjoint et deux enfants. Le bulletin COMAR fourni en référence couvre les champs attendus.',
+      },
+      {
+        id: 'adh-omni-002',
+        externalRequestId: 'OMNI-ADH-2026-0143',
+        source: 'OMNICARE',
+        status: 'A_COMPLETER',
+        submittedAt: this.daysAgo(1, 3),
+        updatedAt: this.hoursAgo(4),
+        applicantName: 'Ines Trabelsi',
+        applicantEmail: 'ines.trabelsi@example.com',
+        applicantPhone: '+216 29 770 312',
+        address: 'Avenue Hedi Nouira, Sfax',
+        city: 'Sfax',
+        profession: 'Consultante indépendante',
+        annualSalary: 38000,
+        familySituation: 'CELIBATAIRE',
+        requestedCoverage: ['SANTE_COMPLEMENTAIRE'],
+        desiredEffectiveDate: this.dateOnly(this.daysFromNow(12)),
+        currentHealthCoverage: 'Contrat individuel arrivé à échéance',
+        members: [
+          {
+            id: 'adh-omni-002-assure',
+            relationship: 'ASSURE',
+            fullName: 'Ines Trabelsi',
+            birthDate: '1992-08-09',
+            profession: 'Consultante indépendante',
+            medical: {
+              goodHealth: true,
+              heightCm: 169,
+              weightKg: 64,
+              currentTreatment: 'Déclaration non renseignée dans OmniCare.',
+            },
+          },
+        ],
+        documents: [
+          {
+            id: 'adh-omni-002-doc-identity',
+            label: "Carte d'identité",
+            ownerName: 'Ines Trabelsi',
+            required: true,
+            status: 'MANQUANT',
+          },
+          {
+            id: 'adh-omni-002-doc-medical',
+            label: 'Questionnaire médical',
+            ownerName: 'Ines Trabelsi',
+            required: true,
+            status: 'DEMANDE',
+          },
+        ],
+        missingItems: [
+          "Carte d'identité nationale",
+          'Réponse complète au questionnaire médical',
+          'Confirmation du revenu annuel déclaré',
+        ],
+        lastAction: {
+          type: 'INFOS_DEMANDEES',
+          at: this.hoursAgo(4),
+          label: 'Complément demandé depuis la démo FTUSA',
+        },
+      },
+      {
+        id: 'adh-omni-003',
+        externalRequestId: 'OMNI-ADH-2026-0144',
+        source: 'OMNICARE',
+        status: 'NOUVELLE',
+        submittedAt: this.hoursAgo(18),
+        updatedAt: this.hoursAgo(18),
+        applicantName: 'Hatem Ben Ali',
+        applicantEmail: 'hatem.benali@example.com',
+        applicantPhone: '+216 55 901 404',
+        address: 'Rue de Carthage, Les Berges du Lac',
+        city: 'Tunis',
+        employerName: 'BIAT',
+        profession: 'Conseiller clientèle',
+        annualSalary: 46000,
+        companyEntryDate: '2021-01-04',
+        familySituation: 'MARIE',
+        marriageDate: '2020-09-12',
+        requestedCoverage: ['SANTE_COMPLEMENTAIRE', 'DECES'],
+        desiredEffectiveDate: this.dateOnly(this.daysFromNow(25)),
+        currentHealthCoverage: 'CNAM + contrat employeur partiel',
+        providentScheme: 'Prévoyance groupe BIAT',
+        deathBeneficiary: 'Nour Ben Ali, conjointe',
+        members: [
+          {
+            id: 'adh-omni-003-assure',
+            relationship: 'ASSURE',
+            fullName: 'Hatem Ben Ali',
+            birthDate: '1989-12-02',
+            cin: '08912021',
+            profession: 'Conseiller clientèle',
+            medical: {
+              goodHealth: true,
+              heightCm: 181,
+              weightKg: 86,
+            },
+          },
+          {
+            id: 'adh-omni-003-conjoint',
+            relationship: 'CONJOINT',
+            fullName: 'Nour Ben Ali',
+            birthDate: '1993-05-19',
+            cin: '09305198',
+            profession: 'Enseignante',
+            medical: {
+              goodHealth: true,
+              heightCm: 163,
+              weightKg: 58,
+            },
+          },
+          {
+            id: 'adh-omni-003-enfant-1',
+            relationship: 'ENFANT',
+            fullName: 'Youssef Ben Ali',
+            birthDate: '2022-10-11',
+            medical: {
+              goodHealth: false,
+              chronicDisease: 'Asthme léger déclaré par le parent',
+              notes: 'Certificat médical demandé avant émission de l’offre.',
+            },
+          },
+        ],
+        documents: [
+          {
+            id: 'adh-omni-003-doc-identity',
+            label: "Cartes d'identité assuré et conjointe",
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-003-doc-child',
+            label: "Extrait de naissance de l'enfant",
+            ownerName: 'Youssef Ben Ali',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-003-doc-medical',
+            label: "Certificat médical de l'enfant",
+            ownerName: 'Youssef Ben Ali',
+            required: true,
+            status: 'MANQUANT',
+          },
+        ],
+        missingItems: ["Certificat médical pour l'enfant déclaré asthmatique"],
+        internalNotes:
+          'Demande recevable mais l’offre doit attendre le complément médical pour éviter une proposition incomplète.',
+      },
+      {
+        id: 'adh-omni-004',
+        externalRequestId: 'OMNI-ADH-2026-0145',
+        source: 'OMNICARE',
+        status: 'OFFRE_ENVOYEE',
+        submittedAt: this.daysAgo(3, 2),
+        updatedAt: this.daysAgo(1),
+        applicantName: 'Mouna Gharbi',
+        applicantEmail: 'mouna.gharbi@example.com',
+        applicantPhone: '+216 98 654 220',
+        address: 'Cité Ennasr 2',
+        city: 'Ariana',
+        employerName: 'Societe Poulina',
+        profession: 'Responsable achats',
+        annualSalary: 62000,
+        companyEntryDate: '2016-03-01',
+        familySituation: 'DIVORCE',
+        requestedCoverage: ['SANTE_COMPLEMENTAIRE', 'INCAPACITE_INVALIDITE'],
+        desiredEffectiveDate: this.dateOnly(this.daysFromNow(7)),
+        currentHealthCoverage: 'Aucune complémentaire active',
+        members: [
+          {
+            id: 'adh-omni-004-assure',
+            relationship: 'ASSURE',
+            fullName: 'Mouna Gharbi',
+            birthDate: '1984-07-28',
+            cin: '08407281',
+            profession: 'Responsable achats',
+            medical: {
+              goodHealth: true,
+              heightCm: 171,
+              weightKg: 67,
+            },
+          },
+          {
+            id: 'adh-omni-004-enfant-1',
+            relationship: 'ENFANT',
+            fullName: 'Yasmine Gharbi',
+            birthDate: '2014-04-03',
+            medical: {
+              goodHealth: true,
+            },
+          },
+        ],
+        documents: [
+          {
+            id: 'adh-omni-004-doc-identity',
+            label: "Carte d'identité",
+            ownerName: 'Mouna Gharbi',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-004-doc-child',
+            label: "Extrait de naissance de l'enfant",
+            ownerName: 'Yasmine Gharbi',
+            required: true,
+            status: 'RECU',
+          },
+          {
+            id: 'adh-omni-004-doc-medical',
+            label: 'Questionnaire médical',
+            required: true,
+            status: 'RECU',
+          },
+        ],
+        missingItems: [],
+        selectedCompanyId: 'star',
+        selectedPlanTierName: 'Premium',
+        lastAction: {
+          type: 'OFFRE_ENVOYEE',
+          at: this.daysAgo(1),
+          label: 'Offre STAR Premium envoyée vers OmniCare',
+        },
+      },
+    ];
+
+    this.storage.setItem(STORAGE_KEYS.adhesionRequests, requests);
   }
 
   private seedCrossCompanyFraud(): void {
@@ -2129,7 +2465,19 @@ export class SeedService {
     respondedAt?: string;
     respondedBy?: string;
     lastUpdatedAt?: string;
+    comarBulletin?: DemandeRemboursement['comarBulletin'];
   }): DemandeRemboursement {
+    const respondedAt =
+      input.respondedAt ??
+      (this.isFinalDemandeStatus(input.status) ? this.daysAgo(1) : undefined);
+    const respondedBy =
+      input.respondedBy ??
+      (this.isFinalDemandeStatus(input.status)
+        ? input.companyId === 'star'
+          ? 'Ahmed Direche'
+          : 'Sami Bouzid'
+        : undefined);
+
     return {
       id: input.id,
       companyId: input.companyId,
@@ -2153,23 +2501,116 @@ export class SeedService {
       submittedAt: input.submittedAt,
       actDate: input.actDate,
       lastUpdatedAt: input.lastUpdatedAt ?? this.hoursAgo(8),
-      respondedAt:
-        input.respondedAt ??
-        (this.isFinalDemandeStatus(input.status) ? this.daysAgo(1) : undefined),
-      respondedBy:
-        input.respondedBy ??
-        (this.isFinalDemandeStatus(input.status)
-          ? input.companyId === 'star'
-            ? 'Ahmed Direche'
-            : 'Sami Bouzid'
-          : undefined),
+      respondedAt,
+      respondedBy,
       approvedAmount: input.approvedAmount,
       rejectionReason: input.rejectionReason,
       rejectionNotes: input.rejectionNotes,
       flags: input.flags ?? [],
       riskScore: input.riskScore,
       crossCompanyDuplicateDetected: input.crossCompanyDuplicateDetected,
+      comarBulletin:
+        input.comarBulletin ??
+        this.comarBulletinData({
+          ...input,
+          respondedAt,
+          respondedBy,
+        }),
     };
+  }
+
+  private comarBulletinData(input: {
+    id: string;
+    companyId: string;
+    patientName: string;
+    patientMemberId: string;
+    employerName?: string;
+    contractId?: string;
+    providerName: string;
+    actDescription: string;
+    totalAmount: number;
+    status: DemandeRemboursement['status'];
+    actDate: string;
+    approvedAmount?: number;
+    respondedAt?: string;
+    respondedBy?: string;
+  }): DemandeRemboursement['comarBulletin'] {
+    const companyLabel = input.companyId === 'comar' ? 'COMAR Assurances' : 'Société El Menzah Services';
+    const patientAddressByMember: Record<string, string> = {
+      'AH-789': '12 rue Ibn Khaldoun, Mutuelleville, Tunis',
+      'CB-789': 'Avenue Mohamed V, Tunis',
+      'FM-908': 'Rue du Lac Biwa, Les Berges du Lac, Tunis',
+      'KM-321': '12 Avenue Habib Bourguiba, Tunis',
+      'SBH-112': 'Avenue Hedi Nouira, Sfax',
+      'SG-456': 'Cité Ennasr 2, Ariana',
+    };
+    const amountLabel = `${Math.round(input.totalAmount)} DT`;
+    const approvedAmountLabel =
+      input.approvedAmount === undefined ? amountLabel : `${Math.round(input.approvedAmount)} DT`;
+
+    return {
+      identity: {
+        identifiantUnique: input.id,
+        societyName: input.employerName ?? companyLabel,
+        adherentFullName: input.patientName,
+        address:
+          patientAddressByMember[input.patientMemberId] ?? '12 Avenue Habib Bourguiba, Tunis',
+        contractNumber:
+          input.contractId ?? `${input.companyId.toUpperCase()}-IND-${input.patientMemberId}`,
+        matricule: input.patientMemberId,
+        patientFirstName: input.patientName.split(' ')[0] ?? input.patientName,
+      },
+      provider: {
+        specialistNameAndAddress: `${input.providerName}, Tunis`,
+        establishmentStamp: input.providerName,
+        doctorSignatureLabel: input.providerName,
+        providerFiscalNumber: `MF-${input.companyId.toUpperCase()}-${input.patientMemberId.replace(/[^A-Z0-9]/g, '')}`,
+      },
+      medicalActs: [
+        {
+          actDate: input.actDate,
+          actDesignation: input.actDescription,
+          actCoefficient: input.actDescription.toLowerCase().includes('kiné') ? 'K6' : '—',
+          honorairesAmount: amountLabel,
+          ordonnanceDelivered: 'Oui',
+          invoiceAmount: amountLabel,
+        },
+      ],
+      pharmacy: {
+        pharmacyOrSupplierStamp: 'Pharmacie Centrale El Menzah',
+      },
+      declaration: {
+        declarationDate: input.actDate,
+        adherentVisa: input.patientName,
+        employerVisa: input.employerName ?? companyLabel,
+      },
+      assuranceDecision: this.isFinalDemandeStatus(input.status)
+        ? {
+            label: this.comarBulletinDecision(input.status),
+            approvedAmount: approvedAmountLabel,
+            reviewerName: input.respondedBy ?? 'Admin assurance',
+            reviewedDate: input.respondedAt ?? input.actDate,
+          }
+        : undefined,
+    };
+  }
+
+  private comarBulletinDecision(status: DemandeRemboursement['status']): string {
+    switch (status) {
+      case 'APPROUVEE':
+      case 'APPROUVEE_AUTO':
+        return 'Accord assurance';
+      case 'APPROUVEE_PARTIELLEMENT':
+        return 'Accord partiel assurance';
+      case 'REFUSEE':
+        return 'Refus assurance';
+      case 'DOCUMENTS_INCOMPLETS':
+        return 'Complément demandé';
+      case 'EN_EXAMEN':
+        return 'En cours d’examen';
+      default:
+        return 'Pré-rempli patient';
+    }
   }
 
   private autorisation(input: {

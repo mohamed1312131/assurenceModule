@@ -69,6 +69,31 @@ export class AssuranceReseauComponent implements OnInit {
   protected readonly filteredProviders = computed(() =>
     this.providers().filter((provider) => this.matchesFilters(provider)),
   );
+  protected readonly activeFilterCount = computed(() => {
+    const filters = this.filters();
+
+    return [
+      filters.statuses.length,
+      filters.providerType ? 1 : 0,
+      filters.location ? 1 : 0,
+      filters.tiersPayantOnly ? 1 : 0,
+    ].reduce((total, count) => total + count, 0);
+  });
+  protected readonly agreedCount = computed(
+    () => this.providers().filter((provider) => provider.networkStatus === 'AGREE').length,
+  );
+  protected readonly tiersPayantCount = computed(
+    () => this.providers().filter((provider) => provider.tiersPayantEnabled).length,
+  );
+  protected readonly outsideNetworkCount = computed(
+    () => this.providers().filter((provider) => provider.networkStatus === 'HORS_RESEAU').length,
+  );
+  protected readonly claimsThisYear = computed(() =>
+    this.providers().reduce((total, provider) => total + provider.claimsThisYear, 0),
+  );
+  protected readonly totalReimbursedYear = computed(() =>
+    this.providers().reduce((total, provider) => total + provider.totalReimbursedThisYear, 0),
+  );
 
   ngOnInit(): void {
     this.providers.set(
@@ -96,6 +121,15 @@ export class AssuranceReseauComponent implements OnInit {
 
   protected setTiersPayantOnly(tiersPayantOnly: boolean): void {
     this.filters.update((filters) => ({ ...filters, tiersPayantOnly }));
+  }
+
+  protected resetFilters(): void {
+    this.filters.set({
+      location: null,
+      providerType: null,
+      statuses: [],
+      tiersPayantOnly: false,
+    });
   }
 
   protected openProvider(provider: ProviderNetworkEntry): void {

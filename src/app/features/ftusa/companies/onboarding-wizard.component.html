@@ -1,0 +1,350 @@
+<section class="wizard-shell" aria-labelledby="onboarding-title">
+  <header class="wizard-header">
+    <div class="wizard-heading">
+      <span class="section-kicker">Console FTUSA</span>
+      <h2 id="onboarding-title" mat-dialog-title>Nouvelle compagnie d’assurance</h2>
+      <p>Créer le tenant et transmettre l’accès initial à l’administrateur assureur.</p>
+    </div>
+
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Fermer l’assistant de création"
+      (click)="cancel()"
+    >
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content class="wizard-content">
+    <aside class="step-rail" aria-label="Étapes de création compagnie">
+      @for (step of steps; track step.id; let index = $index) {
+        <button
+          type="button"
+          class="step-rail-item"
+          [class.active]="currentStep() === index"
+          [class.complete]="highestVisitedStep() > index && isStepValid(index)"
+          [disabled]="!canOpenStep(index)"
+          [attr.aria-current]="currentStep() === index ? 'step' : null"
+          (click)="goToStep(index)"
+        >
+          <span class="step-index">{{ index + 1 }}</span>
+          <span class="step-copy">
+            <strong>{{ step.label }}</strong>
+            <small>{{ step.eyebrow }}</small>
+          </span>
+        </button>
+      }
+    </aside>
+
+    <section class="step-panel">
+      <div class="step-panel-header">
+        <span>Étape {{ currentStep() + 1 }} sur {{ steps.length }}</span>
+        <h3>{{ currentStepInfo().label }}</h3>
+      </div>
+
+      @switch (currentStep()) {
+        @case (0) {
+          <section class="step-section">
+            <div class="section-intro">
+              <h4>Identité de la compagnie</h4>
+              <p>Renseignez les informations de base utilisées pour créer le tenant assurance.</p>
+            </div>
+
+            <p class="info-note">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              Le code court sera utilisé dans les références internes et les numéros de dossiers.
+            </p>
+
+            <div class="form-grid">
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nom de la compagnie *</mat-label>
+                  <input
+                    matInput
+                    required
+                    [value]="company().name"
+                    [attr.aria-invalid]="companyError('name') ? 'true' : null"
+                    [attr.aria-describedby]="companyError('name') ? 'company-name-error' : null"
+                    (input)="patchCompany('name', $any($event.target).value)"
+                    (blur)="markCompanyTouched('name')"
+                  />
+                </mat-form-field>
+                @if (companyError('name'); as error) {
+                  <p class="field-error" id="company-name-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Code court *</mat-label>
+                  <input
+                    matInput
+                    required
+                    [value]="company().code"
+                    [attr.aria-invalid]="companyError('code') ? 'true' : null"
+                    [attr.aria-describedby]="companyError('code') ? 'company-code-error' : null"
+                    (input)="patchCompany('code', uppercase($any($event.target).value))"
+                    (blur)="markCompanyTouched('code')"
+                  />
+                </mat-form-field>
+                @if (companyError('code'); as error) {
+                  <p class="field-error" id="company-code-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Immatriculation CGA</mat-label>
+                  <input
+                    matInput
+                    [value]="company().cgaRegistrationNumber"
+                    (input)="patchCompany('cgaRegistrationNumber', $any($event.target).value)"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Déclaration INPDP</mat-label>
+                  <input
+                    matInput
+                    [value]="company().inpdpDeclarationNumber"
+                    (input)="patchCompany('inpdpDeclarationNumber', $any($event.target).value)"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Email contact *</mat-label>
+                  <input
+                    matInput
+                    required
+                    type="email"
+                    [value]="company().contactEmail"
+                    [attr.aria-invalid]="companyError('contactEmail') ? 'true' : null"
+                    [attr.aria-describedby]="
+                      companyError('contactEmail') ? 'company-contact-email-error' : null
+                    "
+                    (input)="patchCompany('contactEmail', $any($event.target).value)"
+                    (blur)="markCompanyTouched('contactEmail')"
+                  />
+                </mat-form-field>
+                @if (companyError('contactEmail'); as error) {
+                  <p class="field-error" id="company-contact-email-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Téléphone</mat-label>
+                  <input
+                    matInput
+                    [value]="company().contactPhone"
+                    (input)="patchCompany('contactPhone', $any($event.target).value)"
+                  />
+                </mat-form-field>
+              </div>
+
+              <div class="field-control full">
+                <mat-form-field appearance="outline">
+                  <mat-label>Adresse</mat-label>
+                  <input
+                    matInput
+                    [value]="company().address"
+                    (input)="patchCompany('address', $any($event.target).value)"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+
+            <button
+              mat-stroked-button
+              disabled
+              type="button"
+              matTooltip="Upload simulé — démo uniquement"
+              class="demo-upload"
+            >
+              <mat-icon aria-hidden="true">upload_file</mat-icon>
+              Logo compagnie
+              <span>Dépôt simulé dans cette démo</span>
+            </button>
+          </section>
+        }
+
+        @case (1) {
+          <section class="step-section">
+            <div class="section-intro">
+              <h4>Compte administrateur</h4>
+              <p>Définissez le premier accès de gestion pour la compagnie membre.</p>
+            </div>
+
+            <p class="info-note">
+              <mat-icon aria-hidden="true">vpn_key</mat-icon>
+              Un accès temporaire sera généré pour l’administrateur de la compagnie lors de
+              l’activation.
+            </p>
+
+            <div class="form-grid">
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nom complet de l’administrateur *</mat-label>
+                  <input
+                    matInput
+                    required
+                    [value]="admin().name"
+                    [attr.aria-invalid]="adminError('name') ? 'true' : null"
+                    [attr.aria-describedby]="adminError('name') ? 'admin-name-error' : null"
+                    (input)="patchAdmin('name', $any($event.target).value)"
+                    (blur)="markAdminTouched('name')"
+                  />
+                </mat-form-field>
+                @if (adminError('name'); as error) {
+                  <p class="field-error" id="admin-name-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Email professionnel *</mat-label>
+                  <input
+                    matInput
+                    required
+                    type="email"
+                    [value]="admin().email"
+                    [attr.aria-invalid]="adminError('email') ? 'true' : null"
+                    [attr.aria-describedby]="adminError('email') ? 'admin-email-error' : null"
+                    (input)="patchAdmin('email', $any($event.target).value)"
+                    (blur)="markAdminTouched('email')"
+                  />
+                </mat-form-field>
+                @if (adminError('email'); as error) {
+                  <p class="field-error" id="admin-email-error">{{ error }}</p>
+                }
+              </div>
+
+              <div class="field-control">
+                <mat-form-field appearance="outline">
+                  <mat-label>Téléphone direct</mat-label>
+                  <input
+                    matInput
+                    [value]="admin().phone"
+                    (input)="patchAdmin('phone', $any($event.target).value)"
+                  />
+                </mat-form-field>
+              </div>
+            </div>
+          </section>
+        }
+
+        @case (2) {
+          <section class="step-section">
+            <div class="section-intro">
+              <h4>Droits & accès</h4>
+              <p>Confirmez les espaces visibles pour l’administrateur assureur après activation.</p>
+            </div>
+
+            <div class="access-grid">
+              @for (module of accessModules(); track module.id) {
+                <mat-card class="access-card" [class.disabled]="!module.enabled">
+                  <mat-checkbox
+                    [checked]="module.enabled"
+                    (change)="toggleAccessModule(module.id, $event.checked)"
+                  >
+                    <strong>{{ module.title }}</strong>
+                    <span>{{ module.description }}</span>
+                  </mat-checkbox>
+                </mat-card>
+              }
+            </div>
+
+            <div class="sharing-box">
+              <h4>Partage FTUSA</h4>
+              <mat-checkbox [checked]="fraudOptIn()" (change)="fraudOptIn.set($event.checked)">
+                Partager les signaux de fraude avec FTUSA
+              </mat-checkbox>
+              <mat-checkbox
+                [checked]="analyticsOptIn()"
+                (change)="analyticsOptIn.set($event.checked)"
+              >
+                Inclure les données dans l’analytique marché agrégée
+              </mat-checkbox>
+            </div>
+
+            <p class="warning-note">
+              <mat-icon aria-hidden="true">warning</mat-icon>
+              Les partages fraude et analytique nécessitent un accord contractuel séparé.
+            </p>
+          </section>
+        }
+
+        @case (3) {
+          <section class="step-section">
+            <div class="section-intro">
+              <h4>Activation</h4>
+              <p>Vérifiez les informations avant de créer le tenant assurance.</p>
+            </div>
+
+            <mat-card class="recap-card">
+              <div>
+                <span>Compagnie</span>
+                <strong>{{ company().name || 'Non renseignée' }}</strong>
+              </div>
+              <div>
+                <span>Code</span>
+                <strong>{{ company().code || 'Non renseigné' }}</strong>
+              </div>
+              <div>
+                <span>Contact</span>
+                <strong>{{ company().contactEmail || 'Non renseigné' }}</strong>
+              </div>
+              <div>
+                <span>Administrateur</span>
+                <strong>{{ admin().name || 'Non renseigné' }}</strong>
+                <small>{{ admin().email || 'Email non renseigné' }}</small>
+              </div>
+              <div class="wide">
+                <span>Modules activés</span>
+                <strong>{{ enabledModules().length }} module(s)</strong>
+                <small>
+                  @for (module of enabledModules(); track module.id; let last = $last) {
+                    {{ module.title }}@if (!last) {, }
+                  }
+                </small>
+              </div>
+              <div>
+                <span>Partage fraude</span>
+                <strong>{{ fraudOptIn() ? 'Activé' : 'Non activé' }}</strong>
+              </div>
+              <div>
+                <span>Analytique marché</span>
+                <strong>{{ analyticsOptIn() ? 'Activé' : 'Non activé' }}</strong>
+              </div>
+            </mat-card>
+
+            <mat-card class="post-activation-card">
+              <h4>Après activation, l’assureur devra compléter dans son espace :</h4>
+              <p>Plans, adhérents, contrats groupe, réseau agréé et paramètres compagnie.</p>
+            </mat-card>
+          </section>
+        }
+      }
+    </section>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="wizard-footer">
+    <button mat-button type="button" (click)="cancel()">Annuler</button>
+    <span class="footer-spacer"></span>
+    <button mat-button type="button" [disabled]="currentStep() === 0" (click)="back()">Retour</button>
+    @if (currentStep() < steps.length - 1) {
+      <button mat-flat-button color="primary" type="button" (click)="continue()">
+        Continuer
+      </button>
+    } @else {
+      <button mat-flat-button color="primary" type="button" (click)="activate()">
+        Activer la compagnie
+      </button>
+    }
+  </mat-dialog-actions>
+</section>

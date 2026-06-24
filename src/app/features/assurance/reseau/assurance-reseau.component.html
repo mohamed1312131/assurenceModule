@@ -1,104 +1,166 @@
 <section class="reseau-page">
-  <header class="page-header">
-    <div>
-      <h1>Réseau agréé</h1>
-      <p>{{ providers().length }} prestataires · {{ filteredProviders().length }} affichés</p>
-    </div>
-  </header>
+  <section class="dashboard-shell" aria-label="Console réseau agréé STAR">
+    <header class="page-header">
+      <div class="header-copy">
+        <p class="eyebrow">Prestataires médicaux</p>
+        <h1>Réseau agréé</h1>
+        <p>{{ providers().length }} prestataires · {{ filteredProviders().length }} affichés</p>
+      </div>
+    </header>
 
-  <mat-card class="filter-card">
-    <div class="filter-row">
-      <span class="filter-label">Statut réseau</span>
-      <mat-chip-listbox multiple aria-label="Filtrer par statut réseau">
-        @for (status of statuses; track status) {
-          <mat-chip-option
-            [selected]="filters().statuses.includes(status)"
-            (click)="toggleStatus(status)"
-          >
-            {{ statusLabel(status) }}
-          </mat-chip-option>
-        }
-      </mat-chip-listbox>
-    </div>
-
-    <div class="filter-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Type de prestataire</mat-label>
-        <mat-select
-          [value]="filters().providerType"
-          (selectionChange)="setProviderType($event.value)"
-        >
-          <mat-option [value]="null">Tous les types</mat-option>
-          @for (type of providerTypes; track type) {
-            <mat-option [value]="type">{{ providerTypeLabel(type) }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Ville ou région</mat-label>
-        <input
-          matInput
-          type="search"
-          [value]="filters().location ?? ''"
-          (input)="setLocation($any($event.target).value)"
-          placeholder="Tunis, Sousse..."
-        />
-      </mat-form-field>
-
-      <mat-checkbox
-        [checked]="filters().tiersPayantOnly"
-        (change)="setTiersPayantOnly($event.checked)"
-      >
-        Tiers payant uniquement
-      </mat-checkbox>
-    </div>
-  </mat-card>
-
-  <section class="provider-grid" aria-label="Prestataires">
-    @for (provider of filteredProviders(); track provider.id) {
-      <mat-card class="provider-card">
-        <header>
-          <div>
-            <h2>{{ provider.providerName }}</h2>
-            <p>{{ providerTypeLabel(provider.providerType) }} · {{ provider.city }}</p>
-          </div>
-          <app-status-chip [status]="provider.networkStatus" />
-        </header>
-
-        <div class="badge-row">
-          <span class="tiers" [class.enabled]="provider.tiersPayantEnabled">
-            {{ provider.tiersPayantEnabled ? 'Tiers payant' : 'Sans tiers payant' }}
-          </span>
-          <span>{{ provider.region }}</span>
-        </div>
-
-        <div class="metrics">
-          <div>
-            <span>Agréé depuis</span>
-            <strong>{{ formatDate(provider.agreedSince) }}</strong>
-          </div>
-          <div>
-            <span>Demandes année</span>
-            <strong>{{ provider.claimsThisYear }}</strong>
-          </div>
-          <div>
-            <span>Remboursé année</span>
-            <strong>{{ formatCurrency(provider.totalReimbursedThisYear) }}</strong>
-          </div>
-        </div>
-
-        <button mat-button color="primary" type="button" (click)="openProvider(provider)">
-          Voir détail
-        </button>
-      </mat-card>
-    }
-  </section>
-
-  @if (filteredProviders().length === 0) {
-    <section class="empty-state">
-      <mat-icon aria-hidden="true">local_hospital</mat-icon>
-      <h2>Aucun prestataire trouvé</h2>
+    <section
+      class="operations-row"
+      [class.tone-warning]="outsideNetworkCount() > 0"
+      [class.tone-success]="outsideNetworkCount() === 0"
+      aria-label="Synthèse réseau"
+    >
+      <span class="row-status-dot"></span>
+      <strong>{{ agreedCount() }} prestataires agréés · {{ tiersPayantCount() }} tiers payant</strong>
+      <span>{{ outsideNetworkCount() }} hors réseau</span>
     </section>
-  }
+
+    <section class="primary-kpis" aria-label="Indicateurs réseau">
+      <mat-card class="kpi-card status-success" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Réseau agréé</span>
+          <strong class="kpi-value">{{ agreedCount() }}</strong>
+          <small>{{ providers().length }} prestataires référencés</small>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card status-info" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Tiers payant</span>
+          <strong class="kpi-value">{{ tiersPayantCount() }}</strong>
+          <small>Parcours prise en charge directe</small>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card status-warning" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Demandes année</span>
+          <strong class="kpi-value">{{ claimsThisYear() }}</strong>
+          <small>Activité prestataires réseau</small>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="kpi-card status-success" appearance="outlined">
+        <mat-card-content>
+          <span class="kpi-label">Remboursé année</span>
+          <strong class="kpi-value compact">{{ formatCurrency(totalReimbursedYear()) }}</strong>
+          <small>Volume réseau médical</small>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <mat-card class="filter-card" appearance="outlined">
+      <div class="filter-row">
+        <span class="filter-label">Statut réseau</span>
+        <mat-chip-listbox multiple aria-label="Filtrer par statut réseau">
+          @for (status of statuses; track status) {
+            <mat-chip-option
+              class="filter-chip"
+              [class.status-success]="status === 'AGREE'"
+              [class.status-warning]="status === 'EN_COURS_AGREMENT'"
+              [class.status-error]="status === 'HORS_RESEAU'"
+              [class.is-selected]="filters().statuses.includes(status)"
+              [selected]="filters().statuses.includes(status)"
+              (click)="toggleStatus(status)"
+            >
+              {{ statusLabel(status) }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Type de prestataire</mat-label>
+          <mat-select [value]="filters().providerType" (selectionChange)="setProviderType($event.value)">
+            <mat-option [value]="null">Tous les types</mat-option>
+            @for (type of providerTypes; track type) {
+              <mat-option [value]="type">{{ providerTypeLabel(type) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Ville ou région</mat-label>
+          <input
+            matInput
+            type="search"
+            [value]="filters().location ?? ''"
+            (input)="setLocation($any($event.target).value)"
+            placeholder="Tunis, Sousse..."
+          />
+        </mat-form-field>
+
+        <mat-checkbox [checked]="filters().tiersPayantOnly" (change)="setTiersPayantOnly($event.checked)">
+          Tiers payant uniquement
+        </mat-checkbox>
+
+        @if (activeFilterCount() > 0) {
+          <button mat-button color="primary" type="button" (click)="resetFilters()">
+            Réinitialiser
+          </button>
+        }
+      </div>
+    </mat-card>
+
+    <mat-card class="providers-panel" appearance="outlined">
+      <header class="section-heading">
+        <div>
+          <span>Prestataires</span>
+          <h2>{{ filteredProviders().length }} résultats</h2>
+        </div>
+      </header>
+
+      @if (filteredProviders().length === 0) {
+        <section class="empty-state">
+          <mat-icon aria-hidden="true">local_hospital</mat-icon>
+          <h2>Aucun prestataire trouvé</h2>
+        </section>
+      } @else {
+        <section class="provider-grid" aria-label="Prestataires">
+          @for (provider of filteredProviders(); track provider.id) {
+            <article class="provider-card">
+              <header>
+                <div>
+                  <h3>{{ provider.providerName }}</h3>
+                  <p>{{ providerTypeLabel(provider.providerType) }} · {{ provider.city }}</p>
+                </div>
+                <app-status-chip [status]="provider.networkStatus" />
+              </header>
+
+              <div class="badge-row">
+                <span class="tiers" [class.enabled]="provider.tiersPayantEnabled">
+                  {{ provider.tiersPayantEnabled ? 'Tiers payant' : 'Sans tiers payant' }}
+                </span>
+                <span>{{ provider.region }}</span>
+              </div>
+
+              <div class="metrics">
+                <div>
+                  <span>Agréé depuis</span>
+                  <strong>{{ formatDate(provider.agreedSince) }}</strong>
+                </div>
+                <div>
+                  <span>Demandes</span>
+                  <strong>{{ provider.claimsThisYear }}</strong>
+                </div>
+                <div>
+                  <span>Remboursé</span>
+                  <strong>{{ formatCurrency(provider.totalReimbursedThisYear) }}</strong>
+                </div>
+              </div>
+
+              <button mat-button color="primary" type="button" (click)="openProvider(provider)">
+                Voir détail
+              </button>
+            </article>
+          }
+        </section>
+      }
+    </mat-card>
+  </section>
 </section>

@@ -60,16 +60,9 @@ export class StatusChipComponent {
     }
 
     if (
-      [
-        'DOCUMENTS_INCOMPLETS',
-        'DEMANDE',
-        'EN_ATTENTE',
-        'EN_COURS_AGREMENT',
-        'EN_EXAMEN',
-        'EXPIRATION_PROCHE',
-        'MOYEN',
-        'SOUMISE',
-      ].includes(status)
+      ['DOCUMENTS_INCOMPLETS', 'DEMANDE', 'EN_ATTENTE', 'EN_COURS_AGREMENT', 'EN_EXAMEN', 'EXPIRATION_PROCHE', 'MOYEN'].includes(
+        status,
+      )
     ) {
       return 'warning';
     }
@@ -82,7 +75,7 @@ export class StatusChipComponent {
       return 'error';
     }
 
-    if (status === 'APPROUVEE_PARTIELLEMENT') {
+    if (['APPROUVEE_PARTIELLEMENT', 'SOUMISE'].includes(status)) {
       return 'info';
     }
 

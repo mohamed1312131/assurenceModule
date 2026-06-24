@@ -1,28 +1,51 @@
 <main class="login-page">
-  <section class="login-panel" aria-labelledby="login-title">
-    <div class="brand-mark">
+  <section class="access-gateway" aria-labelledby="login-title">
+    <header class="gateway-header">
       <img src="omnicare-logo.png" alt="OmniCare" class="brand-logo" />
-    </div>
-    <h1 id="login-title">Démonstration — Choisir un profil</h1>
-    <app-alert-banner
-      tone="info"
-      icon="school"
-      message="Démo FTUSA — choisissez un profil pour commencer."
-      [dismissible]="true"
-    />
+      <span class="demo-badge">
+        <mat-icon aria-hidden="true">radio_button_checked</mat-icon>
+        Mode démonstration
+      </span>
+    </header>
 
-    <div class="profile-grid">
+    <div class="gateway-heading">
+      <h1 id="login-title">Choisir un espace de connexion</h1>
+      <p>
+        Environnement de démonstration FTUSA et STAR Assurances pour présenter les parcours métier
+        avec des données fictives.
+      </p>
+    </div>
+
+    <div class="access-grid" aria-label="Choix du profil de connexion">
       @for (profile of profiles; track profile.id) {
-        <mat-card class="profile-card" appearance="outlined">
-          <mat-card-content>
-            <mat-icon aria-hidden="true">{{ profile.icon }}</mat-icon>
-            <div>
+        <mat-card class="access-card" appearance="outlined">
+          <mat-card-content class="access-card-content">
+            <div class="access-card-header">
+              <span class="access-icon">
+                <mat-icon aria-hidden="true">{{ profile.icon }}</mat-icon>
+              </span>
+              <span class="role-label">
+                @if (profile.id === 'ftusa') {
+                  Régulateur
+                } @else {
+                  Assureur
+                }
+              </span>
+            </div>
+
+            <div class="access-copy">
               <h2>{{ profile.title }}</h2>
               <p>{{ profile.description }}</p>
             </div>
           </mat-card-content>
-          <mat-card-actions align="end">
-            <button mat-flat-button type="button" (click)="login(profile.id)">
+
+          <mat-card-actions class="access-actions">
+            <button
+              mat-flat-button
+              type="button"
+              [attr.aria-label]="'Se connecter à ' + profile.title"
+              (click)="login(profile.id)"
+            >
               <mat-icon aria-hidden="true">login</mat-icon>
               Se connecter
             </button>
@@ -30,5 +53,9 @@
         </mat-card>
       }
     </div>
+
+    <footer class="gateway-footer">
+      Environnement de démonstration — données fictives.
+    </footer>
   </section>
 </main>

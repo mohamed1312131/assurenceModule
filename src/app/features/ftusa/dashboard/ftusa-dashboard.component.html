@@ -1,46 +1,59 @@
 <section class="ftusa-dashboard-page">
   <header class="page-header">
-    <div>
-      <h1>Tableau de bord marché</h1>
-      <p>Agrégation anonyme des compagnies ayant activé le partage analytique.</p>
+    <div class="header-copy">
+      <span class="section-kicker">Centre de supervision FTUSA</span>
+      <h1>Command center réglementaire</h1>
+      <p>
+        Pilotage du marché assurance, suivi des compagnies, demandes d’adhésion OmniCare,
+        exceptions SLA et alertes fraude inter-compagnies.
+      </p>
+    </div>
+
+    <div class="header-actions" aria-label="Actions rapides">
+      <span class="period-pill">
+        <mat-icon aria-hidden="true">calendar_month</mat-icon>
+        {{ facade.currentMonthLabel() }}
+      </span>
+      <button mat-stroked-button type="button" (click)="navigate('/ftusa/export')">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        Export activité
+      </button>
+      <button mat-flat-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
+        <mat-icon aria-hidden="true">person_add</mat-icon>
+        File adhésion
+      </button>
     </div>
   </header>
 
-  <section class="kpi-grid" aria-label="Indicateurs marché">
+  <mat-card class="urgent-strip">
+    <span class="urgent-icon">
+      <mat-icon aria-hidden="true">priority_high</mat-icon>
+    </span>
+    <strong>
+      {{ formatNumber(kpis().companiesOverSla) }} hors délai SLA ·
+      {{ formatNumber(kpis().flaggedCount) }} fraudes détectées ·
+      {{ formatNumber(adhesionFacade.stats().incomplete) }} dossier(s) à compléter
+    </strong>
+    <span>Surveillance consolidée sur les compagnies participantes et la file OmniCare.</span>
+  </mat-card>
+
+  <section class="kpi-grid" aria-label="Indicateurs primaires de supervision">
     <mat-card class="kpi-card">
       <span>Compagnies actives</span>
-      <strong>{{ kpis().activeCompanies }} sur {{ kpis().totalCompanies }}</strong>
-      <small>Base FTUSA complète</small>
+      <strong>{{ kpis().activeCompanies }} / {{ kpis().totalCompanies }}</strong>
+      <small>Compagnies référencées FTUSA</small>
     </mat-card>
 
     <mat-card class="kpi-card">
       <span>Demandes ce mois</span>
       <strong>{{ formatNumber(kpis().demandesThisMonth) }}</strong>
-      <small>Marché opt-in uniquement</small>
-    </mat-card>
-
-    <mat-card class="kpi-card">
-      <span>Volume via OmniCare</span>
-      <strong>{{ formatNumber(kpis().omnicareVolume) }}</strong>
-      <small>{{ formatPercent(kpis().omnicarePercent) }} du volume agrégé</small>
+      <small>Flux agrégé marché opt-in</small>
     </mat-card>
 
     <mat-card class="kpi-card">
       <span>Taux d’approbation</span>
       <strong>{{ formatPercent(kpis().approvalRate) }}</strong>
       <small>Décisions finales agrégées</small>
-    </mat-card>
-
-    <mat-card class="kpi-card">
-      <span>Délai moyen marché</span>
-      <strong>{{ formatDelay(kpis().averageDelay) }}</strong>
-      <small>Dossiers clôturés</small>
-    </mat-card>
-
-    <mat-card class="kpi-card">
-      <span>Fraudes détectées</span>
-      <strong>{{ formatNumber(kpis().flaggedCount) }}</strong>
-      <small>Dossiers flagués ce mois</small>
     </mat-card>
 
     <mat-card class="kpi-card warning">
@@ -50,7 +63,106 @@
     </mat-card>
   </section>
 
-  <p class="kpi-period-caption">Indicateurs du mois en cours — {{ facade.currentMonthLabel() }}</p>
+  <section class="secondary-insights" aria-label="Indicateurs secondaires">
+    <mat-card class="secondary-card">
+      <span>Délai moyen marché</span>
+      <strong>{{ formatDelay(kpis().averageDelay) }}</strong>
+      <small>Dossiers clôturés ce mois</small>
+    </mat-card>
+
+    <mat-card class="secondary-card">
+      <span>Fraudes détectées</span>
+      <strong>{{ formatNumber(kpis().flaggedCount) }}</strong>
+      <small>Dossiers flagués sur le mois</small>
+    </mat-card>
+
+    <mat-card class="secondary-card">
+      <span>Volume via OmniCare</span>
+      <strong>{{ formatNumber(kpis().omnicareVolume) }}</strong>
+      <small>{{ formatPercent(kpis().omnicarePercent) }} du volume agrégé</small>
+    </mat-card>
+  </section>
+
+  <mat-card class="adhesion-panel">
+    <header class="section-header">
+      <div>
+        <span class="section-kicker">File opérationnelle</span>
+        <h2>Demandes d’adhésion OmniCare</h2>
+        <p>
+          {{ adhesionFacade.stats().newCount }} nouvelle(s) ·
+          {{ adhesionFacade.stats().incomplete }} à compléter ·
+          {{ adhesionFacade.stats().ready }} prête(s) à proposer
+        </p>
+      </div>
+      <button mat-stroked-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
+        <mat-icon aria-hidden="true">open_in_new</mat-icon>
+        Ouvrir la file
+      </button>
+    </header>
+
+    @if (adhesionPreview().length === 0) {
+      <section class="empty-state">
+        <mat-icon aria-hidden="true">playlist_add_check</mat-icon>
+        <p>Aucune demande active dans la file OmniCare.</p>
+      </section>
+    } @else {
+      <div class="adhesion-preview-list">
+        @for (request of adhesionPreview(); track request.id) {
+          <article class="adhesion-preview-row">
+            <div class="queue-identity">
+              <strong>{{ request.applicantName }}</strong>
+              <span>Réf. {{ request.externalRequestId }}</span>
+            </div>
+
+            <div class="queue-meta">
+              <span>Composition</span>
+              <strong>{{ adhesionMemberSummary(request) }}</strong>
+            </div>
+
+            <div class="queue-meta recommendation">
+              <span>Suggestion assureur</span>
+              @if (adhesionFacade.topRecommendationFor(request); as recommendation) {
+                <strong>{{ recommendation.companyCode }} · {{ recommendation.planTierName }}</strong>
+                <small>
+                  Score {{ recommendation.score }} ·
+                  {{ adhesionFacade.formatCurrency(recommendation.monthlyPremiumEstimate) }}/mois
+                </small>
+              } @else {
+                <strong>Suggestion indisponible</strong>
+                <small>À qualifier dans la file complète</small>
+              }
+            </div>
+
+            <div class="queue-state">
+              <span
+                class="priority-pill"
+                [class.attention]="request.missingItems.length > 0 || request.status === 'A_COMPLETER'"
+              >
+                {{ adhesionPriorityLabel(request) }}
+              </span>
+              <app-status-chip
+                [status]="request.status"
+                [label]="adhesionStatusLabel(request.status)"
+                [tone]="adhesionStatusTone(request.status)"
+              />
+            </div>
+
+            <button mat-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
+              Analyser
+            </button>
+          </article>
+        }
+      </div>
+    }
+  </mat-card>
+
+  <section class="section-heading" aria-label="Analytique marché">
+    <div>
+      <span class="section-kicker">Analytique marché</span>
+      <h2>Flux, canaux et performance SLA</h2>
+      <p>Données issues des compagnies ayant activé le partage analytique.</p>
+    </div>
+  </section>
 
   <section class="hero-chart-grid" aria-label="Graphiques marché principaux">
     <app-chart-card
@@ -76,8 +188,8 @@
     />
   </section>
 
-  <section class="content-grid">
-    <section class="insights-section" aria-label="Aperçus marché">
+  <section class="content-grid" aria-label="Risques et activité réglementaire">
+    <section class="insights-section" aria-label="Fraude, risque et supervision">
       @for (insight of insights(); track insight.title) {
         <app-insight-card
           [icon]="insight.icon"
@@ -93,8 +205,9 @@
     </section>
 
     <mat-card class="activity-card">
-      <header>
+      <header class="section-header">
         <div>
+          <span class="section-kicker">Journal de supervision</span>
           <h2>Activité récente</h2>
           <p>Derniers événements inter-compagnies opt-in.</p>
         </div>
@@ -102,7 +215,11 @@
 
       <div class="timeline">
         @for (event of activityFeed(); track event.id) {
-          <article [class.success]="event.tone === 'success'" [class.warning]="event.tone === 'warning'" [class.error]="event.tone === 'error'">
+          <article
+            [class.success]="event.tone === 'success'"
+            [class.warning]="event.tone === 'warning'"
+            [class.error]="event.tone === 'error'"
+          >
             <span class="icon-frame">
               <mat-icon aria-hidden="true">{{ event.icon }}</mat-icon>
             </span>

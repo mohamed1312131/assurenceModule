@@ -1,36 +1,63 @@
 @if (dashboardData(); as dashboard) {
   <section class="dashboard-page">
-    <header class="page-header">
-      <div>
-        <p class="eyebrow">{{ dashboard.companyName }}</p>
-        <h1>Tableau de bord</h1>
-        <p>{{ dashboard.subtitle }}</p>
-      </div>
-    </header>
+    <section class="dashboard-shell" aria-label="Cockpit opérationnel STAR">
+      <header class="page-header">
+        <div class="header-copy">
+          <p class="eyebrow">{{ dashboard.companyName }}</p>
+          <h1>Tableau de bord</h1>
+          <p>{{ dashboard.subtitle }}</p>
+        </div>
 
-    @if (importantMessages().length > 0) {
-      <app-alert-banner
-        tone="warning"
-        icon="campaign"
-        [message]="'Communication FTUSA importante — ' + importantMessages()[0].subject"
-        actionLabel="Lire"
-        (action)="openMessage(importantMessages()[0])"
-      />
-    }
+        <div class="header-actions" aria-label="Actions du tableau de bord">
+          <span class="period-pill">{{ dashboard.periodLabel }}</span>
+          <button mat-stroked-button type="button" (click)="exportDashboard()">
+            <mat-icon aria-hidden="true">download</mat-icon>
+            Exporter
+          </button>
+          <button mat-flat-button type="button" (click)="viewDemandes()">
+            <mat-icon aria-hidden="true">fact_check</mat-icon>
+            Voir demandes
+          </button>
+        </div>
+      </header>
 
-    <section class="kpi-section" aria-label="Indicateurs principaux">
-      <div class="kpi-grid four-columns">
-        @for (kpi of dashboard.kpiRows[0]; track kpi.id) {
+      @if (importantMessages().length > 0) {
+        <app-alert-banner
+          tone="warning"
+          icon="campaign"
+          [message]="'Communication FTUSA importante — ' + importantMessages()[0].subject"
+          actionLabel="Lire"
+          (action)="openMessage(importantMessages()[0])"
+        />
+      }
+
+      <section
+        class="operations-row"
+        [class.tone-error]="dashboard.operationsSummary.tone === 'error'"
+        [class.tone-warning]="dashboard.operationsSummary.tone === 'warning'"
+        [class.tone-success]="dashboard.operationsSummary.tone === 'success'"
+        aria-label="Synthèse opérationnelle"
+      >
+        <span class="row-status-dot"></span>
+        <strong>{{ dashboard.operationsSummary.sentence }}</strong>
+        <button mat-button type="button" (click)="viewDemandes()">Ouvrir la file</button>
+      </section>
+
+      <section class="primary-kpis" aria-label="Indicateurs principaux">
+        @for (kpi of dashboard.primaryKpis; track kpi.id) {
           <mat-card
             class="kpi-card"
             appearance="outlined"
-            [class.tone-primary]="kpi.tone === 'primary'"
-            [class.tone-secondary]="kpi.tone === 'secondary'"
-            [class.tone-tertiary]="kpi.tone === 'tertiary'"
+            [class.status-error]="kpi.statusTone === 'error'"
+            [class.status-warning]="kpi.statusTone === 'warning'"
+            [class.status-success]="kpi.statusTone === 'success'"
           >
             <mat-card-content>
-              <div class="kpi-icon">
-                <lucide-icon [img]="kpi.icon" [size]="22" [strokeWidth]="2.2" />
+              <div class="kpi-topline">
+                <span class="kpi-icon">
+                  <lucide-icon [img]="kpi.icon" [size]="17" [strokeWidth]="2.2" />
+                </span>
+                <span class="status-dot"></span>
               </div>
               <strong
                 class="kpi-value"
@@ -39,89 +66,130 @@
                 [suffix]="kpi.suffix ?? ''"
               ></strong>
               <span class="kpi-label">{{ kpi.label }}</span>
-              @if (kpi.trend) {
-                <span class="kpi-trend">{{ kpi.trend }}</span>
-              }
+              <small>{{ kpi.trend }}</small>
             </mat-card-content>
           </mat-card>
         }
-      </div>
+      </section>
 
-      <div class="kpi-grid three-columns">
-        @for (kpi of dashboard.kpiRows[1]; track kpi.id) {
-          <mat-card
-            class="kpi-card"
-            appearance="outlined"
-            [class.tone-primary]="kpi.tone === 'primary'"
-            [class.tone-secondary]="kpi.tone === 'secondary'"
-            [class.tone-tertiary]="kpi.tone === 'tertiary'"
-          >
-            <mat-card-content>
-              <div class="kpi-icon">
-                <lucide-icon [img]="kpi.icon" [size]="22" [strokeWidth]="2.2" />
+      <section class="workspace-grid" aria-label="Pilotage opérationnel">
+        <mat-card class="priority-card" appearance="outlined">
+          <mat-card-content>
+            <header class="section-heading">
+              <div>
+                <span>Opérations</span>
+                <h2>File prioritaire</h2>
               </div>
-              <strong
-                class="kpi-value"
-                [appCountUp]="kpi.value"
-                [format]="kpi.format"
-                [suffix]="kpi.suffix ?? ''"
-              ></strong>
-              <span class="kpi-label">{{ kpi.label }}</span>
-              @if (kpi.trend) {
-                <span class="kpi-trend">{{ kpi.trend }}</span>
+            </header>
+
+            <div class="priority-table" aria-label="File prioritaire">
+              @for (priority of dashboard.treatmentPriorities.slice(0, 3); track priority.id) {
+                <button
+                  class="priority-row"
+                  type="button"
+                  [class.tone-error]="priority.tone === 'error'"
+                  [class.tone-warning]="priority.tone === 'warning'"
+                  [class.tone-success]="priority.tone === 'success'"
+                  [class.tone-info]="priority.tone === 'info'"
+                  (click)="openPriority(priority)"
+                >
+                  <span class="priority-name">
+                    <span class="row-status-dot"></span>
+                    {{ priority.label }}
+                  </span>
+                  <strong>{{ priority.value }}</strong>
+                  <span class="priority-action">
+                    {{ priority.actionLabel }}
+                    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                  </span>
+                </button>
               }
-            </mat-card-content>
-          </mat-card>
-        }
-      </div>
-    </section>
+            </div>
+          </mat-card-content>
+        </mat-card>
 
-    <section class="content-section" aria-labelledby="insights-title">
-      <div class="section-heading">
-        <h2 id="insights-title">Aperçu intelligent</h2>
-      </div>
+        <mat-card class="performance-card" appearance="outlined">
+          <mat-card-content>
+            <header class="section-heading">
+              <div>
+                <span>Performance</span>
+                <h2>Performance</h2>
+              </div>
+            </header>
 
-      <div class="insight-grid">
-        @for (insight of dashboard.insights; track insight.id; let index = $index) {
-          <div class="insight-item" [style.animation-delay.ms]="index * 50">
-            <app-insight-card
-              [icon]="insight.icon"
-              [eyebrow]="insight.eyebrow"
-              [title]="insight.title"
-              [description]="insight.description"
-              [supportingData]="insight.supportingData"
-              [actionLabel]="insight.actionLabel"
-              [tone]="insight.tone"
-              (action)="openInsight(insight)"
-            />
+            <div class="metric-list" aria-label="Performance du mois">
+              @for (metric of dashboard.secondaryMetrics; track metric.id) {
+                <article
+                  class="metric-row"
+                  [class.tone-success]="metric.tone === 'success'"
+                  [class.tone-warning]="metric.tone === 'warning'"
+                  [class.tone-info]="metric.tone === 'info'"
+                >
+                  <span class="metric-label">{{ metric.label }}</span>
+                  <strong
+                    [appCountUp]="metric.value"
+                    [format]="metric.format"
+                    [suffix]="metric.suffix ?? ''"
+                  ></strong>
+                </article>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+
+      <section class="compact-insights" aria-labelledby="insights-title">
+        <header class="section-heading">
+          <div>
+            <span>Signalement</span>
+            <h2 id="insights-title">Aperçu intelligent</h2>
           </div>
-        }
-      </div>
-    </section>
+        </header>
 
-    <section class="content-section" aria-labelledby="quick-actions-title">
-      <mat-card class="quick-actions-card" appearance="outlined">
-        <mat-card-content>
-          <div class="section-heading">
+        <div class="insight-list">
+          @for (insight of dashboard.insights; track insight.id) {
+            <article
+              class="insight-row"
+              [class.tone-error]="insight.tone === 'error'"
+              [class.tone-warning]="insight.tone === 'warning'"
+              [class.tone-success]="insight.tone === 'success'"
+              [class.tone-info]="insight.tone === 'info'"
+            >
+              <span class="row-status-dot"></span>
+              <strong>{{ insight.title }}</strong>
+              <span>{{ insight.supportingData[0] }}</span>
+              <button mat-button type="button" (click)="openInsight(insight)">
+                {{ insight.actionLabel }}
+              </button>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="quick-actions-section" aria-labelledby="quick-actions-title">
+        <header class="section-heading">
+          <div>
+            <span>Raccourcis</span>
             <h2 id="quick-actions-title">Actions rapides</h2>
           </div>
+        </header>
 
-          <div class="quick-actions">
-            @for (action of dashboard.quickActions; track action.id) {
-              <button
-                mat-stroked-button
-                type="button"
-                [disabled]="action.disabled"
-                [matTooltip]="action.disabled ? 'Fonctionnalité prévue dans une prochaine étape' : ''"
-                (click)="runQuickAction(action)"
-              >
-                <lucide-icon [img]="action.icon" [size]="18" [strokeWidth]="2.2" />
-                {{ action.label }}
-              </button>
-            }
-          </div>
-        </mat-card-content>
-      </mat-card>
+        <div class="quick-actions">
+          @for (action of dashboard.quickActions; track action.id) {
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="action.disabled"
+              [class.enabled-action]="!action.disabled"
+              [matTooltip]="action.disabled ? (action.helper ?? 'Fonctionnalité prévue') : ''"
+              (click)="runQuickAction(action)"
+            >
+              <lucide-icon [img]="action.icon" [size]="16" [strokeWidth]="2.2" />
+              {{ action.label }}
+            </button>
+          }
+        </div>
+      </section>
     </section>
   </section>
 }

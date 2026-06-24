@@ -14,7 +14,6 @@ import { DemandeRemboursement } from '../../../models/demande-remboursement.mode
 import { ClaimSource } from '../../../models/shared.model';
 import { SourceBadgeComponent } from '../../../shared/source-badge/source-badge.component';
 import { StatusChipComponent } from '../../../shared/status-chip/status-chip.component';
-import { AlertBannerComponent } from '../../../shared/alert-banner/alert-banner.component';
 import { AdherentDetailDrawerComponent } from './adherent-detail-drawer.component';
 import { AdherentsFacade } from './adherents.facade';
 
@@ -25,7 +24,6 @@ type EnrollmentType = Adherent['enrollmentType'];
   selector: 'app-adherents',
   imports: [
     AdherentDetailDrawerComponent,
-    AlertBannerComponent,
     MatButtonModule,
     MatCardModule,
     MatChipsModule,
@@ -62,6 +60,12 @@ export class AdherentsComponent implements OnInit {
       (left, right) => left.localeCompare(right, 'fr'),
     ),
   );
+  protected readonly verifiedCount = computed(
+    () => this.facade.allAdherents().filter((adherent) => adherent.verificationStatus === 'VERIFIE').length,
+  );
+  protected readonly groupCount = computed(
+    () => this.facade.allAdherents().filter((adherent) => adherent.enrollmentType === 'GROUPE').length,
+  );
 
   protected readonly statsByMember = computed(() => {
     const stats = new Map<string, { count: number; reimbursed: number }>();
@@ -81,6 +85,9 @@ export class AdherentsComponent implements OnInit {
 
     return stats;
   });
+  protected readonly totalReimbursedYear = computed(() =>
+    Array.from(this.statsByMember().values()).reduce((total, stats) => total + stats.reimbursed, 0),
+  );
 
   ngOnInit(): void {
     const companyId = this.companyId();
