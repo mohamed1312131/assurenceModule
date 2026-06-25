@@ -1,13 +1,15 @@
 .source-badge {
-  --source-bg: #475569;
-  --source-text: #ffffff;
+  --source-bg: #f8fafc;
+  --source-text: #475569;
+  --source-border: #dbe3e7;
   --mdc-chip-elevated-container-color: var(--source-bg);
   --mdc-chip-unselected-container-color: var(--source-bg);
   --mdc-chip-label-text-color: var(--source-text);
-  --mdc-chip-outline-color: transparent;
+  --mdc-chip-outline-color: var(--source-border);
   --mdc-chip-with-icon-icon-color: var(--source-text);
 
   background: var(--source-bg);
+  border: 1px solid var(--source-border);
   border-radius: 999px;
   color: var(--source-text);
   font-size: 0.72rem;
@@ -29,37 +31,44 @@
 }
 
 .omnicare {
-  --source-bg: #0f766e;
+  --source-bg: #eef7f6;
+  --source-border: #cde8e6;
+  --source-text: #0f6f73;
 }
 
 .manuel {
-  --source-bg: #334155;
+  --source-bg: #f8fafc;
+  --source-text: #334155;
 }
 
 .import-csv {
-  --source-bg: #4338ca;
+  --source-bg: #f8fafc;
+  --source-text: #334155;
 }
 
 .website {
-  --source-bg: #0891b2;
+  --source-bg: #f8fafc;
+  --source-text: #334155;
 }
 
 .email {
-  --source-bg: #7c3aed;
+  --source-bg: #f8fafc;
+  --source-text: #334155;
 }
 
 .other {
-  --source-bg: #475569;
+  --source-bg: #f8fafc;
+  --source-text: #334155;
 }
 
 :host ::ng-deep .source-badge .mdc-evolution-chip__text-label {
-  color: #ffffff !important;
+  color: var(--source-text) !important;
 }
 
 :host ::ng-deep .source-badge .mdc-evolution-chip__action--primary {
   background: var(--source-bg);
   border-radius: 999px;
-  color: #ffffff !important;
+  color: var(--source-text) !important;
   overflow: hidden;
 }
 
@@ -67,6 +76,6 @@
 :host ::ng-deep .source-badge .mat-mdc-chip-action,
 :host ::ng-deep .source-badge mat-icon {
   border-radius: 999px;
-  color: #ffffff !important;
+  color: var(--source-text) !important;
   overflow: hidden;
 }

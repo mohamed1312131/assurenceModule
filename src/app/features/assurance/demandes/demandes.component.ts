@@ -60,14 +60,18 @@ export class DemandesComponent implements OnInit {
   protected openNouvelleDemandeDialog(): void {
     this.dialog.open(NouvelleDemandeDialogComponent, {
       data: { companyId: this.companyId() },
-      width: '640px',
+      maxWidth: '94vw',
+      panelClass: 'assurance-form-dialog',
+      width: 'min(860px, 94vw)',
     });
   }
 
   protected openImportCsvDialog(): void {
     this.dialog.open(ImportCsvDialogComponent, {
       data: { companyId: this.companyId() },
-      width: '700px',
+      maxWidth: '94vw',
+      panelClass: 'assurance-form-dialog',
+      width: 'min(900px, 94vw)',
     });
   }
 
@@ -88,6 +92,6 @@ export class DemandesComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

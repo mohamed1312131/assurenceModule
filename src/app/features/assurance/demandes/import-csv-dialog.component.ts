@@ -42,14 +42,27 @@ interface CsvPreviewRow {
     MatTooltipModule,
   ],
   template: `
-    <h2 mat-dialog-title>Import lot — fichier CSV</h2>
+    <header class="wizard-header">
+      <div class="wizard-heading">
+        <span class="section-kicker">Import COMAR</span>
+        <h2 mat-dialog-title>Importer un lot CSV</h2>
+        <p>Contrôlez les lignes détectées avant de les ajouter à la file de traitement.</p>
+      </div>
+      <button class="dialog-close" mat-icon-button type="button" mat-dialog-close aria-label="Fermer">
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    </header>
 
-    <mat-dialog-content>
+    <mat-dialog-content class="wizard-content">
       @switch (state()) {
         @case ('idle') {
-          <section class="idle-state">
+          <section class="step-section idle-state">
+            <div class="section-intro">
+              <span class="section-kicker">Format attendu</span>
+              <p>Les colonnes doivent rester dans cet ordre pour garantir une prévisualisation fiable.</p>
+            </div>
+
             <div class="instructions">
-              <p>Format CSV attendu (colonnes dans cet ordre) :</p>
               <code>
                 matricule_adherent, categorie_acte, prestataire, date_acte, montant, numero_facture
               </code>
@@ -87,14 +100,17 @@ interface CsvPreviewRow {
           </section>
         }
         @case ('parsing') {
-          <section class="center-state">
+          <section class="step-section center-state">
             <mat-spinner diameter="46" />
             <p>Analyse du fichier en cours...</p>
           </section>
         }
         @case ('preview') {
-          <section class="preview-state">
-            <p class="preview-title">{{ previewRows().length }} demandes détectées — vérification avant import</p>
+          <section class="step-section preview-state">
+            <div class="section-intro">
+              <span class="section-kicker">Prévisualisation</span>
+              <p class="preview-title">{{ previewRows().length }} demandes détectées</p>
+            </div>
 
             <table mat-table [dataSource]="previewRows()" class="preview-table">
               <ng-container matColumnDef="adherent">
@@ -144,7 +160,7 @@ interface CsvPreviewRow {
           </section>
         }
         @case ('done') {
-          <section class="center-state done-state">
+          <section class="step-section center-state done-state">
             <mat-icon aria-hidden="true">check_circle</mat-icon>
             <h3>Import terminé</h3>
             <p>{{ importedCount() }} demandes ajoutées à la file de traitement</p>
@@ -153,7 +169,7 @@ interface CsvPreviewRow {
       }
     </mat-dialog-content>
 
-    <mat-dialog-actions align="end">
+    <mat-dialog-actions class="wizard-footer" align="end">
       @if (state() === 'preview') {
         <button mat-button type="button" (click)="cancelPreview()">Annuler</button>
         <button mat-flat-button color="primary" type="button" (click)="importValidRows()">
@@ -167,6 +183,106 @@ interface CsvPreviewRow {
     </mat-dialog-actions>
   `,
   styles: `
+    :host {
+      box-sizing: border-box;
+      display: block;
+      max-height: 90vh;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    :host *,
+    :host *::before,
+    :host *::after {
+      box-sizing: border-box;
+    }
+
+    .wizard-header {
+      align-items: flex-start;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      min-width: 0;
+      padding: 18px 22px 16px;
+    }
+
+    .dialog-close {
+      --mdc-icon-button-state-layer-size: 38px;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      color: #334155;
+      display: inline-flex;
+      flex: 0 0 38px;
+      height: 38px;
+      justify-content: center;
+      padding: 0;
+      width: 38px;
+    }
+
+    .dialog-close mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+
+    .wizard-heading {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .section-kicker {
+      color: var(--omnicare-secondary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h2[mat-dialog-title] {
+      color: var(--omnicare-text);
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0;
+      padding: 0;
+    }
+
+    .wizard-heading p,
+    .section-intro p {
+      color: var(--omnicare-muted);
+      font-size: 0.94rem;
+      margin: 0;
+    }
+
+    .wizard-content {
+      background: #f8fafc;
+      max-height: min(68vh, 760px);
+      max-width: 100%;
+      overflow: auto;
+      overflow-x: hidden;
+      padding: 16px 22px;
+    }
+
+    .step-section {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+      max-width: 100%;
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .section-intro {
+      display: grid;
+      gap: 5px;
+    }
+
     .idle-state,
     .preview-state {
       display: grid;
@@ -174,8 +290,8 @@ interface CsvPreviewRow {
     }
 
     .instructions {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
+      background: #f4f8fb;
+      border: 1px solid #d9e4ec;
       border-radius: 14px;
       padding: 14px;
     }
@@ -251,6 +367,22 @@ interface CsvPreviewRow {
       margin-right: 4px;
       vertical-align: middle;
       width: 18px;
+    }
+
+    .wizard-footer {
+      border-top: 1px solid #e5e7eb;
+      gap: 10px;
+      min-width: 0;
+      padding: 12px 22px 16px;
+    }
+
+    @media (max-width: 720px) {
+      .wizard-header,
+      .wizard-content,
+      .wizard-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
     }
   `,
 })

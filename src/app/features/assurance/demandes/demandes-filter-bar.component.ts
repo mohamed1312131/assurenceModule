@@ -302,13 +302,13 @@ interface ActiveFilterChip {
   `,
   styles: `
     .filter-card {
-      background: #eef8f5;
-      border-color: rgba(15, 111, 115, 0.12);
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
       border-radius: 14px;
-      box-shadow: none;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
       display: grid;
-      gap: 10px;
-      padding: 12px;
+      gap: 12px;
+      padding: 14px;
     }
 
     .filter-toolbar {
@@ -331,18 +331,18 @@ interface ActiveFilterChip {
     }
 
     .filter-toolbar button[mat-stroked-button] {
-      background: rgba(15, 111, 115, 0.1);
-      border-color: rgba(15, 111, 115, 0.2);
-      color: var(--omnicare-secondary);
+      background: #f8fafc;
+      border-color: #dbe3e7;
+      color: #334155;
       font-weight: 800;
       padding: 0 14px;
     }
 
     .active-advanced,
     .filter-toolbar button[mat-stroked-button]:hover {
-      background: var(--omnicare-secondary);
+      background: #eef7f6;
       border-color: rgba(15, 111, 115, 0.28);
-      color: #ffffff;
+      color: var(--omnicare-secondary);
     }
 
     .filter-count {
@@ -367,22 +367,25 @@ interface ActiveFilterChip {
     }
 
     .chip-toolbar {
-      align-items: center;
+      align-items: start;
+      border-top: 1px solid #eef2f4;
       display: grid;
-      gap: 10px;
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(220px, 0.55fr);
+      gap: 14px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(220px, 0.5fr);
+      padding-top: 12px;
     }
 
     .chip-group {
-      align-items: center;
+      align-items: start;
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 7px;
       min-width: 0;
       overflow: hidden;
     }
 
     .filter-label {
-      color: var(--omnicare-secondary);
+      color: #64748b;
       flex: 0 0 auto;
       font-size: 0.7rem;
       font-weight: 800;
@@ -395,21 +398,23 @@ interface ActiveFilterChip {
     }
 
     .filter-chip {
-      --chip-bg: #475569;
-      --chip-bg-selected: #334155;
-      --chip-text: #ffffff;
+      --chip-bg: #f8fafc;
+      --chip-bg-selected: #102a2d;
+      --chip-text: #475569;
+      --chip-text-selected: #ffffff;
+      --chip-border: #dbe3e7;
       --mdc-chip-elevated-container-color: var(--chip-bg);
       --mdc-chip-flat-selected-container-color: var(--chip-bg-selected);
       --mdc-chip-selected-container-color: var(--chip-bg-selected);
       --mdc-chip-unselected-container-color: var(--chip-bg);
       --mdc-chip-label-text-color: var(--chip-text);
-      --mdc-chip-selected-label-text-color: var(--chip-text);
-      --mdc-chip-disabled-label-text-color: rgba(255, 255, 255, 0.72);
+      --mdc-chip-selected-label-text-color: var(--chip-text-selected);
+      --mdc-chip-disabled-label-text-color: rgba(71, 85, 105, 0.72);
       --mdc-chip-outline-color: transparent;
       --mdc-chip-selected-outline-color: transparent;
       --mdc-chip-with-icon-icon-color: var(--chip-text);
-      --mdc-chip-selected-icon-color: var(--chip-text);
-      background: var(--chip-bg);
+      --mdc-chip-selected-icon-color: var(--chip-text-selected);
+      background: transparent;
       border: 0;
       border-radius: 999px;
       color: var(--chip-text);
@@ -417,65 +422,56 @@ interface ActiveFilterChip {
       font-weight: 800;
       min-height: 24px;
       overflow: hidden;
-      opacity: 0.78;
+      opacity: 1;
+      padding: 0;
       transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
         box-shadow 160ms ease,
-        opacity 160ms ease,
         transform 160ms ease;
     }
 
     .filter-chip.neutral {
-      --chip-bg: #475569;
       --chip-bg-selected: #334155;
     }
 
     .filter-chip.success {
-      --chip-bg: #047857;
-      --chip-bg-selected: #065f46;
+      --chip-bg-selected: #047857;
     }
 
     .filter-chip.warning {
-      --chip-bg: #b45309;
       --chip-bg-selected: #92400e;
     }
 
     .filter-chip.error {
-      --chip-bg: #b91c1c;
       --chip-bg-selected: #991b1b;
     }
 
     .filter-chip.info {
-      --chip-bg: #1d4ed8;
-      --chip-bg-selected: #1e40af;
+      --chip-bg-selected: #0f6f73;
     }
 
     .filter-chip.source-omnicare {
-      --chip-bg: #0f766e;
       --chip-bg-selected: #115e59;
     }
 
     .filter-chip.source-manuel {
-      --chip-bg: #334155;
       --chip-bg-selected: #1e293b;
     }
 
     .filter-chip.source-import {
-      --chip-bg: #4338ca;
-      --chip-bg-selected: #3730a3;
+      --chip-bg-selected: #334155;
     }
 
     .filter-chip.source-website {
-      --chip-bg: #0891b2;
-      --chip-bg-selected: #0e7490;
+      --chip-bg-selected: #334155;
     }
 
     .filter-chip.source-email {
-      --chip-bg: #7c3aed;
-      --chip-bg-selected: #6d28d9;
+      --chip-bg-selected: #334155;
     }
 
     .filter-chip.source-other {
-      --chip-bg: #475569;
       --chip-bg-selected: #334155;
     }
 
@@ -483,13 +479,9 @@ interface ActiveFilterChip {
     .filter-chip[aria-selected='true'],
     .filter-chip.mat-mdc-chip-selected {
       background: var(--chip-bg-selected);
-      box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.32),
-        0 0 0 2px #ffffff,
-        0 0 0 4px rgba(15, 111, 115, 0.24),
-        0 6px 14px rgba(15, 111, 115, 0.16);
+      border-color: transparent;
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
       color: #ffffff;
-      opacity: 1;
       transform: translateY(-1px);
     }
 
@@ -497,13 +489,14 @@ interface ActiveFilterChip {
     :host ::ng-deep .filter-chip .mat-mdc-chip-action-label,
     :host ::ng-deep .filter-chip mat-icon,
     :host ::ng-deep .filter-chip .mdc-evolution-chip__graphic {
-      color: #ffffff !important;
+      color: var(--chip-text) !important;
     }
 
     :host ::ng-deep .filter-chip .mdc-evolution-chip__action--primary {
       background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
       border-radius: 999px;
-      color: #ffffff !important;
+      color: var(--chip-text) !important;
       overflow: hidden;
     }
 
@@ -511,6 +504,23 @@ interface ActiveFilterChip {
     :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__action--primary,
     :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__action--primary {
       background: var(--chip-bg-selected);
+      border-color: transparent;
+      color: #ffffff !important;
+    }
+
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__text-label,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__text-label,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__text-label,
+    :host ::ng-deep .filter-chip.is-selected .mat-mdc-chip-action-label,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mat-mdc-chip-action-label,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mat-mdc-chip-action-label,
+    :host ::ng-deep .filter-chip.is-selected mat-icon,
+    :host ::ng-deep .filter-chip[aria-selected='true'] mat-icon,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected mat-icon,
+    :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__graphic,
+    :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__graphic,
+    :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__graphic {
+      color: #ffffff !important;
     }
 
     :host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__graphic,
@@ -544,13 +554,39 @@ interface ActiveFilterChip {
       overflow: hidden;
     }
 
+    :host ::ng-deep .filter-chip .mdc-evolution-chip__cell {
+      background: transparent;
+    }
+
     .chip-dot {
-      background: currentColor;
+      background: #94a3b8;
       border-radius: 999px;
       display: inline-block;
       height: 7px;
       margin-right: 5px;
       width: 7px;
+    }
+
+    .filter-chip.success .chip-dot {
+      background: #10b981;
+    }
+
+    .filter-chip.warning .chip-dot {
+      background: #f59e0b;
+    }
+
+    .filter-chip.error .chip-dot {
+      background: #ef4444;
+    }
+
+    .filter-chip.info .chip-dot {
+      background: var(--omnicare-secondary);
+    }
+
+    .filter-chip.is-selected .chip-dot,
+    .filter-chip[aria-selected='true'] .chip-dot,
+    .filter-chip.mat-mdc-chip-selected .chip-dot {
+      background: currentColor;
     }
 
     .active-strip {
@@ -563,17 +599,17 @@ interface ActiveFilterChip {
     }
 
     .active-filter-chip {
-      --mdc-chip-elevated-container-color: var(--omnicare-secondary);
-      --mdc-chip-label-text-color: #ffffff;
-      border: 0;
+      --mdc-chip-elevated-container-color: #f8fafc;
+      --mdc-chip-label-text-color: #334155;
+      border: 1px solid #dbe3e7;
       font-size: 0.74rem;
       font-weight: 800;
       min-height: 24px;
     }
 
     .advanced-panel {
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(15, 111, 115, 0.12);
+      background: #fbfcfd;
+      border: 1px solid #e5e7eb;
       border-radius: 12px;
       box-shadow: none;
       padding: 12px;

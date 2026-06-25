@@ -42,12 +42,11 @@ export class AssuranceShellComponent {
 
   protected readonly user = this.auth.currentUser;
   protected readonly companyId = computed(() => this.user()?.companyId ?? '');
-  protected readonly companyLabel = computed(() =>
-    this.companyId() === 'comar' ? 'COMAR' : 'STAR',
-  );
+  protected readonly companyLabel = computed(() => this.companyId().toUpperCase() || 'COMAR');
   protected readonly navItems: ShellNavItem[] = [
     { path: 'dashboard', icon: 'dashboard', label: 'Tableau de bord' },
     { path: 'demandes', icon: 'assignment', label: 'Demandes' },
+    { path: 'demandes-adhesion', icon: 'person_add', label: 'Demandes d’adhésion' },
     { path: 'autorisations', icon: 'fact_check', label: 'Autorisations préalables' },
     { path: 'adherents', icon: 'groups', label: 'Adhérents' },
     { path: 'entreprises', icon: 'apartment', label: 'Entreprises' },

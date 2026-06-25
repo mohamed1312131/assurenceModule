@@ -468,6 +468,6 @@ export class AssuranceAnalytiqueComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

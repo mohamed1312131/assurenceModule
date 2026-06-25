@@ -84,7 +84,9 @@ export class EntreprisesComponent implements OnInit {
   protected openNewContractDialog(): void {
     this.dialog.open(NouveauContratDialogComponent, {
       data: { companyId: this.companyId() },
-      width: '720px',
+      maxWidth: '94vw',
+      panelClass: 'assurance-form-dialog',
+      width: 'min(820px, 94vw)',
     });
   }
 
@@ -143,6 +145,6 @@ export class EntreprisesComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

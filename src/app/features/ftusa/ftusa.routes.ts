@@ -22,20 +22,21 @@ export const FTUSA_ROUTES: Routes = [
       {
         path: 'compagnies',
         loadChildren: () =>
-          import('./companies/ftusa-companies.component').then((m) => [
-            { path: '', component: m.FtusaCompaniesComponent },
+          Promise.all([
+            import('./companies/ftusa-companies.component'),
+            import('./companies/company-360/company-360.component'),
+          ]).then(([companies, company360]) => [
+            { path: '', component: companies.FtusaCompaniesComponent },
+            { path: ':companyId', component: company360.Company360Component },
           ]),
       },
       {
         path: 'demandes-adhesion',
-        loadChildren: () =>
-          import('./adhesion-requests/ftusa-adhesion-requests.component').then((m) => [
-            { path: '', component: m.FtusaAdhesionRequestsComponent },
-          ]),
+        redirectTo: 'dashboard',
       },
       {
         path: 'adhesions',
-        redirectTo: 'demandes-adhesion',
+        redirectTo: 'dashboard',
       },
       {
         path: 'companies',

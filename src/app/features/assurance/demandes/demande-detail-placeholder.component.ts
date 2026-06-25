@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { Adherent } from '../../../models/adherent.model';
 import { CorporateContract } from '../../../models/corporate-contract.model';
 import {
@@ -83,6 +84,25 @@ interface BudgetRow {
             <app-status-chip [status]="demande.status" />
           </div>
         </header>
+
+        <section class="summary-strip" aria-label="Synthèse du dossier">
+          <article class="summary-card">
+            <span>Montant demandé</span>
+            <strong>{{ amountLabel(demande.totalAmount) }}</strong>
+          </article>
+          <article class="summary-card">
+            <span>Montant calculé</span>
+            <strong>{{ amountLabel(calculatedCoverageAmount()) }}</strong>
+          </article>
+          <article class="summary-card">
+            <span>Acte médical</span>
+            <strong>{{ actCategoryLabel(demande.actCategory) }}</strong>
+          </article>
+          <article class="summary-card">
+            <span>Dépôt</span>
+            <strong>{{ dateLabel(demande.submittedAt) }}</strong>
+          </article>
+        </section>
 
         <div class="detail-layout">
           <mat-card class="tabs-card" appearance="outlined">
@@ -190,20 +210,41 @@ interface BudgetRow {
                     <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
                     <div>
                       <strong>Bulletin de soins COMAR</strong>
-                      <p>Document généré · {{ comarBulletinModeLabel(demande) }}</p>
+                      <p>Document généré · Pré-rempli patient</p>
                     </div>
-                    <mat-chip class="document-mode-chip">{{ comarBulletinModeLabel(demande) }}</mat-chip>
+                    <mat-chip class="document-mode-chip">Pré-rempli patient</mat-chip>
                     <div class="document-actions">
-                      <button mat-stroked-button type="button" (click)="previewComarBulletin(demande)">
+                      <button mat-stroked-button type="button" (click)="previewComarBulletin(demande, 'PATIENT_PREFILLED')">
                         <mat-icon aria-hidden="true">visibility</mat-icon>
                         Prévisualiser
                       </button>
-                      <button mat-stroked-button type="button" (click)="downloadComarBulletin(demande)">
+                      <button mat-stroked-button type="button" (click)="downloadComarBulletin(demande, 'PATIENT_PREFILLED')">
                         <mat-icon aria-hidden="true">download</mat-icon>
                         Télécharger
                       </button>
                     </div>
                   </article>
+
+                  @if (isApprovedStatus(demande.status)) {
+                    <article class="document-row generated-document-row">
+                      <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
+                      <div>
+                        <strong>Bulletin de soins COMAR</strong>
+                        <p>Document généré · Version finale assurance</p>
+                      </div>
+                      <mat-chip class="document-mode-chip final">Version finale assurance</mat-chip>
+                      <div class="document-actions">
+                        <button mat-stroked-button type="button" (click)="previewComarBulletin(demande, 'ASSURANCE_FINAL')">
+                          <mat-icon aria-hidden="true">visibility</mat-icon>
+                          Prévisualiser
+                        </button>
+                        <button mat-stroked-button type="button" (click)="downloadComarBulletin(demande, 'ASSURANCE_FINAL')">
+                          <mat-icon aria-hidden="true">download</mat-icon>
+                          Télécharger
+                        </button>
+                      </div>
+                    </article>
+                  }
 
                   @if (demande.documents.length === 0) {
                     <div class="empty-inline">Aucun document associé à ce dossier.</div>
@@ -483,19 +524,31 @@ interface BudgetRow {
   `,
   styles: `
     .detail-page {
+      background: #ffffff;
+      border: 1px solid rgba(15, 111, 115, 0.1);
+      border-radius: 26px;
       display: grid;
-      gap: 20px;
+      gap: 16px;
+      padding: 22px;
     }
 
     .back-button {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 999px;
+      color: #334155;
+      font-weight: 800;
       justify-self: start;
+      min-height: 34px;
     }
 
     .detail-header {
       align-items: end;
+      border-bottom: 1px solid #eef2f4;
       display: flex;
       gap: 18px;
       justify-content: space-between;
+      padding-bottom: 14px;
     }
 
     .eyebrow {
@@ -514,7 +567,9 @@ interface BudgetRow {
 
     h1 {
       color: var(--omnicare-text);
-      font-size: 2rem;
+      font-size: 1.72rem;
+      font-weight: 800;
+      line-height: 1.12;
       margin: 0 0 6px;
     }
 
@@ -531,25 +586,87 @@ interface BudgetRow {
       gap: 8px;
     }
 
+    .summary-strip {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .summary-card {
+      background: #fbfcfd;
+      border: 1px solid #e5e7eb;
+      border-left: 3px solid var(--omnicare-secondary);
+      border-radius: 12px;
+      display: grid;
+      gap: 7px;
+      min-height: 86px;
+      padding: 12px 13px;
+    }
+
+    .summary-card span {
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .summary-card strong {
+      color: var(--omnicare-text);
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .detail-layout {
       align-items: start;
       display: grid;
-      gap: 20px;
-      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 14px;
+      grid-template-columns: minmax(0, 1fr) 340px;
     }
 
     .tabs-card,
     .action-panel mat-card,
     .error-card {
       background: #ffffff;
-      border-color: rgba(15, 111, 115, 0.12);
-      border-radius: 16px;
+      border-color: #e5e7eb;
+      border-radius: 14px;
+      box-shadow: none;
     }
 
     .tab-content {
       display: grid;
-      gap: 18px;
-      padding: 22px;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    :host ::ng-deep .tabs-card .mat-mdc-tab-header {
+      border-bottom: 1px solid #eef2f4;
+      margin: 0 18px;
+    }
+
+    :host ::ng-deep .tabs-card .mat-mdc-tab-header-pagination {
+      display: none !important;
+    }
+
+    :host ::ng-deep .tabs-card .mat-mdc-tab-label-container {
+      overflow: visible;
+    }
+
+    :host ::ng-deep .tabs-card .mat-mdc-tab {
+      flex: 0 1 auto;
+      min-width: max-content;
+      padding: 0 16px;
+    }
+
+    :host ::ng-deep .tabs-card .mdc-tab__text-label {
+      color: #334155;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0;
     }
 
     .info-grid {
@@ -567,8 +684,8 @@ interface BudgetRow {
     .coverage-box,
     .decision-lock {
       border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 16px;
+      border-radius: 12px;
+      padding: 14px;
     }
 
     .info-block,
@@ -576,7 +693,13 @@ interface BudgetRow {
     .panel-section,
     .document-row,
     .coverage-box {
-      background: #f8fafc;
+      background: #ffffff;
+    }
+
+    .info-block,
+    .panel-section,
+    .document-row {
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     }
 
     .wide {
@@ -585,7 +708,8 @@ interface BudgetRow {
 
     h2 {
       color: var(--omnicare-text);
-      font-size: 1.05rem;
+      font-size: 0.96rem;
+      font-weight: 800;
       margin: 0 0 12px;
     }
 
@@ -600,15 +724,17 @@ interface BudgetRow {
     }
 
     dt {
-      color: var(--omnicare-muted);
-      font-size: 0.76rem;
-      font-weight: 700;
+      color: #64748b;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
       text-transform: uppercase;
     }
 
     dd {
       color: var(--omnicare-text);
-      font-weight: 700;
+      font-size: 0.84rem;
+      font-weight: 800;
       margin: 4px 0 0;
     }
 
@@ -624,37 +750,46 @@ interface BudgetRow {
     }
 
     .network-chip {
+      --mdc-chip-outline-color: #bbf7d0;
       --mdc-chip-elevated-container-color: #ecfdf5;
       --mdc-chip-label-text-color: #047857;
+      border: 1px solid #bbf7d0;
     }
 
     .network-chip.out {
+      --mdc-chip-outline-color: #fecaca;
       --mdc-chip-elevated-container-color: #fef2f2;
       --mdc-chip-label-text-color: #b91c1c;
+      border-color: #fecaca;
     }
 
     .notice {
       align-items: center;
-      background: #eff6ff;
-      color: #1d4ed8;
+      background: #eef7f6;
+      border-color: #cde8e6;
+      color: var(--omnicare-secondary);
       display: flex;
       gap: 10px;
-      font-weight: 700;
+      font-size: 0.84rem;
+      font-weight: 800;
     }
 
     .notice.success {
       background: #ecfdf5;
+      border-color: #bbf7d0;
       color: #047857;
     }
 
     .notice.error {
       background: #fef2f2;
+      border-color: #fecaca;
       color: #b91c1c;
     }
 
     .notice.warning,
     .warning-text {
       background: #fffbeb;
+      border-color: #fde68a;
       color: #b45309;
     }
 
@@ -666,8 +801,8 @@ interface BudgetRow {
     }
 
     .generated-document-row {
-      background: #ffffff;
-      border-color: rgba(15, 111, 115, 0.2);
+      background: #fbfcfd;
+      border-color: #dbe3e7;
     }
 
     .generated-document-row > mat-icon {
@@ -675,9 +810,14 @@ interface BudgetRow {
     }
 
     .document-mode-chip {
-      --mdc-chip-elevated-container-color: #ecfeff;
+      --mdc-chip-elevated-container-color: #eef7f6;
       --mdc-chip-label-text-color: #0f6f73;
       font-weight: 700;
+    }
+
+    .document-mode-chip.final {
+      --mdc-chip-elevated-container-color: #ecfdf5;
+      --mdc-chip-label-text-color: #047857;
     }
 
     .document-actions {
@@ -712,7 +852,7 @@ interface BudgetRow {
     .metric-card strong {
       color: var(--omnicare-text);
       display: block;
-      font-size: 1.65rem;
+      font-size: 1.45rem;
       margin-top: 8px;
     }
 
@@ -733,7 +873,8 @@ interface BudgetRow {
 
     .recommendation {
       align-items: start;
-      background: rgba(31, 191, 154, 0.1);
+      background: #eef7f6;
+      border-color: #cde8e6;
       color: var(--omnicare-secondary);
       display: flex;
       gap: 12px;
@@ -772,7 +913,7 @@ interface BudgetRow {
 
     .action-panel {
       position: sticky;
-      top: 86px;
+      top: 78px;
     }
 
     .panel-title {
@@ -781,6 +922,10 @@ interface BudgetRow {
       gap: 10px;
       justify-content: space-between;
       margin-bottom: 18px;
+    }
+
+    .panel-title h2 {
+      margin: 0;
     }
 
     .field-label {
@@ -794,11 +939,19 @@ interface BudgetRow {
 
     .amount-input,
     textarea {
+      background: #fbfcfd;
       border: 1px solid #d8e1e4;
       border-radius: 10px;
       font: inherit;
       padding: 12px;
       width: 100%;
+    }
+
+    .amount-input:focus,
+    textarea:focus {
+      border-color: var(--omnicare-secondary);
+      box-shadow: 0 0 0 3px rgba(15, 111, 115, 0.12);
+      outline: none;
     }
 
     .link-button {
@@ -809,7 +962,7 @@ interface BudgetRow {
 
     .coverage-box,
     .decision-lock {
-      background: #f8fafc;
+      background: #fbfcfd;
       display: grid;
       gap: 6px;
       margin-top: 8px;
@@ -826,6 +979,9 @@ interface BudgetRow {
 
     .action-stack button,
     .rejection-box button {
+      border-radius: 999px;
+      font-weight: 800;
+      min-height: 36px;
       width: 100%;
     }
 
@@ -869,6 +1025,10 @@ interface BudgetRow {
         grid-template-columns: 1fr;
       }
 
+      .summary-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .action-panel {
         position: static;
       }
@@ -878,6 +1038,7 @@ interface BudgetRow {
       .detail-header,
       .document-row {
         align-items: start;
+        flex-direction: column;
         grid-template-columns: 1fr;
       }
 
@@ -887,7 +1048,8 @@ interface BudgetRow {
 
       .info-grid,
       .two-cols,
-      .metric-grid {
+      .metric-grid,
+      .summary-strip {
         grid-template-columns: 1fr;
       }
     }
@@ -899,6 +1061,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
   private readonly facade = inject(DemandesFacade);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly auth = inject(AuthService);
   private readonly comarBulletinPdf = inject(ComarBulletinPdfService);
   private lastComarBulletinUrl: string | null = null;
 
@@ -924,7 +1087,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     { value: 'AUTRE', label: 'Autre' },
   ];
 
-  private readonly companyId = signal('star');
+  private readonly companyId = signal('comar');
   private readonly adherents = signal<Adherent[]>([]);
   private readonly planTiers = signal<PlanTier[]>([]);
   private readonly contracts = signal<CorporateContract[]>([]);
@@ -1132,7 +1295,10 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     });
   }
 
-  protected async previewComarBulletin(demande: DemandeRemboursement): Promise<void> {
+  protected async previewComarBulletin(
+    demande: DemandeRemboursement,
+    mode: ComarBulletinPdfMode,
+  ): Promise<void> {
     const previewWindow = window.open('about:blank', '_blank');
 
     if (previewWindow) {
@@ -1140,7 +1306,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     }
 
     try {
-      const result = await this.generateComarBulletin(demande);
+      const result = await this.generateComarBulletin(demande, mode);
 
       if (previewWindow) {
         previewWindow.location.href = result.objectUrl;
@@ -1158,23 +1324,20 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     }
   }
 
-  protected async downloadComarBulletin(demande: DemandeRemboursement): Promise<void> {
+  protected async downloadComarBulletin(
+    demande: DemandeRemboursement,
+    mode: ComarBulletinPdfMode,
+  ): Promise<void> {
     try {
-      const result = await this.generateComarBulletin(demande);
+      const result = await this.generateComarBulletin(demande, mode);
       const anchor = document.createElement('a');
 
       anchor.href = result.objectUrl;
-      anchor.download = this.comarBulletinPdf.filename(demande);
+      anchor.download = this.comarBulletinPdf.filename(demande, mode);
       anchor.click();
     } catch (error) {
       this.notifyPdfError(error);
     }
-  }
-
-  protected comarBulletinModeLabel(demande: DemandeRemboursement): string {
-    return this.comarBulletinMode(demande) === 'FINAL_APPROVED'
-      ? 'Final approuvé'
-      : 'Pré-rempli patient';
   }
 
   protected requestDocument(document: RequestDocument): void {
@@ -1211,7 +1374,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
       approvedAmount: this.approvedAmount(),
       internalNotes: this.internalNotes() || undefined,
       respondedAt: new Date().toISOString(),
-      respondedBy: 'Admin assurance',
+      respondedBy: this.currentReviewerName(),
       lastUpdatedAt: new Date().toISOString(),
     });
   }
@@ -1261,7 +1424,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
       rejectionNotes: this.internalNotes() || undefined,
       internalNotes: this.internalNotes() || undefined,
       respondedAt: new Date().toISOString(),
-      respondedBy: 'Admin assurance',
+      respondedBy: this.currentReviewerName(),
       lastUpdatedAt: new Date().toISOString(),
     });
   }
@@ -1349,17 +1512,20 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     this.rejectionMode.set(false);
   }
 
-  private async generateComarBulletin(demande: DemandeRemboursement) {
-    const result = await this.comarBulletinPdf.generate(demande, this.comarBulletinMode(demande));
+  protected isApprovedStatus(status: DemandeStatus): boolean {
+    return ['APPROUVEE', 'APPROUVEE_PARTIELLEMENT', 'APPROUVEE_AUTO'].includes(status);
+  }
+
+  private async generateComarBulletin(
+    demande: DemandeRemboursement,
+    mode: ComarBulletinPdfMode,
+  ) {
+    const result = await this.comarBulletinPdf.generateComarBulletinPdf(demande, mode);
 
     this.revokeLastComarBulletinUrl();
     this.lastComarBulletinUrl = result.objectUrl;
 
     return result;
-  }
-
-  private comarBulletinMode(demande: DemandeRemboursement): ComarBulletinPdfMode {
-    return this.comarBulletinPdf.modeForStatus(demande.status);
   }
 
   private revokeLastComarBulletinUrl(): void {
@@ -1377,6 +1543,10 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
       verticalPosition: 'top',
       panelClass: 'notification-error',
     });
+  }
+
+  private currentReviewerName(): string {
+    return this.auth.currentUser()?.name ?? 'Ahmed Direche';
   }
 
   private toBudgetRow(rule: CoverageRule, demandes: DemandeRemboursement[]): BudgetRow {
@@ -1472,7 +1642,7 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
     return this.rejectionReasons.find((item) => item.value === reason)?.label ?? 'Motif non renseigné';
   }
 
-  private actCategoryLabel(category: ActCategory): string {
+  protected actCategoryLabel(category: ActCategory): string {
     const labels: Record<ActCategory, string> = {
       AUTRE: 'Autre',
       BIOLOGIE: 'Biologie',
@@ -1523,6 +1693,6 @@ export class DemandeDetailPlaceholderComponent implements OnDestroy, OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

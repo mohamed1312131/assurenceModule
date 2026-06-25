@@ -27,6 +27,7 @@ export interface DemandeRemboursement {
   respondedAt?: string;
   respondedBy?: string;
   approvedAmount?: number;
+  reimbursementAmount?: number;
   rejectionReason?: RejectionReason;
   rejectionNotes?: string;
   conditions?: string;
@@ -72,8 +73,10 @@ export interface ComarBulletinData {
   assuranceDecision?: {
     label: string;
     approvedAmount: string;
+    reimbursementAmount?: string;
     reviewerName: string;
     reviewedDate: string;
+    dossierReference?: string;
   };
 }
 

@@ -3,7 +3,7 @@
     <header class="page-header">
       <div>
         <span class="eyebrow">Configuration compagnie</span>
-        <h1>Centre de contrôle STAR</h1>
+        <h1>Centre de contrôle COMAR</h1>
         <p>Règles opérationnelles, garanties et paramètres qui alimentent les recommandations.</p>
       </div>
 
@@ -278,6 +278,62 @@
 
       <mat-tab label="Documents & contrôles">
         <section class="tab-panel">
+          <div class="document-signature-card">
+            <div class="section-heading">
+              <div>
+                <h2>Signature & cachet des documents</h2>
+                <p>Utilisée automatiquement sur les documents finaux approuvés.</p>
+              </div>
+              <span class="status-chip info">COMAR final</span>
+            </div>
+
+            <div class="signature-layout">
+              <div class="signature-preview" [class.empty]="!documentSignatureBase64()">
+                @if (documentSignatureBase64(); as signaturePreview) {
+                  <img [src]="signaturePreview" alt="Aperçu signature et cachet" />
+                } @else {
+                  <mat-icon aria-hidden="true">draw</mat-icon>
+                  <span>Aucune signature configurée</span>
+                }
+              </div>
+
+              <div class="signature-controls">
+                <input
+                  #signatureInput
+                  class="signature-file-input"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  (change)="uploadDocumentSignature($event)"
+                />
+                <div class="signature-actions">
+                  <button mat-flat-button color="primary" type="button" (click)="signatureInput.click()">
+                    <mat-icon aria-hidden="true">upload_file</mat-icon>
+                    Importer
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="!documentSignatureBase64()"
+                    (click)="removeDocumentSignature()"
+                  >
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                    Retirer
+                  </button>
+                </div>
+                <small>PNG recommandé, JPG accepté, max 1 Mo.</small>
+                @if (documentSignatureError()) {
+                  <p class="signature-error">{{ documentSignatureError() }}</p>
+                }
+                @if (documentSignatureMeta(); as signatureMeta) {
+                  <div class="signature-meta">
+                    <span>{{ signatureMeta.fileName }}</span>
+                    <span>{{ signatureMeta.uploadedBy }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
           <div class="readiness-panel">
             <span class="status-chip neutral">Future rules</span>
             <h2>Documents requis et contrôles</h2>

@@ -171,10 +171,12 @@ h2 {
 }
 
 .filter-card {
-  background: #f8fafc;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 12px;
+  padding: 14px;
 }
 
 .filter-row,
@@ -186,7 +188,7 @@ h2 {
 }
 
 .filter-label {
-  color: var(--omnicare-secondary);
+  color: #64748b;
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 800;
@@ -195,18 +197,20 @@ h2 {
 }
 
 .filter-chip {
-  --chip-bg: #475569;
-  --chip-bg-selected: #334155;
-  --chip-text: #ffffff;
+  --chip-bg: #f8fafc;
+  --chip-bg-selected: #102a2d;
+  --chip-text: #475569;
+  --chip-text-selected: #ffffff;
+  --chip-border: #dbe3e7;
   --mdc-chip-elevated-container-color: var(--chip-bg);
   --mdc-chip-flat-selected-container-color: var(--chip-bg-selected);
   --mdc-chip-selected-container-color: var(--chip-bg-selected);
   --mdc-chip-unselected-container-color: var(--chip-bg);
   --mdc-chip-label-text-color: var(--chip-text);
-  --mdc-chip-selected-label-text-color: var(--chip-text);
+  --mdc-chip-selected-label-text-color: var(--chip-text-selected);
   --mdc-chip-outline-color: transparent;
   --mdc-chip-selected-outline-color: transparent;
-  background: var(--chip-bg);
+  background: transparent;
   border: 0;
   border-radius: 999px;
   color: var(--chip-text);
@@ -214,21 +218,19 @@ h2 {
   font-weight: 800;
   min-height: 24px;
   overflow: hidden;
-  opacity: 0.82;
+  opacity: 1;
+  padding: 0;
 }
 
 .filter-chip.status-success {
-  --chip-bg: #047857;
-  --chip-bg-selected: #065f46;
+  --chip-bg-selected: #047857;
 }
 
 .filter-chip.status-warning {
-  --chip-bg: #b45309;
   --chip-bg-selected: #92400e;
 }
 
 .filter-chip.status-error {
-  --chip-bg: #b91c1c;
   --chip-bg-selected: #991b1b;
 }
 
@@ -236,10 +238,7 @@ h2 {
 .filter-chip[aria-selected='true'],
 .filter-chip.mat-mdc-chip-selected {
   background: var(--chip-bg-selected);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
-    0 0 0 2px #ffffff,
-    0 0 0 4px rgba(15, 111, 115, 0.2);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
   color: #ffffff;
   opacity: 1;
 }
@@ -247,13 +246,14 @@ h2 {
 :host ::ng-deep .filter-chip .mdc-evolution-chip__text-label,
 :host ::ng-deep .filter-chip .mat-mdc-chip-action-label,
 :host ::ng-deep .filter-chip .mdc-evolution-chip__graphic {
-  color: #ffffff !important;
+  color: var(--chip-text) !important;
 }
 
 :host ::ng-deep .filter-chip .mdc-evolution-chip__action--primary {
   background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
   border-radius: 999px;
-  color: #ffffff !important;
+  color: var(--chip-text) !important;
   overflow: hidden;
 }
 
@@ -261,6 +261,20 @@ h2 {
 :host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__action--primary,
 :host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__action--primary {
   background: var(--chip-bg-selected);
+  border-color: transparent;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__text-label,
+:host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__text-label,
+:host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__text-label,
+:host ::ng-deep .filter-chip.is-selected .mat-mdc-chip-action-label,
+:host ::ng-deep .filter-chip[aria-selected='true'] .mat-mdc-chip-action-label,
+:host ::ng-deep .filter-chip.mat-mdc-chip-selected .mat-mdc-chip-action-label,
+:host ::ng-deep .filter-chip.is-selected .mdc-evolution-chip__graphic,
+:host ::ng-deep .filter-chip[aria-selected='true'] .mdc-evolution-chip__graphic,
+:host ::ng-deep .filter-chip.mat-mdc-chip-selected .mdc-evolution-chip__graphic {
+  color: #ffffff !important;
 }
 
 .providers-panel {
@@ -290,7 +304,7 @@ h2 {
 .provider-card {
   background: #ffffff;
   border: 1px solid #eef2f4;
-  border-left: 3px solid var(--omnicare-secondary);
+  border-left: 3px solid #cde8e6;
   border-radius: 12px;
   display: grid;
   gap: 12px;
@@ -327,16 +341,19 @@ h2 {
 
 .tiers,
 .badge-row span {
-  background: #475569;
+  background: #f8fafc;
+  border: 1px solid #dbe3e7;
   border-radius: 999px;
-  color: #ffffff;
+  color: #334155;
   font-size: 0.72rem;
   font-weight: 800;
   padding: 4px 8px;
 }
 
 .tiers.enabled {
-  background: #047857;
+  background: #ecfdf5;
+  border-color: #bbf7d0;
+  color: #047857;
 }
 
 .metrics {

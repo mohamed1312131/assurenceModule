@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -40,12 +40,6 @@ export class FtusaAdhesionRequestsComponent implements OnInit {
     'OFFRE_ENVOYEE',
   ];
   protected readonly pageSizes = [10, 25, 50];
-  protected readonly recommendations = computed(() => {
-    const request = this.facade.selectedRequest();
-
-    return request ? this.facade.recommendationsFor(request) : [];
-  });
-  protected readonly topRecommendation = computed(() => this.recommendations()[0] ?? null);
 
   ngOnInit(): void {
     this.facade.load();
@@ -82,23 +76,6 @@ export class FtusaAdhesionRequestsComponent implements OnInit {
     this.snackBar.open('Demande de complément envoyée vers OmniCare (simulation)', 'Fermer', {
       duration: 3500,
     });
-  }
-
-  protected sendOffer(request: AdhesionRequest): void {
-    const recommendation = this.topRecommendation();
-
-    if (!recommendation) {
-      return;
-    }
-
-    this.facade.sendOffer(request.id, recommendation);
-    this.snackBar.open(
-      `Offre ${recommendation.companyCode} envoyée vers OmniCare (simulation)`,
-      'Fermer',
-      {
-        duration: 3500,
-      },
-    );
   }
 
   protected statusLabel(status: AdhesionRequestStatus): string {
@@ -204,10 +181,6 @@ export class FtusaAdhesionRequestsComponent implements OnInit {
     }).format(new Date(isoDate));
   }
 
-  protected scoreWidth(score: number): string {
-    return `${Math.max(4, Math.min(score, 100))}%`;
-  }
-
   protected formatCurrency(value: number | undefined): string {
     if (value === undefined) {
       return 'Non renseigné';
@@ -216,9 +189,4 @@ export class FtusaAdhesionRequestsComponent implements OnInit {
     return this.facade.formatCurrency(value);
   }
 
-  protected formatInteger(value: number): string {
-    return new Intl.NumberFormat('fr-TN', {
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
 }

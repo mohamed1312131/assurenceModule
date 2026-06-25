@@ -361,7 +361,7 @@ export class EntrepriseDetailComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 
   private emptyMonthRows(): ContractMonthlyAmountRow[] {

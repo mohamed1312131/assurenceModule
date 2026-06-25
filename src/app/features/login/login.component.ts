@@ -8,7 +8,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/notifications/notification.service';
 
 type DemoProfile = {
-  id: 'ftusa' | 'star' | 'comar';
+  id: 'ftusa' | 'comar';
   icon: string;
   title: string;
   description: string;
@@ -33,9 +33,9 @@ export class LoginComponent {
       description: 'Superviser les indicateurs marché, les compagnies et les échanges réglementaires.',
     },
     {
-      id: 'star',
+      id: 'comar',
       icon: 'domain',
-      title: 'Espace STAR Assurances — Assureur',
+      title: 'Espace COMAR Assurances — Assureur',
       description: 'Accéder aux demandes, adhérents, contrats entreprises et opérations assurance.',
     },
   ];
@@ -45,13 +45,6 @@ export class LoginComponent {
       const user = this.auth.loginAsFtusaAdmin();
       this.notifications.success(`Bienvenue ${user.name}`);
       void this.router.navigate(['/ftusa/dashboard']);
-      return;
-    }
-
-    if (profileId === 'star') {
-      const user = this.auth.loginAsStarAdmin();
-      this.notifications.success(`Bienvenue ${user.name}`);
-      void this.router.navigate(['/assurance', user.companyId, 'dashboard']);
       return;
     }
 

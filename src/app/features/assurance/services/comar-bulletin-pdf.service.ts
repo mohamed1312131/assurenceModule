@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFImage, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 
 import {
   ComarBulletinData,
@@ -7,7 +7,7 @@ import {
   DemandeStatus,
 } from '../../../models/demande-remboursement.model';
 
-export type ComarBulletinPdfMode = 'PATIENT_PREFILLED' | 'FINAL_APPROVED';
+export type ComarBulletinPdfMode = 'PATIENT_PREFILLED' | 'ASSURANCE_FINAL';
 
 export interface ComarBulletinPdfResult {
   blob: Blob;
@@ -34,11 +34,14 @@ interface LegacyComarBulletinData {
   fiscalNumber?: string;
   assuranceDecision?: string;
   approvedAmount?: number;
+  reimbursementAmount?: number;
   reviewerName?: string;
   reviewedDate?: string;
+  dossierReference?: string;
 }
 
 const TEMPLATE_URL = 'assets/templates/comar-bulletin-soins.pdf';
+const DOCUMENT_SIGNATURE_KEY = 'assurance.documentSignatureBase64';
 const DEBUG_COORDINATES = false;
 const DEMO_FALLBACK = '—';
 const TEXT_COLOR = rgb(0.05, 0.13, 0.24);
@@ -66,6 +69,11 @@ const DEMO_DEFAULTS = {
   declarationDate: '16/06/2026',
   adherentVisa: 'Karim Mansour',
   employerVisa: 'Société El Menzah Services',
+  decisionLabel: 'Accord assurance',
+  approvedAmount: '420 DT',
+  reimbursementAmount: '336 DT',
+  reviewerName: 'Ahmed Direche',
+  reviewedDate: '24/06/2026',
 } as const;
 
 const COMAR_COORDS = {
@@ -96,15 +104,31 @@ const COMAR_COORDS = {
       invoiceAmount: { x: 368, maxWidth: 28 },
     },
   },
-  declaration: {
-    employerVisa: { x: 456, y: 38 },
-    declarationDate: { x: 690, y: 52 },
-    adherentVisa: { x: 748, y: 38 },
+  dentalRows: {
+    rowStartY: 118,
+    rowHeight: 11,
+    columns: {
+      actDate: { x: 500, maxWidth: 38 },
+      actDesignation: { x: 548, maxWidth: 78 },
+      honorairesAmount: { x: 636, maxWidth: 42 },
+      providerFiscalNumber: { x: 688, maxWidth: 48 },
+      invoiceAmount: { x: 748, maxWidth: 42 },
+    },
   },
-  assuranceDecision: {
-    label: { x: 610, y: 85 },
-    approvedAmount: { x: 610, y: 72 },
-    reviewerName: { x: 610, y: 60 },
+  declaration: {
+    employerVisa: { x: 625, y: 30 },
+    declarationDate: { x: 720, y: 30 },
+    adherentVisa: { x: 785, y: 30 },
+  },
+  assuranceReservedBox: {
+    decisionLabel: { x: 65, y: 112 },
+    approvedAmount: { x: 65, y: 101 },
+    reimbursedAmount: { x: 65, y: 90 },
+    reviewerName: { x: 65, y: 79 },
+    reviewedDate: { x: 65, y: 68 },
+    dossierReference: { x: 65, y: 57 },
+    signature: { x: 265, y: 58, width: 95, height: 38 },
+    fontSize: 7,
   },
 } as const;
 
@@ -113,6 +137,13 @@ export class ComarBulletinPdfService {
   async generate(
     demande: DemandeRemboursement,
     mode: ComarBulletinPdfMode = this.modeForStatus(demande.status),
+  ): Promise<ComarBulletinPdfResult> {
+    return this.generateComarBulletinPdf(demande, mode);
+  }
+
+  async generateComarBulletinPdf(
+    demande: DemandeRemboursement,
+    mode: ComarBulletinPdfMode,
   ): Promise<ComarBulletinPdfResult> {
     const templateBytes = await this.loadTemplate();
     const pdfDoc = await PDFDocument.load(templateBytes);
@@ -123,11 +154,16 @@ export class ComarBulletinPdfService {
 
     this.drawIdentity(page, data, font, boldFont);
     this.drawProvider(page, data, font, boldFont);
-    this.drawMedicalActRows(page, data.medicalActs, data, font, boldFont);
+    if (this.isDentalDemande(demande)) {
+      this.drawDentalActRows(page, data.medicalActs, data, font, boldFont);
+    } else {
+      this.drawMedicalActRows(page, data.medicalActs, data, font, boldFont);
+    }
     this.drawDeclaration(page, data, font);
 
-    if (mode === 'FINAL_APPROVED' && data.assuranceDecision) {
+    if (mode === 'ASSURANCE_FINAL' && data.assuranceDecision) {
       this.drawAssuranceDecision(page, data.assuranceDecision, font, boldFont);
+      await this.drawDocumentSignature(pdfDoc, page);
     }
 
     if (DEBUG_COORDINATES) {
@@ -149,12 +185,14 @@ export class ComarBulletinPdfService {
 
   modeForStatus(status: DemandeStatus): ComarBulletinPdfMode {
     return ['APPROUVEE', 'APPROUVEE_PARTIELLEMENT', 'APPROUVEE_AUTO'].includes(status)
-      ? 'FINAL_APPROVED'
+      ? 'ASSURANCE_FINAL'
       : 'PATIENT_PREFILLED';
   }
 
-  filename(demande: DemandeRemboursement): string {
-    return `bulletin-soins-comar-${demande.id}.pdf`;
+  filename(demande: DemandeRemboursement, mode: ComarBulletinPdfMode = 'PATIENT_PREFILLED'): string {
+    const suffix = mode === 'ASSURANCE_FINAL' ? 'final-assurance' : 'pre-rempli-patient';
+
+    return `bulletin-soins-comar-${demande.id}-${suffix}.pdf`;
   }
 
   mapDemandeToComarBulletin(demande: DemandeRemboursement): ComarBulletinData {
@@ -168,7 +206,17 @@ export class ComarBulletinPdfService {
     const approvedAmount = this.formatDemoAmount(
       this.parseAmount(existing?.assuranceDecision?.approvedAmount) ??
         legacy?.approvedAmount ??
+        this.legacyNumber(demande, 'montantApprouve') ??
         demande.approvedAmount,
+      DEMO_DEFAULTS.approvedAmount,
+    );
+    const reimbursementAmount = this.formatDemoAmount(
+      this.parseAmount(existing?.assuranceDecision?.reimbursementAmount) ??
+        legacy?.reimbursementAmount ??
+        this.legacyNumber(demande, 'montantRembourse') ??
+        demande.reimbursementAmount ??
+        this.estimatedReimbursementAmount(demande),
+      DEMO_DEFAULTS.reimbursementAmount,
     );
 
     return {
@@ -266,22 +314,33 @@ export class ComarBulletinPdfService {
             DEMO_DEFAULTS.employerVisa,
         ),
       },
-      assuranceDecision: this.modeForStatus(demande.status) === 'FINAL_APPROVED'
+      assuranceDecision: this.modeForStatus(demande.status) === 'ASSURANCE_FINAL'
         ? {
-            label: this.value(existing?.assuranceDecision?.label ?? this.statusLabel(demande.status)),
+            label: this.value(
+              existing?.assuranceDecision?.label ??
+                legacy?.assuranceDecision ??
+                this.statusLabel(demande.status),
+            ),
             approvedAmount,
+            reimbursementAmount,
             reviewerName: this.value(
               existing?.assuranceDecision?.reviewerName ??
                 legacy?.reviewerName ??
                 demande.respondedBy ??
-                'Admin assurance',
+                DEMO_DEFAULTS.reviewerName,
             ),
             reviewedDate: this.formatDateValue(
               existing?.assuranceDecision?.reviewedDate ??
                 legacy?.reviewedDate ??
                 demande.respondedAt ??
-                new Date().toISOString(),
+                DEMO_DEFAULTS.reviewedDate,
             ),
+            dossierReference: this.value(
+              existing?.assuranceDecision?.dossierReference ??
+                legacy?.dossierReference ??
+                this.legacyString(demande, 'reference') ??
+                demande.id,
+            ).toUpperCase(),
           }
         : undefined,
     };
@@ -411,17 +470,82 @@ export class ComarBulletinPdfService {
     this.drawSafeText(page, data.declaration.adherentVisa, coordinates.adherentVisa.x, coordinates.adherentVisa.y, 6, { font });
   }
 
+  private drawDentalActRows(
+    page: PDFPage,
+    rows: ComarBulletinData['medicalActs'],
+    data: ComarBulletinData,
+    font: PDFFont,
+    boldFont: PDFFont,
+  ): void {
+    const table = COMAR_COORDS.dentalRows;
+
+    rows.slice(0, 4).forEach((row, index) => {
+      const y = table.rowStartY - index * table.rowHeight;
+
+      this.drawWrappedText(page, row.actDate, table.columns.actDate.x, y, table.columns.actDate.maxWidth, 4.2, 4.8, { font });
+      this.drawWrappedText(
+        page,
+        this.medicalActCellLabel(row),
+        table.columns.actDesignation.x,
+        y,
+        table.columns.actDesignation.maxWidth,
+        4.2,
+        4.8,
+        { font },
+      );
+      this.drawSafeText(page, row.honorairesAmount, table.columns.honorairesAmount.x, y, 4.2, { font: boldFont });
+      this.drawWrappedText(
+        page,
+        data.provider.providerFiscalNumber,
+        table.columns.providerFiscalNumber.x,
+        y,
+        table.columns.providerFiscalNumber.maxWidth,
+        4,
+        4.6,
+        { font },
+      );
+      this.drawSafeText(page, row.invoiceAmount, table.columns.invoiceAmount.x, y, 4.2, { font: boldFont });
+    });
+  }
+
   private drawAssuranceDecision(
     page: PDFPage,
     assuranceDecision: NonNullable<ComarBulletinData['assuranceDecision']>,
     font: PDFFont,
     boldFont: PDFFont,
   ): void {
-    const coordinates = COMAR_COORDS.assuranceDecision;
+    const coordinates = COMAR_COORDS.assuranceReservedBox;
+    const size = coordinates.fontSize;
 
-    this.drawSafeText(page, assuranceDecision.label, coordinates.label.x, coordinates.label.y, 7, { font: boldFont });
-    this.drawSafeText(page, assuranceDecision.approvedAmount, coordinates.approvedAmount.x, coordinates.approvedAmount.y, 7, { font: boldFont });
-    this.drawSafeText(page, assuranceDecision.reviewerName, coordinates.reviewerName.x, coordinates.reviewerName.y, 7, { font });
+    this.drawSafeText(page, `Décision: ${assuranceDecision.label}`, coordinates.decisionLabel.x, coordinates.decisionLabel.y, size, { font: boldFont });
+    this.drawSafeText(page, `Montant approuvé: ${assuranceDecision.approvedAmount}`, coordinates.approvedAmount.x, coordinates.approvedAmount.y, size, { font: boldFont });
+    this.drawSafeText(page, `Montant remboursé: ${assuranceDecision.reimbursementAmount ?? DEMO_DEFAULTS.reimbursementAmount}`, coordinates.reimbursedAmount.x, coordinates.reimbursedAmount.y, size, { font: boldFont });
+    this.drawSafeText(page, `Gestionnaire: ${assuranceDecision.reviewerName}`, coordinates.reviewerName.x, coordinates.reviewerName.y, size, { font });
+    this.drawSafeText(page, `Date traitement: ${assuranceDecision.reviewedDate}`, coordinates.reviewedDate.x, coordinates.reviewedDate.y, size, { font });
+    this.drawSafeText(page, `Dossier: ${assuranceDecision.dossierReference ?? DEMO_DEFAULTS.identifiantUnique}`, coordinates.dossierReference.x, coordinates.dossierReference.y, size, { font });
+  }
+
+  private async drawDocumentSignature(pdfDoc: PDFDocument, page: PDFPage): Promise<void> {
+    const signatureDataUrl = this.readDocumentSignature();
+
+    if (!signatureDataUrl) {
+      return;
+    }
+
+    const signatureImage = await this.embedSignatureImage(pdfDoc, signatureDataUrl);
+
+    if (!signatureImage) {
+      return;
+    }
+
+    const coordinates = COMAR_COORDS.assuranceReservedBox.signature;
+
+    page.drawImage(signatureImage, {
+      x: coordinates.x,
+      y: coordinates.y,
+      width: coordinates.width,
+      height: coordinates.height,
+    });
   }
 
   private drawSafeText(
@@ -496,6 +620,62 @@ export class ComarBulletinPdfService {
     }
   }
 
+  private async embedSignatureImage(
+    pdfDoc: PDFDocument,
+    dataUrl: string,
+  ): Promise<PDFImage | null> {
+    const parsed = this.parseImageDataUrl(dataUrl);
+
+    if (!parsed) {
+      return null;
+    }
+
+    try {
+      if (parsed.mimeType === 'image/png') {
+        return await pdfDoc.embedPng(parsed.bytes);
+      }
+
+      if (parsed.mimeType === 'image/jpeg') {
+        return await pdfDoc.embedJpg(parsed.bytes);
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
+  private parseImageDataUrl(dataUrl: string): { mimeType: 'image/png' | 'image/jpeg'; bytes: Uint8Array } | null {
+    const match = /^data:(image\/png|image\/jpeg);base64,(.+)$/i.exec(dataUrl.trim());
+
+    if (!match) {
+      return null;
+    }
+
+    const mimeType = match[1].toLowerCase() as 'image/png' | 'image/jpeg';
+
+    try {
+      const binary = atob(match[2]);
+      const bytes = new Uint8Array(binary.length);
+
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+
+      return { mimeType, bytes };
+    } catch {
+      return null;
+    }
+  }
+
+  private readDocumentSignature(): string | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+
+    return localStorage.getItem(DOCUMENT_SIGNATURE_KEY);
+  }
+
   private value(value: string | null | undefined): string {
     const normalized = value?.replace(/\s+/g, ' ').trim();
 
@@ -547,12 +727,34 @@ export class ComarBulletinPdfService {
     return label;
   }
 
-  private formatDemoAmount(amount?: number): string {
+  private formatDemoAmount(amount?: number, fallback: string = DEMO_DEFAULTS.honorairesAmount): string {
     if (!Number.isFinite(amount)) {
-      return DEMO_DEFAULTS.honorairesAmount;
+      return fallback;
     }
 
     return `${Math.round(amount ?? 0)} DT`;
+  }
+
+  private estimatedReimbursementAmount(demande: DemandeRemboursement): number | undefined {
+    const baseAmount = this.legacyNumber(demande, 'montantApprouve') ?? demande.approvedAmount;
+
+    return Number.isFinite(baseAmount) ? Math.round((baseAmount ?? 0) * 0.8) : undefined;
+  }
+
+  private legacyNumber(demande: DemandeRemboursement, key: 'montantApprouve' | 'montantRembourse'): number | undefined {
+    const value = (demande as DemandeRemboursement & Record<typeof key, unknown>)[key];
+
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  }
+
+  private legacyString(demande: DemandeRemboursement, key: 'reference'): string | undefined {
+    const value = (demande as DemandeRemboursement & Record<typeof key, unknown>)[key];
+
+    return typeof value === 'string' && value.trim() ? value : undefined;
+  }
+
+  private isDentalDemande(demande: DemandeRemboursement): boolean {
+    return demande.actCategory === 'DENTAIRE';
   }
 
   private parseAmount(amount?: string): number | undefined {

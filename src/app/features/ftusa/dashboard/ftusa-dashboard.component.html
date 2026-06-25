@@ -4,8 +4,8 @@
       <span class="section-kicker">Centre de supervision FTUSA</span>
       <h1>Command center réglementaire</h1>
       <p>
-        Pilotage du marché assurance, suivi des compagnies, demandes d’adhésion OmniCare,
-        exceptions SLA et alertes fraude inter-compagnies.
+        Pilotage du marché assurance, suivi des compagnies, exceptions SLA et alertes fraude
+        inter-compagnies.
       </p>
     </div>
 
@@ -18,10 +18,6 @@
         <mat-icon aria-hidden="true">download</mat-icon>
         Export activité
       </button>
-      <button mat-flat-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
-        <mat-icon aria-hidden="true">person_add</mat-icon>
-        File adhésion
-      </button>
     </div>
   </header>
 
@@ -31,10 +27,9 @@
     </span>
     <strong>
       {{ formatNumber(kpis().companiesOverSla) }} hors délai SLA ·
-      {{ formatNumber(kpis().flaggedCount) }} fraudes détectées ·
-      {{ formatNumber(adhesionFacade.stats().incomplete) }} dossier(s) à compléter
+      {{ formatNumber(kpis().flaggedCount) }} fraudes détectées
     </strong>
-    <span>Surveillance consolidée sur les compagnies participantes et la file OmniCare.</span>
+    <span>Surveillance consolidée sur les compagnies participantes.</span>
   </mat-card>
 
   <section class="kpi-grid" aria-label="Indicateurs primaires de supervision">
@@ -82,79 +77,6 @@
       <small>{{ formatPercent(kpis().omnicarePercent) }} du volume agrégé</small>
     </mat-card>
   </section>
-
-  <mat-card class="adhesion-panel">
-    <header class="section-header">
-      <div>
-        <span class="section-kicker">File opérationnelle</span>
-        <h2>Demandes d’adhésion OmniCare</h2>
-        <p>
-          {{ adhesionFacade.stats().newCount }} nouvelle(s) ·
-          {{ adhesionFacade.stats().incomplete }} à compléter ·
-          {{ adhesionFacade.stats().ready }} prête(s) à proposer
-        </p>
-      </div>
-      <button mat-stroked-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
-        <mat-icon aria-hidden="true">open_in_new</mat-icon>
-        Ouvrir la file
-      </button>
-    </header>
-
-    @if (adhesionPreview().length === 0) {
-      <section class="empty-state">
-        <mat-icon aria-hidden="true">playlist_add_check</mat-icon>
-        <p>Aucune demande active dans la file OmniCare.</p>
-      </section>
-    } @else {
-      <div class="adhesion-preview-list">
-        @for (request of adhesionPreview(); track request.id) {
-          <article class="adhesion-preview-row">
-            <div class="queue-identity">
-              <strong>{{ request.applicantName }}</strong>
-              <span>Réf. {{ request.externalRequestId }}</span>
-            </div>
-
-            <div class="queue-meta">
-              <span>Composition</span>
-              <strong>{{ adhesionMemberSummary(request) }}</strong>
-            </div>
-
-            <div class="queue-meta recommendation">
-              <span>Suggestion assureur</span>
-              @if (adhesionFacade.topRecommendationFor(request); as recommendation) {
-                <strong>{{ recommendation.companyCode }} · {{ recommendation.planTierName }}</strong>
-                <small>
-                  Score {{ recommendation.score }} ·
-                  {{ adhesionFacade.formatCurrency(recommendation.monthlyPremiumEstimate) }}/mois
-                </small>
-              } @else {
-                <strong>Suggestion indisponible</strong>
-                <small>À qualifier dans la file complète</small>
-              }
-            </div>
-
-            <div class="queue-state">
-              <span
-                class="priority-pill"
-                [class.attention]="request.missingItems.length > 0 || request.status === 'A_COMPLETER'"
-              >
-                {{ adhesionPriorityLabel(request) }}
-              </span>
-              <app-status-chip
-                [status]="request.status"
-                [label]="adhesionStatusLabel(request.status)"
-                [tone]="adhesionStatusTone(request.status)"
-              />
-            </div>
-
-            <button mat-button type="button" (click)="navigate('/ftusa/demandes-adhesion')">
-              Analyser
-            </button>
-          </article>
-        }
-      </div>
-    }
-  </mat-card>
 
   <section class="section-heading" aria-label="Analytique marché">
     <div>

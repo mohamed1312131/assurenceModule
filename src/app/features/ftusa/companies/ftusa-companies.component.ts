@@ -137,7 +137,7 @@ export class FtusaCompaniesComponent implements OnInit {
   }
 
   protected manage(company: InsuranceCompany): void {
-    void this.router.navigate(['/assurance', company.id, 'dashboard']);
+    void this.router.navigate(['/ftusa', 'compagnies', company.id]);
   }
 
   protected suspend(company: InsuranceCompany): void {

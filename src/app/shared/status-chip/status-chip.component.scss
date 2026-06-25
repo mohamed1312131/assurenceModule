@@ -1,13 +1,15 @@
 .status-chip {
-  --chip-bg: #475569;
-  --chip-text: #ffffff;
+  --chip-bg: #f8fafc;
+  --chip-text: #334155;
+  --chip-border: #dbe3e7;
   --mdc-chip-elevated-container-color: var(--chip-bg);
   --mdc-chip-unselected-container-color: var(--chip-bg);
   --mdc-chip-label-text-color: var(--chip-text);
-  --mdc-chip-outline-color: transparent;
+  --mdc-chip-outline-color: var(--chip-border);
   --mdc-chip-with-icon-icon-color: var(--chip-text);
 
   background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
   border-radius: 999px;
   color: var(--chip-text);
   font-size: 0.72rem;
@@ -21,29 +23,37 @@
 }
 
 .status-chip.success {
-  --chip-bg: #047857;
+  --chip-bg: #ecfdf5;
+  --chip-border: #bbf7d0;
+  --chip-text: #047857;
 }
 
 .status-chip.warning {
-  --chip-bg: #b45309;
+  --chip-bg: #fffbeb;
+  --chip-border: #fde68a;
+  --chip-text: #b45309;
 }
 
 .status-chip.error {
-  --chip-bg: #b91c1c;
+  --chip-bg: #fef2f2;
+  --chip-border: #fecaca;
+  --chip-text: #b91c1c;
 }
 
 .status-chip.info {
-  --chip-bg: #1d4ed8;
+  --chip-bg: #eef7f6;
+  --chip-border: #cde8e6;
+  --chip-text: #0f6f73;
 }
 
 :host ::ng-deep .status-chip .mdc-evolution-chip__text-label {
-  color: #ffffff !important;
+  color: var(--chip-text) !important;
 }
 
 :host ::ng-deep .status-chip .mdc-evolution-chip__action--primary {
   background: var(--chip-bg);
   border-radius: 999px;
-  color: #ffffff !important;
+  color: var(--chip-text) !important;
   overflow: hidden;
 }
 

@@ -136,7 +136,7 @@ export class AssuranceDashboardFacade {
   ];
 
   private readonly companyId = computed(
-    () => this.auth.currentUser()?.companyId ?? this.routeCompanyId() ?? 'star',
+    () => this.auth.currentUser()?.companyId ?? this.routeCompanyId() ?? 'comar',
   );
 
   private readonly companies = computed(() =>
@@ -341,6 +341,13 @@ export class AssuranceDashboardFacade {
         icon: ChartNoAxesColumnIncreasing,
         commands: ['/assurance', companyId, 'demandes'],
         queryParams: { filtre: 'retard' },
+      },
+      {
+        id: 'adhesion-requests',
+        label: 'Demandes d’adhésion',
+        disabled: false,
+        icon: ClipboardList,
+        commands: ['/assurance', companyId, 'demandes-adhesion'],
       },
       {
         id: 'provider-reminder',

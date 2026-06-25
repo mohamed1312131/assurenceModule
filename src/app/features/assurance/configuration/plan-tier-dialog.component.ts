@@ -43,10 +43,23 @@ const ACT_CATEGORIES: ActCategory[] = [
   selector: 'app-plan-tier-dialog',
   imports: [MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h2 mat-dialog-title>{{ data.plan ? 'Modifier le plan' : 'Nouveau plan' }}</h2>
+    <header class="wizard-header">
+      <div class="wizard-heading">
+        <span class="section-kicker">Configuration COMAR</span>
+        <h2 mat-dialog-title>{{ data.plan ? 'Modifier le plan' : 'Nouveau plan' }}</h2>
+        <p>Paramétrez les seuils, délais SLA et règles de couverture par catégorie d'acte.</p>
+      </div>
+      <button class="dialog-close" mat-icon-button type="button" mat-dialog-close aria-label="Fermer">×</button>
+    </header>
 
-    <mat-dialog-content>
-      <div class="form-grid">
+    <mat-dialog-content class="wizard-content">
+      <section class="step-section">
+        <div class="section-intro">
+          <span class="section-kicker">Informations du plan</span>
+          <p>Les valeurs définies ici sont reprises dans les contrôles automatiques des demandes.</p>
+        </div>
+
+        <div class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Nom</mat-label>
           <input matInput [value]="form().name" (input)="patch('name', $any($event.target).value)" />
@@ -81,10 +94,14 @@ const ACT_CATEGORIES: ActCategory[] = [
           <mat-label>SLA cible</mat-label>
           <input matInput type="number" [value]="form().slaTargetDays" (input)="patchNumber('slaTargetDays', $any($event.target).value)" />
         </mat-form-field>
-      </div>
+        </div>
+      </section>
 
       <section class="coverage-section">
-        <h3>Règles de couverture</h3>
+        <div class="section-intro">
+          <span class="section-kicker">Règles de couverture</span>
+          <p>Renseignez le pourcentage et les plafonds applicables à chaque catégorie.</p>
+        </div>
         <div class="coverage-header">
           <span>Catégorie</span>
           <span>%</span>
@@ -123,28 +140,134 @@ const ACT_CATEGORIES: ActCategory[] = [
       }
     </mat-dialog-content>
 
-    <mat-dialog-actions align="end">
+    <mat-dialog-actions class="wizard-footer" align="end">
       <button mat-button type="button" mat-dialog-close>Annuler</button>
       <button mat-flat-button color="primary" type="button" (click)="save()">Enregistrer</button>
     </mat-dialog-actions>
   `,
   styles: `
+    :host {
+      box-sizing: border-box;
+      display: block;
+      max-height: 90vh;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    :host *,
+    :host *::before,
+    :host *::after {
+      box-sizing: border-box;
+    }
+
+    .wizard-header {
+      align-items: flex-start;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      min-width: 0;
+      padding: 18px 22px 16px;
+    }
+
+    .dialog-close {
+      --mdc-icon-button-state-layer-size: 38px;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      color: #334155;
+      display: inline-flex;
+      flex: 0 0 38px;
+      font-size: 1.3rem;
+      height: 38px;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+      width: 38px;
+    }
+
+    .wizard-heading {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .section-kicker {
+      color: var(--omnicare-secondary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h2[mat-dialog-title] {
+      color: var(--omnicare-text);
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0;
+      padding: 0;
+    }
+
+    .wizard-heading p,
+    .section-intro p {
+      color: var(--omnicare-muted);
+      font-size: 0.94rem;
+      margin: 0;
+    }
+
+    .wizard-content {
+      background: #f8fafc;
+      display: grid;
+      gap: 18px;
+      max-height: min(68vh, 760px);
+      max-width: 100%;
+      overflow: auto;
+      overflow-x: hidden;
+      padding: 16px 22px;
+    }
+
+    .step-section,
+    .coverage-section {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+      display: grid;
+      gap: 16px;
+      max-width: 100%;
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .section-intro {
+      display: grid;
+      gap: 5px;
+    }
+
     .form-grid {
       display: grid;
-      gap: 12px;
+      gap: 12px 14px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      min-width: min(780px, 82vw);
-      padding-top: 4px;
+      max-width: 100%;
+      min-width: 0;
     }
 
-    .coverage-section {
-      margin-top: 18px;
+    mat-form-field {
+      min-width: 0;
+      width: 100%;
     }
 
-    h3 {
-      color: var(--omnicare-text);
-      font-size: 1rem;
-      margin: 0 0 12px;
+    :host ::ng-deep .mat-mdc-form-field,
+    :host ::ng-deep .mat-mdc-text-field-wrapper {
+      min-width: 0 !important;
+      width: 100%;
+    }
+
+    :host ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
     }
 
     .coverage-header,
@@ -155,20 +278,25 @@ const ACT_CATEGORIES: ActCategory[] = [
     }
 
     .coverage-header {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
       color: var(--omnicare-muted);
       font-size: 0.76rem;
       font-weight: 800;
-      margin-bottom: 8px;
+      padding: 10px 12px;
       text-transform: uppercase;
     }
 
     .coverage-row {
       align-items: center;
-      border-top: 1px solid #edf2f7;
-      padding: 8px 0;
+      border: 1px solid #edf2f7;
+      border-radius: 12px;
+      padding: 10px 12px;
     }
 
     .coverage-row input {
+      background: #fbfcfd;
       border: 1px solid #d1d5db;
       border-radius: 10px;
       font: inherit;
@@ -176,12 +304,32 @@ const ACT_CATEGORIES: ActCategory[] = [
       width: 100%;
     }
 
+    .coverage-row input:focus {
+      border-color: var(--omnicare-secondary);
+      box-shadow: 0 0 0 3px rgba(0, 124, 128, 0.12);
+      outline: none;
+    }
+
     .error-message {
       color: #b91c1c;
       margin: 10px 0 0;
     }
 
+    .wizard-footer {
+      border-top: 1px solid #e5e7eb;
+      gap: 10px;
+      min-width: 0;
+      padding: 12px 22px 16px;
+    }
+
     @media (max-width: 760px) {
+      .wizard-header,
+      .wizard-content,
+      .wizard-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
       .form-grid,
       .coverage-header,
       .coverage-row {

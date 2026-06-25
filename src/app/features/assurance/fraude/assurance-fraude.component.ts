@@ -184,7 +184,7 @@ export class AssuranceFraudeComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 
   private readJson<T>(key: string, fallback: T): T {

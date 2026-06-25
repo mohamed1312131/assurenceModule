@@ -11,6 +11,7 @@
   border-radius: 0;
   border-top: 1px solid #eef2f4;
   box-shadow: none;
+  cursor: pointer;
 }
 
 :host:first-child .claim-card {
@@ -28,6 +29,12 @@
 
 .claim-card:hover {
   background: #fbfcfd;
+  box-shadow: inset 0 0 0 1px #e5e7eb;
+}
+
+.claim-card:focus-visible {
+  outline: 3px solid rgba(15, 111, 115, 0.24);
+  outline-offset: -3px;
 }
 
 mat-card-content {
@@ -160,13 +167,17 @@ p,
 }
 
 .flag-row mat-chip {
-  --mdc-chip-elevated-container-color: var(--omnicare-secondary);
-  --mdc-chip-unselected-container-color: var(--omnicare-secondary);
-  --mdc-chip-label-text-color: #ffffff;
+  --flag-bg: #eef7f6;
+  --flag-text: #0f6f73;
+  --flag-border: #cde8e6;
+  --mdc-chip-elevated-container-color: var(--flag-bg);
+  --mdc-chip-unselected-container-color: var(--flag-bg);
+  --mdc-chip-label-text-color: var(--flag-text);
   --mdc-chip-outline-color: transparent;
-  background: var(--omnicare-secondary);
+  background: var(--flag-bg);
+  border: 1px solid var(--flag-border);
   border-radius: 999px;
-  color: #ffffff;
+  color: var(--flag-text);
   font-size: 0.72rem;
   font-weight: 800;
   min-height: 24px;
@@ -174,31 +185,31 @@ p,
 }
 
 .flag-row mat-chip.flag-error {
-  --mdc-chip-elevated-container-color: #b91c1c;
-  --mdc-chip-unselected-container-color: #b91c1c;
-  background: #b91c1c;
+  --flag-bg: #fef2f2;
+  --flag-border: #fecaca;
+  --flag-text: #b91c1c;
 }
 
 .flag-row mat-chip.flag-warning {
-  --mdc-chip-elevated-container-color: #b45309;
-  --mdc-chip-unselected-container-color: #b45309;
-  background: #b45309;
+  --flag-bg: #fffbeb;
+  --flag-border: #fde68a;
+  --flag-text: #b45309;
 }
 
 .flag-row mat-chip.flag-info {
-  --mdc-chip-elevated-container-color: #0f6f73;
-  --mdc-chip-unselected-container-color: #0f6f73;
-  background: #0f6f73;
+  --flag-bg: #eef7f6;
+  --flag-border: #cde8e6;
+  --flag-text: #0f6f73;
 }
 
 :host ::ng-deep .flag-row mat-chip .mdc-evolution-chip__text-label {
-  color: #ffffff !important;
+  color: var(--flag-text) !important;
 }
 
 :host ::ng-deep .flag-row mat-chip .mdc-evolution-chip__action--primary {
   background: inherit;
   border-radius: 999px;
-  color: #ffffff !important;
+  color: var(--flag-text) !important;
   overflow: hidden;
 }
 

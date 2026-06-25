@@ -37,12 +37,30 @@ interface NewContractForm {
     MatSnackBarModule,
   ],
   template: `
-    <h2 mat-dialog-title>Nouveau contrat groupe</h2>
+    <header class="wizard-header">
+      <div class="wizard-heading">
+        <span class="section-kicker">Contrats COMAR</span>
+        <h2 mat-dialog-title>Nouveau contrat groupe</h2>
+        <p>Créez un contrat entreprise et rattachez les plans disponibles.</p>
+      </div>
+      <button class="dialog-close" mat-icon-button type="button" mat-dialog-close aria-label="Fermer">
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
+    </header>
 
-    <mat-dialog-content>
-      <mat-chip-set class="source-chip" aria-label="Source">
-        <mat-chip>Source : Manuel</mat-chip>
-      </mat-chip-set>
+    <mat-dialog-content class="wizard-content">
+      <section class="step-section">
+        <div class="section-intro">
+          <div>
+            <span class="section-kicker">Source</span>
+            <h3>Saisie manuelle</h3>
+          </div>
+          <mat-chip-set class="source-chip" aria-label="Source">
+            <mat-chip>Manuel</mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <p class="info-note">Les dates, effectifs et plans sélectionnés seront utilisés pour calculer le suivi du contrat.</p>
 
       <div class="form-grid">
         <mat-form-field appearance="outline">
@@ -97,17 +115,18 @@ interface NewContractForm {
             }
           </mat-select>
         </mat-form-field>
-      </div>
+        </div>
 
-      @if (submitted() && !isValid()) {
-        <p class="error-message">
-          <mat-icon aria-hidden="true">error</mat-icon>
-          Merci de renseigner tous les champs obligatoires.
-        </p>
-      }
+        @if (submitted() && !isValid()) {
+          <p class="error-message">
+            <mat-icon aria-hidden="true">error</mat-icon>
+            Merci de renseigner tous les champs obligatoires.
+          </p>
+        }
+      </section>
     </mat-dialog-content>
 
-    <mat-dialog-actions align="end">
+    <mat-dialog-actions class="wizard-footer" align="end">
       <button mat-button type="button" mat-dialog-close>Annuler</button>
       <button mat-flat-button color="primary" type="button" (click)="createContract()">
         Créer le contrat
@@ -115,17 +134,159 @@ interface NewContractForm {
     </mat-dialog-actions>
   `,
   styles: `
+    :host {
+      box-sizing: border-box;
+      display: block;
+      max-height: 90vh;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    :host *,
+    :host *::before,
+    :host *::after {
+      box-sizing: border-box;
+    }
+
+    .wizard-header {
+      align-items: flex-start;
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      min-width: 0;
+      padding: 18px 22px 16px;
+    }
+
+    .dialog-close {
+      --mdc-icon-button-state-layer-size: 38px;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      color: #334155;
+      display: inline-flex;
+      flex: 0 0 38px;
+      height: 38px;
+      justify-content: center;
+      padding: 0;
+      width: 38px;
+    }
+
+    .dialog-close mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+
+    .wizard-heading {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .section-kicker {
+      color: var(--omnicare-secondary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h2[mat-dialog-title] {
+      color: var(--omnicare-text);
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0;
+      padding: 0;
+    }
+
+    .wizard-heading p {
+      color: var(--omnicare-muted);
+      font-size: 0.94rem;
+      margin: 0;
+    }
+
+    .wizard-content {
+      background: #f8fafc;
+      max-height: min(68vh, 760px);
+      max-width: 100%;
+      overflow: auto;
+      overflow-x: hidden;
+      padding: 16px 22px;
+    }
+
+    .step-section {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+      display: grid;
+      gap: 16px;
+      max-width: 100%;
+      min-width: 0;
+      padding: 16px;
+    }
+
+    .section-intro {
+      align-items: flex-start;
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      min-width: 0;
+    }
+
+    .section-intro h3 {
+      color: var(--omnicare-text);
+      font-size: 1.05rem;
+      margin: 2px 0 0;
+    }
+
+    .info-note {
+      background: #f4f8fb;
+      border: 1px solid #d9e4ec;
+      border-radius: 14px;
+      color: #475569;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0;
+      padding: 12px 14px;
+    }
+
     .form-grid {
       display: grid;
-      gap: 12px;
+      gap: 12px 14px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      min-width: min(620px, 78vw);
-      padding-top: 4px;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .source-chip {
       display: block;
-      margin-bottom: 14px;
+    }
+
+    .source-chip mat-chip {
+      --mdc-chip-elevated-container-color: #eef6f4;
+      --mdc-chip-label-text-color: var(--omnicare-secondary);
+      border: 1px solid #cfe5df;
+      font-weight: 800;
+    }
+
+    mat-form-field {
+      min-width: 0;
+      width: 100%;
+    }
+
+    :host ::ng-deep .mat-mdc-form-field,
+    :host ::ng-deep .mat-mdc-text-field-wrapper {
+      min-width: 0 !important;
+      width: 100%;
+    }
+
+    :host ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
     }
 
     .full {
@@ -140,7 +301,25 @@ interface NewContractForm {
       margin: 4px 0 0;
     }
 
+    .wizard-footer {
+      border-top: 1px solid #e5e7eb;
+      gap: 10px;
+      min-width: 0;
+      padding: 12px 22px 16px;
+    }
+
     @media (max-width: 680px) {
+      .wizard-header,
+      .wizard-content,
+      .wizard-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .section-intro {
+        display: grid;
+      }
+
       .form-grid {
         grid-template-columns: 1fr;
       }

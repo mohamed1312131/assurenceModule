@@ -1,81 +1,104 @@
 <section class="adhesion-requests-page">
-  <header class="page-header">
-    <div>
-      <h1>Demandes d’adhésion OmniCare</h1>
-      <p>Demandes reçues depuis l’app OmniCare avant proposition d’une compagnie d’assurance.</p>
-    </div>
-  </header>
+  <section class="dashboard-shell" aria-label="Cockpit demandes adhesion">
+    <header class="page-header">
+      <div class="header-copy">
+        <p class="eyebrow">OmniCare · Assurance</p>
+        <h1>Demandes d’adhésion</h1>
+        <p>File opérationnelle des adhésions reçues depuis OmniCare.</p>
+      </div>
 
-  <section class="stats-grid" aria-label="Indicateurs demandes adhesion">
-    <mat-card class="stat-card">
-      <span>Total demandes</span>
-      <strong>{{ facade.stats().total }}</strong>
-      <small>Canal OmniCare</small>
-    </mat-card>
-    <mat-card class="stat-card info">
-      <span>Nouvelles</span>
-      <strong>{{ facade.stats().newCount }}</strong>
-      <small>À analyser par FTUSA</small>
-    </mat-card>
-    <mat-card class="stat-card warning">
-      <span>À compléter</span>
-      <strong>{{ facade.stats().incomplete }}</strong>
-      <small>Données ou pièces manquantes</small>
-    </mat-card>
-    <mat-card class="stat-card success">
-      <span>Prêtes</span>
-      <strong>{{ facade.stats().ready }}</strong>
-      <small>Offre possible vers OmniCare</small>
-    </mat-card>
-  </section>
-
-  <mat-card class="filter-card">
-    <label class="search-control">
-      <span>Recherche</span>
-      <mat-icon aria-hidden="true">search</mat-icon>
-      <input
-        type="search"
-        [value]="facade.filters().search ?? ''"
-        (input)="setSearch($any($event.target).value)"
-        placeholder="Nom, ID, employeur, ville..."
-      />
-    </label>
-
-    <div class="status-filter">
-      <span class="filter-label">Statut</span>
-      <mat-chip-listbox multiple aria-label="Filtrer les demandes par statut">
-        @for (status of statuses; track status) {
-          <mat-chip-option
-            [selected]="facade.filters().statuses.includes(status)"
-            (click)="toggleStatus(status)"
-          >
-            {{ statusLabel(status) }}
-          </mat-chip-option>
+      <div class="header-actions" aria-label="Actions demandes adhesion">
+        <span class="period-pill">{{ facade.visibleRange().total }} dossier(s)</span>
+        @if (facade.filters().statuses.length > 0 || facade.filters().search) {
+          <button mat-stroked-button type="button" (click)="facade.resetFilters()">
+            <mat-icon aria-hidden="true">restart_alt</mat-icon>
+            Réinitialiser
+          </button>
         }
-      </mat-chip-listbox>
-    </div>
+      </div>
+    </header>
 
-    <label class="page-size-control">
-      <span>Par page</span>
-      <select [value]="facade.pageSize()" (change)="setPageSize($any($event.target).value)">
-        @for (size of pageSizes; track size) {
-          <option [value]="size">{{ size }}</option>
-        }
-      </select>
-    </label>
+    <section class="operations-row" aria-label="Synthèse adhesion">
+      <span class="row-status-dot"></span>
+      <strong>
+        {{ facade.stats().newCount }} nouvelles · {{ facade.stats().incomplete }} à compléter ·
+        {{ facade.stats().ready }} prêtes
+      </strong>
+      <span>{{ facade.stats().total }} demandes OmniCare</span>
+    </section>
 
-    @if (facade.filters().statuses.length > 0 || facade.filters().search) {
-      <button mat-button type="button" (click)="facade.resetFilters()">
-        <mat-icon aria-hidden="true">restart_alt</mat-icon>
-        Réinitialiser
-      </button>
-    }
-  </mat-card>
+    <section class="stats-grid" aria-label="Indicateurs demandes adhesion">
+      <mat-card class="stat-card" appearance="outlined">
+        <mat-card-content>
+          <span>Total demandes</span>
+          <strong>{{ facade.stats().total }}</strong>
+          <small>Canal OmniCare</small>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card info" appearance="outlined">
+        <mat-card-content>
+          <span>Nouvelles</span>
+          <strong>{{ facade.stats().newCount }}</strong>
+          <small>À qualifier</small>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card warning" appearance="outlined">
+        <mat-card-content>
+          <span>À compléter</span>
+          <strong>{{ facade.stats().incomplete }}</strong>
+          <small>Données ou pièces manquantes</small>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="stat-card success" appearance="outlined">
+        <mat-card-content>
+          <span>Prêtes</span>
+          <strong>{{ facade.stats().ready }}</strong>
+          <small>Dossiers exploitables</small>
+        </mat-card-content>
+      </mat-card>
+    </section>
 
-  <section class="workspace-grid">
-    <mat-card class="queue-card">
-      <header class="section-header">
+    <mat-card class="filter-card" appearance="outlined">
+      <label class="search-control">
+        <span>Recherche</span>
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input
+          type="search"
+          [value]="facade.filters().search ?? ''"
+          (input)="setSearch($any($event.target).value)"
+          placeholder="Nom, ID, employeur, ville..."
+        />
+      </label>
+
+      <div class="status-filter">
+        <span class="filter-label">Statut</span>
+        <mat-chip-listbox multiple aria-label="Filtrer les demandes par statut">
+          @for (status of statuses; track status) {
+            <mat-chip-option
+              [selected]="facade.filters().statuses.includes(status)"
+              (click)="toggleStatus(status)"
+            >
+              {{ statusLabel(status) }}
+            </mat-chip-option>
+          }
+        </mat-chip-listbox>
+      </div>
+
+      <label class="page-size-control">
+        <span>Par page</span>
+        <select [value]="facade.pageSize()" (change)="setPageSize($any($event.target).value)">
+          @for (size of pageSizes; track size) {
+            <option [value]="size">{{ size }}</option>
+          }
+        </select>
+      </label>
+    </mat-card>
+
+    <section class="workspace-grid">
+    <mat-card class="queue-card" appearance="outlined">
+      <header class="section-heading">
         <div>
+          <span>Opérations</span>
           <h2>File de demandes</h2>
           <p>
             {{ facade.visibleRange().start }}-{{ facade.visibleRange().end }}
@@ -146,7 +169,7 @@
 
     @if (facade.selectedRequest(); as request) {
       <section class="detail-column">
-        <mat-card class="detail-card">
+        <mat-card class="detail-card" appearance="outlined">
           <header class="detail-header">
             <div>
               <p class="eyebrow">Dossier {{ request.externalRequestId }}</p>
@@ -290,69 +313,15 @@
               </div>
             }
           </section>
-        </mat-card>
-
-        <mat-card class="recommendation-card">
-          <header class="section-header">
-            <div>
-              <h2>Compagnies suggérées</h2>
-              <p>Classement démo basé sur couverture, SLA, réseau, contrat groupe et complétude.</p>
-            </div>
-          </header>
-
-          <div class="recommendation-list">
-            @for (recommendation of recommendations(); track recommendation.companyId) {
-              <article class="recommendation-row" [class.best]="recommendation.rank === 1">
-                <div class="rank-badge">#{{ recommendation.rank }}</div>
-                <div class="recommendation-main">
-                  <div class="recommendation-title">
-                    <div>
-                      <strong>{{ recommendation.companyName }}</strong>
-                      <span>{{ recommendation.planTierName }} · {{ recommendation.companyCode }}</span>
-                    </div>
-                    <strong class="score">{{ recommendation.score }}/100</strong>
-                  </div>
-                  <div class="score-track" aria-hidden="true">
-                    <span [style.width]="scoreWidth(recommendation.score)"></span>
-                  </div>
-                  <div class="recommendation-meta">
-                    <span>{{ facade.formatCurrency(recommendation.monthlyPremiumEstimate) }}/mois estimé</span>
-                    <span>{{ recommendation.slaTargetDays }} j SLA</span>
-                    <span>{{ formatInteger(recommendation.averageCoveragePercent) }}% couverture moyenne</span>
-                  </div>
-                  <div class="reason-grid">
-                    @for (reason of recommendation.reasons; track reason) {
-                      <span class="reason">
-                        <mat-icon aria-hidden="true">check_circle</mat-icon>
-                        {{ reason }}
-                      </span>
-                    }
-                    @for (caution of recommendation.cautions; track caution) {
-                      <span class="caution">
-                        <mat-icon aria-hidden="true">warning</mat-icon>
-                        {{ caution }}
-                      </span>
-                    }
-                  </div>
-                </div>
-              </article>
-            }
-          </div>
 
           <footer class="action-bar">
+            <div>
+              <span>Traitement du dossier</span>
+              <strong>Complétude et suivi OmniCare</strong>
+            </div>
             <button mat-stroked-button type="button" (click)="requestMoreInfo(request)">
               <mat-icon aria-hidden="true">edit_note</mat-icon>
               Demander infos manquantes
-            </button>
-            <button
-              mat-flat-button
-              color="primary"
-              type="button"
-              [disabled]="request.missingItems.length > 0 || request.status === 'OFFRE_ENVOYEE'"
-              (click)="sendOffer(request)"
-            >
-              <mat-icon aria-hidden="true">send</mat-icon>
-              Envoyer l’offre vers OmniCare
             </button>
           </footer>
 
@@ -364,5 +333,6 @@
         </mat-card>
       </section>
     }
+  </section>
   </section>
 </section>

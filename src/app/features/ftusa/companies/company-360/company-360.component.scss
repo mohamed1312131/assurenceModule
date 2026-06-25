@@ -1,0 +1,519 @@
+:host {
+  display: block;
+}
+
+.company-360-page {
+  display: block;
+}
+
+.company-shell {
+  background: #ffffff;
+  border: 1px solid rgba(15, 111, 115, 0.1);
+  border-radius: 24px;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+h1,
+h2,
+p {
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.page-header {
+  align-items: start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.header-main,
+.company-identity,
+.header-aside,
+.admin-strip,
+.kpi-grid,
+.section-grid,
+.mini-kpis {
+  min-width: 0;
+}
+
+.header-main {
+  display: grid;
+  gap: 14px;
+}
+
+.company-identity {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+
+.company-identity img {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  height: 58px;
+  object-fit: contain;
+  padding: 8px;
+  width: 58px;
+}
+
+.section-kicker,
+.admin-strip span,
+.kpi-card span,
+.mini-kpis span,
+.recommendation-row span,
+.recommendation-card span {
+  color: var(--omnicare-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--omnicare-text);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.08;
+}
+
+h2 {
+  color: var(--omnicare-text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.company-identity p,
+.hero-card p,
+.insight,
+.recommendation-row p,
+.recommendation-card p,
+.admin-strip small,
+.kpi-card small,
+.claim-row span {
+  color: var(--omnicare-muted);
+}
+
+.header-aside {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  max-width: 520px;
+}
+
+.score-badge,
+.opt-badge {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  min-height: 32px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.score-badge {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #047857;
+}
+
+.score-badge.warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.opt-badge {
+  background: #eef8f5;
+  border: 1px solid rgba(15, 111, 115, 0.18);
+  color: var(--omnicare-secondary);
+}
+
+.opt-badge.off {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  color: var(--omnicare-muted);
+}
+
+.admin-strip {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 14px;
+}
+
+.admin-strip div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-strip strong {
+  color: var(--omnicare-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.kpi-card,
+.hero-card,
+.recommendation-preview,
+.panel-card,
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.kpi-card {
+  display: grid;
+  gap: 7px;
+  min-height: 116px;
+  padding: 14px;
+}
+
+.kpi-card strong {
+  color: var(--omnicare-text);
+  font-size: 1.42rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.kpi-card.success {
+  border-color: rgba(4, 120, 87, 0.2);
+}
+
+.kpi-card.warning {
+  border-color: rgba(180, 83, 9, 0.24);
+}
+
+.kpi-card.error {
+  border-color: rgba(185, 28, 28, 0.22);
+}
+
+.company-tabs {
+  min-width: 0;
+}
+
+:host ::ng-deep .company-tabs .mat-mdc-tab-header {
+  border-bottom: 1px solid #edf2f7;
+}
+
+:host ::ng-deep .company-tabs .mat-mdc-tab-label-container {
+  overflow-x: auto;
+}
+
+.tab-panel {
+  display: grid;
+  gap: 16px;
+  padding-top: 18px;
+}
+
+.overview-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.hero-card,
+.recommendation-preview,
+.panel-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.hero-card p {
+  line-height: 1.55;
+}
+
+.score-meter {
+  background: #edf2f7;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.score-meter span {
+  background: linear-gradient(90deg, var(--omnicare-secondary), var(--omnicare-accent));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+}
+
+.card-header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.card-header div {
+  display: grid;
+  gap: 4px;
+}
+
+.card-header > strong {
+  color: var(--omnicare-secondary);
+  white-space: nowrap;
+}
+
+.recommendation-row,
+.recommendation-card {
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.recommendation-row.critical,
+.recommendation-card.critical {
+  border-color: #fecaca;
+}
+
+.recommendation-row strong,
+.recommendation-card strong,
+.claim-row strong,
+.adoption-row strong {
+  color: var(--omnicare-text);
+}
+
+.recommendation-row button {
+  justify-self: start;
+  padding-inline: 0;
+}
+
+.section-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.section-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel-card.wide {
+  grid-column: span 2;
+}
+
+.mini-kpis {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mini-kpis article {
+  background: #fbfcfd;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  display: grid;
+  gap: 7px;
+  min-height: 88px;
+  padding: 13px;
+}
+
+.mini-kpis strong {
+  color: var(--omnicare-text);
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #edf2f7;
+  color: var(--omnicare-text);
+  font-size: 0.84rem;
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: var(--omnicare-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.insight {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.claim-row,
+.check-row,
+.adoption-row {
+  align-items: center;
+  border-bottom: 1px solid #edf2f7;
+  display: grid;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 0;
+}
+
+.claim-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.claim-row div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.claim-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.check-row mat-icon {
+  color: #b45309;
+  font-size: 20px;
+  height: 20px;
+  width: 20px;
+}
+
+.check-row.ok mat-icon {
+  color: #047857;
+}
+
+.check-row span,
+.adoption-row span {
+  color: var(--omnicare-text);
+  font-size: 0.88rem;
+}
+
+.check-row strong,
+.adoption-row strong {
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.action-card {
+  align-content: start;
+  justify-items: start;
+}
+
+.recommendations-full {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.recommendations-full .card-header {
+  grid-column: 1 / -1;
+}
+
+.empty-state {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 34px;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  color: var(--omnicare-secondary);
+  font-size: 34px;
+  height: 34px;
+  width: 34px;
+}
+
+@media (max-width: 1240px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mini-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .page-header,
+  .overview-grid,
+  .section-grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-aside {
+    justify-content: flex-start;
+  }
+
+  .admin-strip,
+  .kpi-grid,
+  .mini-kpis,
+  .recommendations-full {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .panel-card.wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .company-shell {
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .company-identity {
+    align-items: start;
+  }
+
+  h1 {
+    font-size: 1.56rem;
+  }
+
+  .admin-strip,
+  .kpi-grid,
+  .mini-kpis,
+  .recommendations-full {
+    grid-template-columns: 1fr;
+  }
+}

@@ -25,6 +25,13 @@ export const ASSURANCE_ROUTES: Routes = [
           import('./demandes/demandes.routes').then((m) => m.DEMANDES_ROUTES),
       },
       {
+        path: 'demandes-adhesion',
+        loadChildren: () =>
+          import('../ftusa/adhesion-requests/ftusa-adhesion-requests.component').then((m) => [
+            { path: '', component: m.FtusaAdhesionRequestsComponent },
+          ]),
+      },
+      {
         path: 'autorisations',
         loadChildren: () =>
           import('./autorisations/autorisations.routes').then((m) => m.AUTORISATIONS_ROUTES),

@@ -1,9 +1,15 @@
 <mat-card
   class="claim-card"
   appearance="outlined"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Ouvrir la demande de ' + patientName()"
   [class.risk-medium]="riskScore() === 'MOYEN'"
   [class.risk-high]="riskScore() === 'ELEVE'"
   [class.delay-flag]="displaySlaLabel()"
+  (click)="onOpen()"
+  (keydown.enter)="onOpen()"
+  (keydown.space)="onOpen(); $event.preventDefault()"
 >
   <mat-card-content>
     <div class="claim-row">
@@ -52,7 +58,7 @@
       </div>
 
       <div class="claim-action">
-        <button mat-button type="button" (click)="onOpen()">
+        <button mat-button type="button" (click)="onOpen(); $event.stopPropagation()">
           {{ actionLabel() }}
           <mat-icon aria-hidden="true">arrow_forward</mat-icon>
         </button>

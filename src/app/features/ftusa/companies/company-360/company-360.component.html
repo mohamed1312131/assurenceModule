@@ -1,0 +1,402 @@
+@if (summary(); as s) {
+  <section class="company-360-page">
+    <section class="company-shell">
+      <header class="page-header">
+        <div class="header-main">
+          <button mat-stroked-button type="button" (click)="backToCompanies()">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Retour aux compagnies
+          </button>
+
+          <div class="company-identity">
+            <img [src]="s.company.logoUrl" [alt]="'Logo ' + s.company.name" />
+            <div>
+              <span class="section-kicker">Fiche Compagnie 360°</span>
+              <h1>{{ s.company.name }}</h1>
+              <p>{{ s.company.code }} · {{ s.company.contactEmail }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-aside">
+          <app-status-chip
+            [status]="s.company.status"
+            [label]="statusLabel(s.company.status)"
+            [tone]="statusTone(s.company.status)"
+          />
+          <span class="score-badge" [class.warning]="s.overview.healthStatus !== 'SAIN'">
+            Score santé {{ s.overview.healthScore }}/100
+          </span>
+          <span class="opt-badge" [class.off]="!s.configuration.fraudSharingEnabled">
+            Partage fraude {{ s.configuration.fraudSharingEnabled ? 'activé' : 'désactivé' }}
+          </span>
+          <span class="opt-badge" [class.off]="!s.configuration.marketAnalyticsEnabled">
+            Analytique marché {{ s.configuration.marketAnalyticsEnabled ? 'activée' : 'désactivée' }}
+          </span>
+        </div>
+      </header>
+
+      <section class="admin-strip" aria-label="Administration compagnie">
+        <div>
+          <span>Admin contact</span>
+          <strong>{{ s.admin?.name ?? 'À configurer' }}</strong>
+          <small>{{ s.admin?.email ?? 'Aucun administrateur actif' }}</small>
+        </div>
+        <div>
+          <span>Dernière connexion</span>
+          <strong>{{ formatDate(s.overview.lastAdminLoginAt) }}</strong>
+          <small>{{ s.admin?.status === 'ACTIVE' ? 'Compte actif' : 'Accès à vérifier' }}</small>
+        </div>
+        <div>
+          <span>Santé plateforme</span>
+          <strong>{{ healthLabel(s.overview.healthStatus) }}</strong>
+          <small>Conformité configuration plateforme</small>
+        </div>
+      </section>
+
+      <section class="kpi-grid" aria-label="Indicateurs principaux">
+        @for (kpi of topKpis(); track kpi.label) {
+          <mat-card class="kpi-card" [class]="kpi.tone ?? 'neutral'">
+            <span>{{ kpi.label }}</span>
+            <strong>{{ kpi.value }}</strong>
+            <small>{{ kpi.helper }}</small>
+          </mat-card>
+        }
+      </section>
+
+      <mat-tab-group class="company-tabs" mat-stretch-tabs="false" animationDuration="160ms">
+        <mat-tab label="Vue générale">
+          <div class="tab-panel overview-grid">
+            <mat-card class="hero-card">
+              <span class="section-kicker">Synthèse exécutive</span>
+              <h2>{{ s.company.name }} · {{ healthLabel(s.overview.healthStatus) }}</h2>
+              <p>{{ s.overview.executiveSummary }}</p>
+              <div class="score-meter">
+                <span [style.width.%]="s.overview.healthScore"></span>
+              </div>
+              <small>Onboarding {{ formatPercent(s.overview.onboardingCompletionPercent) }}</small>
+            </mat-card>
+
+            <mat-card class="recommendation-preview">
+              <header class="card-header">
+                <div>
+                  <span class="section-kicker">Recommandations FTUSA</span>
+                  <h2>Actions prioritaires</h2>
+                </div>
+              </header>
+              @for (item of s.recommendations.slice(0, 4); track item.title) {
+                <article class="recommendation-row" [class.critical]="item.severity === 'CRITIQUE'">
+                  <span>{{ item.type }}</span>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.description }}</p>
+                  <button mat-button type="button" (click)="mockAction()">{{ item.actionLabel }}</button>
+                </article>
+              }
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Flux demandes">
+          <div class="tab-panel">
+            <section class="section-grid two">
+              <app-chart-card
+                title="Demandes par mois"
+                note="Volume et montant des demandes sur 12 mois pour la compagnie sélectionnée."
+                [wide]="true"
+                [options]="monthlyClaimsOptions()"
+                [height]="340"
+                (exportCsv)="mockAction()"
+              />
+
+              <app-chart-card
+                title="Origine des demandes"
+                [options]="sourceDistributionOptions()"
+                [height]="320"
+                (exportCsv)="mockAction()"
+              />
+
+              <app-chart-card
+                title="Qualité par source"
+                [options]="sourceQualityOptions()"
+                [height]="330"
+                (exportCsv)="mockAction()"
+              />
+            </section>
+
+            <mat-card class="panel-card">
+              <header class="card-header">
+                <div>
+                  <span class="section-kicker">Qualité par source</span>
+                  <h2>Taux d’approbation, documents incomplets et délai</h2>
+                </div>
+              </header>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Source</th>
+                      <th>Demandes</th>
+                      <th>Approbation</th>
+                      <th>Docs incomplets</th>
+                      <th>Délai moyen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (source of s.claims.bySource; track source.label) {
+                      <tr>
+                        <td>{{ source.label }}</td>
+                        <td>{{ formatNumber(source.count) }}</td>
+                        <td>{{ formatPercent(source.approvalRate) }}</td>
+                        <td>{{ formatPercent(source.incompleteDocumentsRate) }}</td>
+                        <td>{{ formatNumber(source.averageProcessingDays) }} j</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <p class="insight">{{ sourceInsight(s.claims.bySource) }}</p>
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="SLA & opérations">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Délai moyen</span><strong>{{ formatNumber(s.operations.averageProcessingDays) }} j</strong></article>
+              <article><span>Médiane</span><strong>{{ formatNumber(s.operations.medianProcessingDays) }} j</strong></article>
+              <article><span>SLA respecté</span><strong>{{ formatPercent(s.operations.slaComplianceRate) }}</strong></article>
+              <article><span>Backlog</span><strong>{{ formatNumber(s.operations.backlogCount) }}</strong></article>
+              <article><span>Prêts à décider</span><strong>{{ formatNumber(s.operations.readyToDecideCount) }}</strong></article>
+              <article><span>Auto-approbations</span><strong>{{ formatNumber(s.operations.autoApprovedCount) }}</strong></article>
+              <article><span>Docs incomplets</span><strong>{{ formatPercent(s.operations.incompleteDocumentsRate) }}</strong></article>
+            </section>
+
+            <section class="section-grid two">
+              <app-chart-card
+                title="SLA par catégorie d’acte"
+                [options]="slaByCategoryOptions()"
+                [height]="340"
+                (exportCsv)="mockAction()"
+              />
+
+              <mat-card class="panel-card">
+                <header class="card-header"><div><span class="section-kicker">File prioritaire</span><h2>Dossiers en retard / prêts</h2></div></header>
+                @for (claim of s.operations.priorityClaims; track claim.id) {
+                  <article class="claim-row">
+                    <div>
+                      <strong>{{ claim.id }}</strong>
+                      <span>{{ formatPriorityClaim(claim) }}</span>
+                    </div>
+                    <app-status-chip [status]="claim.status" />
+                  </article>
+                }
+              </mat-card>
+            </section>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Finance">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Facturé YTD</span><strong>{{ formatCurrency(s.claims.totalBilledAmount) }}</strong></article>
+              <article><span>Approuvé YTD</span><strong>{{ formatCurrency(s.claims.totalApprovedAmount) }}</strong></article>
+              <article><span>Remboursé YTD</span><strong>{{ formatCurrency(s.claims.totalReimbursedAmount) }}</strong></article>
+              <article><span>Montant moyen</span><strong>{{ formatCurrency(s.claims.averageClaimAmount) }}</strong></article>
+              <article><span>Approbation valeur</span><strong>{{ formatPercent(s.claims.approvalRate) }}</strong></article>
+              <article><span>Valeur rejetée</span><strong>{{ formatCurrency(s.claims.totalBilledAmount - s.claims.totalApprovedAmount) }}</strong></article>
+              <article><span>Seuil réassurance</span><strong>{{ formatNumber(highAmountCategoryCount(s.claims.byActCategory)) }}</strong></article>
+            </section>
+
+            <app-chart-card
+              title="Top catégories par montant"
+              [wide]="true"
+              [note]="'Catégorie dominante: ' + topAmountLabel(s.claims.byActCategory)"
+              [options]="topCategoriesAmountOptions()"
+              [height]="360"
+              (exportCsv)="mockAction()"
+            />
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Autorisations">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>En attente</span><strong>{{ formatNumber(s.authorizations.pending) }}</strong></article>
+              <article><span>Proches expiration</span><strong>{{ formatNumber(s.authorizations.closeToExpiry) }}</strong></article>
+              <article><span>Approuvées ce mois</span><strong>{{ formatNumber(s.authorizations.approvedThisMonth) }}</strong></article>
+              <article><span>Refusées ce mois</span><strong>{{ formatNumber(s.authorizations.refusedThisMonth) }}</strong></article>
+              <article><span>Auto-approuvées</span><strong>{{ formatNumber(s.authorizations.autoApprovedThisMonth) }}</strong></article>
+              <article><span>Délai réponse</span><strong>{{ formatNumber(s.authorizations.averageResponseDays) }} j</strong></article>
+            </section>
+            <app-chart-card
+              title="Top actes nécessitant autorisation"
+              [options]="authorizationTypesOptions()"
+              [height]="320"
+              (exportCsv)="mockAction()"
+            />
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Entreprises">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Contrats actifs</span><strong>{{ s.corporate.activeContracts }}</strong></article>
+              <article><span>Expiration proche</span><strong>{{ s.corporate.expiringSoon }}</strong></article>
+              <article><span>Salariés couverts</span><strong>{{ formatNumber(s.corporate.coveredEmployees) }}</strong></article>
+              <article><span>Salariés inscrits</span><strong>{{ formatNumber(s.corporate.enrolledEmployees) }}</strong></article>
+              <article><span>Taux inscription</span><strong>{{ formatPercent(s.corporate.enrollmentRate) }}</strong></article>
+              <article><span>Primes/an</span><strong>{{ formatCurrency(s.corporate.annualPremiumTotal) }}</strong></article>
+              <article><span>Remboursé YTD</span><strong>{{ formatCurrency(s.corporate.reimbursedYtd) }}</strong></article>
+              <article><span>Ratio moyen</span><strong>{{ formatPercent(s.corporate.averageClaimsRatio) }}</strong></article>
+            </section>
+            <mat-card class="panel-card">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Entreprise</th><th>Salariés</th><th>Inscrits</th><th>Primes/an</th><th>Remboursé YTD</th><th>Ratio</th><th>Renouvellement</th></tr></thead>
+                  <tbody>
+                    @for (row of s.corporate.topEmployers; track row.employerName) {
+                      <tr><td>{{ row.employerName }}</td><td>{{ row.employees }}</td><td>{{ row.enrolled }}</td><td>{{ formatCurrency(row.annualPremium) }}</td><td>{{ formatCurrency(row.reimbursedYtd) }}</td><td>{{ formatPercent(row.claimsRatio) }}</td><td>{{ row.renewalStatus }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Adhérents">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Total adhérents</span><strong>{{ formatNumber(s.members.total) }}</strong></article>
+              <article><span>Vérifiés</span><strong>{{ formatNumber(s.members.verified) }}</strong></article>
+              <article><span>En attente</span><strong>{{ formatNumber(s.members.pending) }}</strong></article>
+              <article><span>Nouveaux ce mois</span><strong>{{ formatNumber(s.members.newThisMonth) }}</strong></article>
+              <article><span>Actifs avec demandes</span><strong>{{ formatNumber(s.members.activeWithClaims) }}</strong></article>
+            </section>
+            <section class="section-grid two">
+              <app-chart-card
+                title="Distribution par plan"
+                [options]="memberPlanOptions()"
+                [height]="320"
+                (exportCsv)="mockAction()"
+              />
+              <app-chart-card
+                title="Distribution par source"
+                [options]="memberSourceOptions()"
+                [height]="320"
+                (exportCsv)="mockAction()"
+              />
+            </section>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Réseau agréé">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Prestataires agréés</span><strong>{{ s.network.approvedProviders }}</strong></article>
+              <article><span>Hors réseau utilisés</span><strong>{{ s.network.outOfNetworkProvidersUsed }}</strong></article>
+              <article><span>Demandes réseau</span><strong>{{ formatPercent(s.network.inNetworkClaimsRate) }}</strong></article>
+              <article><span>Demandes hors réseau</span><strong>{{ formatPercent(s.network.outOfNetworkClaimsRate) }}</strong></article>
+              <article><span>Tiers-payant</span><strong>{{ s.network.tiersPayantEnabled }}</strong></article>
+              <article><span>Concentration</span><strong>{{ formatPercent(s.network.providerConcentrationRate) }}</strong></article>
+            </section>
+            <app-chart-card
+              title="Top prestataires par montant"
+              [wide]="true"
+              [options]="networkProvidersOptions()"
+              [height]="360"
+              (exportCsv)="mockAction()"
+            />
+            <mat-card class="panel-card">
+              <p class="insight">Régions sous-servies: {{ s.network.underservedRegions.join(', ') || 'Aucune' }}</p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Prestataire</th><th>Type</th><th>Région</th><th>Réseau</th><th>Demandes</th><th>Remboursé</th></tr></thead>
+                  <tbody>
+                    @for (provider of s.network.topProviders; track provider.providerName) {
+                      <tr><td>{{ provider.providerName }}</td><td>{{ provider.providerType }}</td><td>{{ provider.region }}</td><td>{{ provider.networkStatus }}</td><td>{{ provider.claimsThisYear }}</td><td>{{ formatCurrency(provider.reimbursedThisYear) }}</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </mat-card>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Risque">
+          <div class="tab-panel">
+            <section class="mini-kpis">
+              <article><span>Dossiers flagués</span><strong>{{ s.risk.flaggedClaims }}</strong></article>
+              <article><span>Risque élevé</span><strong>{{ s.risk.highRiskClaims }}</strong></article>
+              <article><span>Doublons suspects</span><strong>{{ s.risk.suspectedDuplicates }}</strong></article>
+              <article><span>Montant à risque</span><strong>{{ formatCurrency(s.risk.amountAtRisk) }}</strong></article>
+              <article><span>Prestataires récurrents</span><strong>{{ s.risk.recurringRiskProviders }}</strong></article>
+              <article><span>Partage fraude</span><strong>{{ s.risk.fraudSharingEnabled ? 'Activé' : 'Désactivé' }}</strong></article>
+            </section>
+            <section class="section-grid two">
+              <app-chart-card
+                title="Top signaux actifs"
+                [options]="riskFlagsOptions()"
+                [height]="320"
+                (exportCsv)="mockAction()"
+              />
+              <mat-card class="panel-card action-card">
+                <button mat-stroked-button type="button" (click)="mockAction()">Voir dossiers suspects</button>
+                <button mat-stroked-button type="button" (click)="mockAction()">Notifier la compagnie</button>
+                @if (!s.risk.fraudSharingEnabled) {
+                  <button mat-flat-button type="button" (click)="mockAction()">Proposer activation partage fraude</button>
+                }
+              </mat-card>
+            </section>
+          </div>
+        </mat-tab>
+
+        <mat-tab label="Configuration">
+          <div class="tab-panel">
+            <section class="section-grid two">
+              <mat-card class="panel-card">
+                <header class="card-header"><div><span class="section-kicker">Plateforme</span><h2>Checklist configuration</h2></div><strong>{{ formatPercent(s.adoption.configurationCompletionRate) }}</strong></header>
+                @for (row of configurationRows(); track row.label) {
+                  <article class="check-row" [class.ok]="row.ok">
+                    <mat-icon aria-hidden="true">{{ row.ok ? 'check_circle' : 'error' }}</mat-icon>
+                    <span>{{ row.label }}</span>
+                    <strong>{{ row.value }}</strong>
+                  </article>
+                }
+              </mat-card>
+              <mat-card class="panel-card">
+                <header class="card-header"><div><span class="section-kicker">Adoption</span><h2>Usage plateforme</h2></div></header>
+                <article class="adoption-row"><span>Demandes OmniCare</span><strong>{{ s.adoption.platformProcessedClaims }}</strong></article>
+                <article class="adoption-row"><span>PDF finaux générés</span><strong>{{ s.adoption.finalPdfsGenerated }}</strong></article>
+                <article class="adoption-row"><span>Exports téléchargés</span><strong>{{ s.adoption.exportsDownloaded }}</strong></article>
+                <article class="adoption-row"><span>Lecture communications</span><strong>{{ formatPercent(s.adoption.communicationsReadRate) }}</strong></article>
+                <article class="adoption-row"><span>Signature configurée</span><strong>{{ s.adoption.signatureConfigured ? 'Oui' : 'Non' }}</strong></article>
+              </mat-card>
+            </section>
+
+            <mat-card class="panel-card recommendations-full">
+              <header class="card-header"><div><span class="section-kicker">Recommandations FTUSA</span><h2>Plan d’action</h2></div></header>
+              @for (item of s.recommendations; track item.title) {
+                <article class="recommendation-card" [class.critical]="item.severity === 'CRITIQUE'">
+                  <span>{{ item.type }} · {{ item.severity }}</span>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.description }}</p>
+                  <button mat-stroked-button type="button" (click)="mockAction()">{{ item.actionLabel }}</button>
+                </article>
+              }
+            </mat-card>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </section>
+  </section>
+} @else {
+  <section class="company-360-page">
+    <mat-card class="empty-state">
+      <mat-icon aria-hidden="true">domain_disabled</mat-icon>
+      <h1>Compagnie introuvable</h1>
+      <p>La fiche demandée n’existe pas dans le registre FTUSA local.</p>
+      <button mat-flat-button type="button" (click)="backToCompanies()">Retour aux compagnies</button>
+    </mat-card>
+  </section>
+}

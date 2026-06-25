@@ -105,8 +105,7 @@ h2 {
 .urgent-strip,
 .kpi-card,
 .secondary-card,
-.activity-card,
-.adhesion-panel {
+.activity-card {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
@@ -202,12 +201,6 @@ h2 {
   line-height: 1.1;
 }
 
-.adhesion-panel {
-  display: grid;
-  gap: 16px;
-  padding: 18px;
-}
-
 .section-header {
   align-items: center;
   display: flex;
@@ -218,72 +211,6 @@ h2 {
 .section-header > div {
   display: grid;
   gap: 6px;
-}
-
-.adhesion-preview-list {
-  display: grid;
-  gap: 10px;
-}
-
-.adhesion-preview-row {
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(180px, 1.25fr) minmax(150px, 0.8fr) minmax(210px, 1fr) minmax(150px, auto) auto;
-  padding: 14px;
-}
-
-.queue-identity,
-.queue-meta,
-.queue-state {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.queue-identity strong,
-.queue-meta strong {
-  color: var(--omnicare-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.queue-identity span,
-.queue-meta span,
-.queue-meta small {
-  color: var(--omnicare-muted);
-  font-size: 0.8rem;
-}
-
-.queue-meta > span {
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.recommendation small {
-  overflow-wrap: anywhere;
-}
-
-.queue-state {
-  justify-items: start;
-}
-
-.priority-pill {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  padding: 6px 9px;
-}
-
-.priority-pill.attention {
-  background: #fffbeb;
-  border-color: #fde68a;
-  color: #b45309;
 }
 
 .section-heading {
@@ -387,16 +314,9 @@ h2 {
   width: 46px;
 }
 
-button:focus-visible,
-.adhesion-preview-row:focus-within {
+button:focus-visible {
   outline: 3px solid rgba(31, 191, 154, 0.35);
   outline-offset: 2px;
-}
-
-@media (max-width: 1320px) {
-  .adhesion-preview-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 1180px) {
@@ -429,8 +349,7 @@ button:focus-visible,
   .kpi-grid,
   .secondary-insights,
   .hero-chart-grid,
-  .insights-section,
-  .adhesion-preview-row {
+  .insights-section {
     grid-template-columns: 1fr;
   }
 

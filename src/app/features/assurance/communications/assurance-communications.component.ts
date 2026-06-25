@@ -153,6 +153,6 @@ export class AssuranceCommunicationsComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

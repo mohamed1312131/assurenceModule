@@ -625,7 +625,7 @@ export class AutorisationDetailComponent implements OnInit {
   protected readonly rejectionMode = signal(false);
   protected readonly rejectionTouched = signal(false);
   protected readonly rejectionReason = signal<string | null>(null);
-  protected readonly companyId = signal('star');
+  protected readonly companyId = signal('comar');
   protected readonly adherents = signal<Adherent[]>([]);
   protected readonly planTiers = signal<PlanTier[]>([]);
   protected readonly rejectionReasons = [
@@ -944,6 +944,6 @@ export class AutorisationDetailComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

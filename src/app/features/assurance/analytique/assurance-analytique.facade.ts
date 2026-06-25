@@ -52,7 +52,7 @@ const CHANNELS: ClaimSource[] = ['OMNICARE', 'MANUEL', 'WEBSITE', 'EMAIL', 'IMPO
 export class AssuranceAnalytiqueFacade {
   private readonly storage = inject(LocalStorageService);
 
-  readonly companyId = signal('star');
+  readonly companyId = signal('comar');
   readonly demandes = signal<DemandeRemboursement[]>([]);
   readonly settings = signal<CompanySettings | null>(null);
   readonly planTiers = signal<PlanTier[]>([]);

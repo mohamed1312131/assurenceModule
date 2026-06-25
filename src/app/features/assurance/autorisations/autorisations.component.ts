@@ -39,7 +39,7 @@ import { AutorisationsFilterBarComponent } from './autorisations-filter-bar.comp
           <header class="results-header">
             <div>
               <strong>{{ filtered().length }} résultats</strong>
-              <span>File d'autorisations STAR</span>
+              <span>File d'autorisations COMAR</span>
             </div>
             <span class="sort-pill">
               <mat-icon aria-hidden="true">sort</mat-icon>
@@ -279,6 +279,7 @@ import { AutorisationsFilterBarComponent } from './autorisations-filter-bar.comp
 
     .auth-row:hover {
       background: #fbfcfd;
+      box-shadow: inset 0 0 0 1px #e5e7eb;
     }
 
     .auth-row.accent-danger {
@@ -342,9 +343,10 @@ import { AutorisationsFilterBarComponent } from './autorisations-filter-bar.comp
     }
 
     .network-badge {
-      background: #047857;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
       border-radius: 999px;
-      color: #ffffff !important;
+      color: #047857 !important;
       display: inline-flex;
       font-size: 0.62rem !important;
       font-weight: 700;
@@ -356,40 +358,46 @@ import { AutorisationsFilterBarComponent } from './autorisations-filter-bar.comp
     }
 
     .network-badge.out {
-      background: #b91c1c;
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #b91c1c !important;
     }
 
     .countdown-chip.safe {
-      --mdc-chip-elevated-container-color: #334155;
-      --mdc-chip-unselected-container-color: #334155;
-      --mdc-chip-label-text-color: #ffffff;
-      background: #334155;
+      --countdown-bg: #f8fafc;
+      --countdown-border: #dbe3e7;
+      --countdown-text: #334155;
     }
 
     .countdown-chip.warning {
-      --mdc-chip-elevated-container-color: #b45309;
-      --mdc-chip-unselected-container-color: #b45309;
-      --mdc-chip-label-text-color: #ffffff;
-      background: #b45309;
+      --countdown-bg: #fffbeb;
+      --countdown-border: #fde68a;
+      --countdown-text: #b45309;
     }
 
     .countdown-chip.danger {
-      --mdc-chip-elevated-container-color: #b91c1c;
-      --mdc-chip-unselected-container-color: #b91c1c;
-      --mdc-chip-label-text-color: #ffffff;
-      background: #b91c1c;
+      --countdown-bg: #fef2f2;
+      --countdown-border: #fecaca;
+      --countdown-text: #b91c1c;
     }
 
     .countdown-chip.expired {
-      --mdc-chip-elevated-container-color: #7f1d1d;
-      --mdc-chip-unselected-container-color: #7f1d1d;
-      --mdc-chip-label-text-color: #ffffff;
-      background: #7f1d1d;
+      --countdown-bg: #fef2f2;
+      --countdown-border: #fecaca;
+      --countdown-text: #7f1d1d;
     }
 
     .countdown-chip {
+      --countdown-bg: #f8fafc;
+      --countdown-border: #dbe3e7;
+      --countdown-text: #334155;
+      --mdc-chip-elevated-container-color: var(--countdown-bg);
+      --mdc-chip-unselected-container-color: var(--countdown-bg);
+      --mdc-chip-label-text-color: var(--countdown-text);
+      background: var(--countdown-bg);
+      border: 1px solid var(--countdown-border);
       border-radius: 999px;
-      color: #ffffff;
+      color: var(--countdown-text);
       font-size: 0.72rem;
       font-weight: 800;
       min-height: 24px;
@@ -399,12 +407,11 @@ import { AutorisationsFilterBarComponent } from './autorisations-filter-bar.comp
     :host ::ng-deep .countdown-chip .mdc-evolution-chip__text-label,
     :host ::ng-deep .countdown-chip .mdc-evolution-chip__action--primary {
       background: inherit !important;
-      color: #ffffff !important;
+      color: var(--countdown-text) !important;
     }
 
     :host ::ng-deep .priority-cell .status-chip,
     :host ::ng-deep .priority-cell .source-badge {
-      border: 0;
       min-height: 24px;
     }
 
@@ -658,6 +665,6 @@ export class AutorisationsComponent implements OnInit {
       currentRoute = currentRoute.parent;
     }
 
-    return 'star';
+    return 'comar';
   }
 }

@@ -33,7 +33,8 @@
 
 .brand-logo {
   display: block;
-  height: 48px;
+  height: 144px;
+  max-width: 100%;
   width: auto;
 }
 
@@ -238,7 +239,7 @@ h1 {
   }
 
   .brand-logo {
-    height: 42px;
+    height: 108px;
   }
 
   .access-card-header {
